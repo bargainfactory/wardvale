@@ -353,6 +353,37 @@ create table if not exists public.outcomes (
 create index if not exists outcomes_client_created_idx on public.outcomes (client_id, created_at desc);
 create index if not exists outcomes_client_status_idx on public.outcomes (client_id, status);
 
+-- ── Governance: per-client execution policies ────────────────────────────────
+-- Guardrails the owner sets: an auto-send spend cap, a per-action approval
+-- threshold, and a recipient-domain allowlist. Enforced before any auto-send;
+-- when a policy would be crossed, the action is queued for approval instead.
+create table if not exists public.client_policy (
+  client_id             uuid primary key references public.clients (id) on delete cascade,
+  daily_spend_cap       numeric,   -- null = no cap; max auto-sent value per day
+  require_approval_over numeric,   -- null = no threshold; queue actions above this value
+  allowed_domains       text,      -- comma-separated; empty = all allowed (email only)
+  updated_at            timestamptz not null default now()
+);
+
+drop trigger if exists client_policy_touch on public.client_policy;
+create trigger client_policy_touch
+  before update on public.client_policy
+  for each row execute function public.touch_updated_at();
+
+alter table public.client_policy enable row level security;
+drop policy if exists client_policy_self_read on public.client_policy;
+create policy client_policy_self_read on public.client_policy
+  for select using (
+    client_id in (select id from public.clients where email = (auth.jwt() ->> 'email'))
+  );
+drop policy if exists client_policy_self_update on public.client_policy;
+create policy client_policy_self_update on public.client_policy
+  for update using (
+    client_id in (select id from public.clients where email = (auth.jwt() ->> 'email'))
+  ) with check (
+    client_id in (select id from public.clients where email = (auth.jwt() ->> 'email'))
+  );
+
 -- ── Learning loop: approved/edited drafts become per-client few-shot exemplars ─
 create table if not exists public.agent_feedback (
   id          uuid primary key default gen_random_uuid(),

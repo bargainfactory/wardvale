@@ -20,6 +20,7 @@ import { loadExemplars } from "@/lib/feedback";
 import { sendApprovalNotification, sendAgentEmail } from "@/lib/email";
 import { sendSmsForClient } from "@/lib/integrations";
 import { recordOutcome } from "@/lib/outcomes";
+import { loadPolicy, spentToday, policyBlocks } from "@/lib/policy";
 import { firstTime, idemKey } from "@/lib/idempotency";
 import { agentName } from "@/lib/agents-catalog";
 import {
@@ -184,15 +185,23 @@ export async function POST(req: Request) {
             autoSend = Boolean(cfg?.auto_send);
           }
 
+          // Governance: even when auto-send is on, a policy (spend cap, per-action
+          // threshold, domain allowlist) can force an action back to approval.
+          const policy = await loadPolicy(supabase, client.id);
+          let spentSoFar = await spentToday(supabase, client.id);
+
           const toQueue: { client_id: string; agent: string; action: string; summary: string; payload: Record<string, unknown> }[] = [];
           for (const a of needApproval) {
-            if (autoSend && a.to && a.draft && (a.action === "email.send" || a.action === "sms.send")) {
+            const canAuto =
+              autoSend && !policyBlocks(policy, a, spentSoFar) && (a.action === "email.send" || a.action === "sms.send");
+            if (canAuto && a.to && a.draft) {
               const ok =
                 a.action === "sms.send"
                   ? await sendSmsForClient(supabase, client.id, a.to, a.draft)
                   : await sendAgentEmail(a.to, a.source, a.draft);
               if (ok) {
                 autoSent += 1;
+                spentSoFar += Number(a.value) || 0; // count against the daily cap
                 // A sent action with money at stake becomes pending ROI pipeline.
                 await recordOutcome(supabase, {
                   clientId: client.id,

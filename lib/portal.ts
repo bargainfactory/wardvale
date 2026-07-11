@@ -25,6 +25,7 @@ export type PortalApproval = { id: string; agent: string; action: string; summar
 export type PortalAgentConfig = { key: string; name: string; enabled: boolean; autoSend: boolean; schedule: string };
 export type PortalRoi = { realized: number; pipeline: number; won: number; resolved: number; winRate: number };
 export type PortalOutcome = { id: string; agent: string; kind: string; value: number; status: string; detail: string; createdAt: string };
+export type PortalPolicy = { dailySpendCap: number | null; requireApprovalOver: number | null; allowedDomains: string };
 export type PortalData = {
   clientName: string;
   onboarded: boolean;
@@ -38,6 +39,7 @@ export type PortalData = {
   approvals: PortalApproval[];
   agentConfigs: PortalAgentConfig[];
   outcomes: PortalOutcome[];
+  policy: PortalPolicy;
 };
 
 function relTime(iso: string): string {
@@ -89,6 +91,7 @@ export async function getPortalData(email: string): Promise<PortalData | null> {
       { data: approvalsData },
       { data: configData },
       { data: outcomeData },
+      { data: policyData },
     ] = await Promise.all([
       supabase.from("automations").select("id, name, status").eq("client_id", client.id),
       supabase
@@ -119,6 +122,7 @@ export async function getPortalData(email: string): Promise<PortalData | null> {
         .eq("client_id", client.id)
         .order("created_at", { ascending: false })
         .limit(100),
+      supabase.from("client_policy").select("daily_spend_cap, require_approval_over, allowed_domains").eq("client_id", client.id).maybeSingle(),
     ]);
 
     const runList: RunRow[] = (runs as RunRow[] | null) ?? [];
@@ -194,6 +198,13 @@ export async function getPortalData(email: string): Promise<PortalData | null> {
       resolved,
       winRate: resolved ? Math.round((won / resolved) * 100) : 0,
     };
+    const pol = policyData as { daily_spend_cap: number | null; require_approval_over: number | null; allowed_domains: string | null } | null;
+    const policy: PortalPolicy = {
+      dailySpendCap: pol?.daily_spend_cap != null ? Number(pol.daily_spend_cap) : null,
+      requireApprovalOver: pol?.require_approval_over != null ? Number(pol.require_approval_over) : null,
+      allowedDomains: pol?.allowed_domains ?? "",
+    };
+
     const outcomes: PortalOutcome[] = outcomeRows.slice(0, 30).map((o) => ({
       id: o.id,
       agent: o.agent ?? agentName(o.kind ?? ""),
@@ -226,6 +237,7 @@ export async function getPortalData(email: string): Promise<PortalData | null> {
       approvals,
       agentConfigs,
       outcomes,
+      policy,
     };
   } catch {
     return null;

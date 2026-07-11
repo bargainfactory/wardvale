@@ -35,7 +35,7 @@ import { Button } from "@/components/ui/button";
 import { createClient } from "@/lib/supabase";
 import { useLocale } from "@/lib/locale-context";
 import { entitlement, type Schedule } from "@/lib/agents-catalog";
-import type { PortalAgentConfig, PortalApproval, PortalAutomation, PortalAudit, PortalConnection, PortalKpis, PortalLog, PortalOutcome, PortalRoi } from "@/lib/portal";
+import type { PortalAgentConfig, PortalApproval, PortalAutomation, PortalAudit, PortalConnection, PortalKpis, PortalLog, PortalOutcome, PortalPolicy, PortalRoi } from "@/lib/portal";
 import type { PeerBenchmarks } from "@/lib/peer-benchmarks";
 
 type Props = {
@@ -53,12 +53,13 @@ type Props = {
   roi: PortalRoi;
   outcomes: PortalOutcome[];
   benchmarks: PeerBenchmarks | null;
+  policy: PortalPolicy;
   isDemo: boolean;
   authEnabled: boolean;
   userEmail: string | null;
 };
 
-type Tab = "overview" | "roi" | "agents" | "approvals" | "connections" | "audit";
+type Tab = "overview" | "roi" | "agents" | "approvals" | "connections" | "trust" | "audit";
 
 const PROVIDER_ICON: Record<string, typeof Mail> = {
   gmail: Mail,
@@ -120,7 +121,10 @@ const RUNNERS: { id: string; label: string; sample: Record<string, unknown> }[] 
   { id: "support-triage", label: "Support triage", sample: { agent: "support-triage", messages: SAMPLE_TICKETS } },
 ];
 
-const TABS = ["overview", "roi", "agents", "approvals", "connections", "audit"] as const;
+const TABS = ["overview", "roi", "agents", "approvals", "connections", "trust", "audit"] as const;
+
+const inputCls =
+  "w-full rounded-lg border border-border bg-card/60 px-3 py-2 text-sm outline-none placeholder:text-muted-foreground/60 focus:border-cyan-electric";
 
 export function PortalDashboard(props: Props) {
   const { clientName, kpis, deltas, logs, connections, onboarded, plan, isDemo, authEnabled, userEmail } = props;
@@ -138,7 +142,26 @@ export function PortalDashboard(props: Props) {
   const [configs, setConfigs] = useState<PortalAgentConfig[]>(props.agentConfigs);
   const [outcomes, setOutcomes] = useState<PortalOutcome[]>(props.outcomes);
   const [editing, setEditing] = useState<{ id: string; text: string } | null>(null);
+  const [policy, setPolicy] = useState<PortalPolicy>(props.policy);
+  const [policySaved, setPolicySaved] = useState(false);
   const { roi } = props;
+
+  async function savePolicy() {
+    setPolicySaved(false);
+    if (!isDemo) {
+      try {
+        await fetch("/api/portal/policy", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify(policy),
+        });
+      } catch {
+        /* ignore */
+      }
+    }
+    setPolicySaved(true);
+    setAudit((log) => [{ time: "just now", actor: userEmail ?? "you", action: "policy.updated", detail: "Updated governance policy" }, ...log]);
+  }
   const ent = entitlement(plan);
 
   // Confirm a pending outcome paid off (realized $) or didn't — optimistic.
@@ -349,6 +372,7 @@ export function PortalDashboard(props: Props) {
           <TabButton icon={Bot} label={`Agents (${agents.length})`} active={tab === "agents"} onClick={() => setTab("agents")} />
           <TabButton icon={ClipboardCheck} label={`Approvals (${approvals.length})`} active={tab === "approvals"} onClick={() => setTab("approvals")} />
           <TabButton icon={Plug} label={`Connections (${connections.length})`} active={tab === "connections"} onClick={() => setTab("connections")} />
+          <TabButton icon={Lock} label="Trust" active={tab === "trust"} onClick={() => setTab("trust")} />
           <TabButton icon={ShieldCheck} label="Audit" active={tab === "audit"} onClick={() => setTab("audit")} />
         </div>
 
@@ -737,6 +761,74 @@ export function PortalDashboard(props: Props) {
             >
               <Plug className="mr-2 h-4 w-4" /> Connect another tool
             </Link>
+          </div>
+        )}
+
+        {tab === "trust" && (
+          <div className="space-y-6">
+            <div className="rounded-3xl border border-border bg-card/40 p-6 backdrop-blur">
+              <h2 className="flex items-center gap-2 font-display font-semibold">
+                <Lock className="h-4 w-4 text-cyan-electric" /> Guardrails &amp; policy
+              </h2>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Even with auto-send on, these limits force an action back to approval. Leave a field blank to disable it.
+              </p>
+              <div className="mt-5 grid gap-4 sm:grid-cols-3">
+                <label className="block">
+                  <span className="mb-1 block text-xs font-medium text-muted-foreground">Daily auto-send cap ($)</span>
+                  <input
+                    type="number"
+                    min={0}
+                    value={policy.dailySpendCap ?? ""}
+                    onChange={(e) => setPolicy((p) => ({ ...p, dailySpendCap: e.target.value === "" ? null : Number(e.target.value) }))}
+                    placeholder="no cap"
+                    className={inputCls}
+                  />
+                </label>
+                <label className="block">
+                  <span className="mb-1 block text-xs font-medium text-muted-foreground">Always approve over ($)</span>
+                  <input
+                    type="number"
+                    min={0}
+                    value={policy.requireApprovalOver ?? ""}
+                    onChange={(e) => setPolicy((p) => ({ ...p, requireApprovalOver: e.target.value === "" ? null : Number(e.target.value) }))}
+                    placeholder="no threshold"
+                    className={inputCls}
+                  />
+                </label>
+                <label className="block">
+                  <span className="mb-1 block text-xs font-medium text-muted-foreground">Allowed email domains</span>
+                  <input
+                    value={policy.allowedDomains}
+                    onChange={(e) => setPolicy((p) => ({ ...p, allowedDomains: e.target.value }))}
+                    placeholder="acme.com, example.com"
+                    className={inputCls}
+                  />
+                </label>
+              </div>
+              <div className="mt-5 flex items-center gap-3">
+                <Button size="sm" onClick={savePolicy}>Save policy</Button>
+                {policySaved && <span className="text-xs text-emerald-300">Saved</span>}
+              </div>
+            </div>
+
+            <div className="rounded-3xl border border-border bg-card/40 p-6 backdrop-blur">
+              <h2 className="flex items-center gap-2 font-display font-semibold">
+                <ShieldCheck className="h-4 w-4 text-emerald-300" /> Controls &amp; data
+              </h2>
+              <ul className="mt-3 space-y-2 text-sm text-muted-foreground">
+                <li>• Prompt-injection guardrails + PII redaction on every untrusted input.</li>
+                <li>• Least-privilege OAuth scopes; tokens stored server-side and never exposed by the API.</li>
+                <li>• Row-level security: you can only ever read your own data.</li>
+                <li>• Every action is written to an immutable audit log.</li>
+              </ul>
+              <a
+                href="/api/portal/audit/export"
+                className="mt-5 inline-flex items-center gap-1.5 rounded-full border border-border px-4 py-2 text-xs font-medium transition hover:border-cyan-electric/40 hover:text-cyan-electric"
+              >
+                <ArrowUpRight className="h-3.5 w-3.5" /> Export audit log (CSV)
+              </a>
+            </div>
           </div>
         )}
 
