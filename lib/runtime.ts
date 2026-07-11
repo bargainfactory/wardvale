@@ -14,6 +14,11 @@ export type ProposedAction = {
   to?: string;
 };
 
+/** Prepend the client's business context to a base system prompt when present. */
+function sys(base: string, context?: string): string {
+  return context ? `${base}\n\n${context}` : base;
+}
+
 const AGENT = "Inbox triage agent";
 
 const SYSTEM = `${SECURITY_PREAMBLE}
@@ -84,7 +89,7 @@ function heuristic(m: { from: string; subject: string; body: string }): Proposed
  * touch the outside world (email.send / escalate) are marked needsApproval so
  * the caller queues them for human sign-off rather than executing directly.
  */
-export async function runInboxTriage(messages: InboxMessage[], trace?: Trace): Promise<ProposedAction[]> {
+export async function runInboxTriage(messages: InboxMessage[], trace?: Trace, context?: string): Promise<ProposedAction[]> {
   const clean = messages.slice(0, 12).map((m) => ({
     from: (m.from ?? "").slice(0, 120),
     subject: (m.subject ?? "(no subject)").slice(0, 200),
@@ -109,7 +114,7 @@ export async function runInboxTriage(messages: InboxMessage[], trace?: Trace): P
       temperature: 0.3,
       response_format: { type: "json_object" },
       messages: [
-        { role: "system", content: SYSTEM },
+        { role: "system", content: sys(SYSTEM, context) },
         {
           role: "user",
           content: fenceUntrusted(
@@ -190,7 +195,7 @@ function arHeuristic(v: CleanInvoice): ProposedAction {
  * tool, or a provided list) and propose a reminder/escalate per invoice.
  * Outbound reminders are needsApproval → queued, not sent, until a human OKs.
  */
-export async function runArFollowup(invoices: Invoice[], trace?: Trace): Promise<ProposedAction[]> {
+export async function runArFollowup(invoices: Invoice[], trace?: Trace, context?: string): Promise<ProposedAction[]> {
   const clean: CleanInvoice[] = invoices.slice(0, 20).map((v) => ({
     number: (v.number ?? "").slice(0, 40) || "—",
     customer: (v.customer ?? "").slice(0, 120),
@@ -212,7 +217,7 @@ export async function runArFollowup(invoices: Invoice[], trace?: Trace): Promise
       temperature: 0.3,
       response_format: { type: "json_object" },
       messages: [
-        { role: "system", content: AR_SYSTEM },
+        { role: "system", content: sys(AR_SYSTEM, context) },
         {
           role: "user",
           content: fenceUntrusted(
@@ -291,7 +296,7 @@ const CART_SYSTEM = `${SECURITY_PREAMBLE}
 You are an abandoned-cart recovery agent for an e-commerce store. For EACH cart, write a short, friendly recovery message (2-3 sentences) in the store's voice that nudges the shopper to finish checkout — reference what they left and the checkout link if given. Do not invent discounts.
 Return ONLY JSON: { "items": [ { "summary": "one line", "draft": "message text" } ] }, one per cart, in order.`;
 
-export async function runCartRecovery(carts: Cart[], trace?: Trace): Promise<ProposedAction[]> {
+export async function runCartRecovery(carts: Cart[], trace?: Trace, context?: string): Promise<ProposedAction[]> {
   const clean = carts.slice(0, 20).map((c) => ({
     customer: (c.customer ?? "").slice(0, 120),
     email: (c.email ?? "").slice(0, 160),
@@ -302,7 +307,7 @@ export async function runCartRecovery(carts: Cart[], trace?: Trace): Promise<Pro
   }));
   trace?.mark("tool.read", { carts: clean.length });
   const drafts = await draftMessages(
-    CART_SYSTEM,
+    sys(CART_SYSTEM, context),
     clean.map((c) => `Customer: ${c.customer || "shopper"} · Total: $${c.total} · Items: ${c.items || "n/a"} · Checkout: ${c.url || "n/a"}`),
     trace
   );
@@ -333,7 +338,7 @@ const REVIEW_SYSTEM = `${SECURITY_PREAMBLE}
 You are a review-request agent for a small business. For EACH recently completed order/job, write a short, warm message asking the happy customer to leave a review (Google/Yelp). Personalize with their name and what they bought or booked, include a clear ask, and do not offer incentives.
 Return ONLY JSON: { "items": [ { "summary": "one line", "draft": "message text" } ] }, one per customer, in order.`;
 
-export async function runReviewRequest(targets: ReviewTarget[], trace?: Trace): Promise<ProposedAction[]> {
+export async function runReviewRequest(targets: ReviewTarget[], trace?: Trace, context?: string): Promise<ProposedAction[]> {
   const clean = targets.slice(0, 20).map((t) => ({
     customer: (t.customer ?? "").slice(0, 120),
     email: (t.email ?? "").slice(0, 160),
@@ -342,7 +347,7 @@ export async function runReviewRequest(targets: ReviewTarget[], trace?: Trace): 
   }));
   trace?.mark("tool.read", { targets: clean.length });
   const drafts = await draftMessages(
-    REVIEW_SYSTEM,
+    sys(REVIEW_SYSTEM, context),
     clean.map((t) => `Customer: ${t.customer || "customer"} · Bought/booked: ${t.service || "n/a"}`),
     trace
   );
@@ -373,7 +378,7 @@ const LEAD_SYSTEM = `${SECURITY_PREAMBLE}
 You are a lead-qualification + first-response agent for a small business. For EACH new lead, classify intent (hot/warm/cold) in the summary, then write a fast, friendly first-touch reply that asks one or two qualifying questions and offers a next step (call or booking). Keep it short.
 Return ONLY JSON: { "items": [ { "summary": "hot|warm|cold — one line", "draft": "reply text" } ] }, one per lead, in order.`;
 
-export async function runLeadQualification(leads: Lead[], trace?: Trace): Promise<ProposedAction[]> {
+export async function runLeadQualification(leads: Lead[], trace?: Trace, context?: string): Promise<ProposedAction[]> {
   const clean = leads.slice(0, 20).map((l) => ({
     name: (l.name ?? "").slice(0, 120),
     email: (l.email ?? "").slice(0, 160),
@@ -383,7 +388,7 @@ export async function runLeadQualification(leads: Lead[], trace?: Trace): Promis
   }));
   trace?.mark("tool.read", { leads: clean.length });
   const drafts = await draftMessages(
-    LEAD_SYSTEM,
+    sys(LEAD_SYSTEM, context),
     clean.map((l) => `Lead: ${l.name || "unknown"} · Source: ${l.source || "n/a"} · Message: ${l.message || "n/a"}`),
     trace
   );
@@ -414,14 +419,14 @@ const SMS_SYSTEM = `${SECURITY_PREAMBLE}
 You are an SMS assistant for a small business replying to inbound texts (e.g. a missed-call auto-text-back or a customer question). Write ONE concise, friendly SMS reply (max 320 chars) that answers or moves toward booking. If a message is spam or an opt-out (STOP/UNSUBSCRIBE), leave the draft empty and say so in the summary.
 Return ONLY JSON: { "items": [ { "summary": "one line", "draft": "sms text" } ] }, one per message, in order.`;
 
-export async function runSmsReply(messages: InboundSms[], trace?: Trace): Promise<ProposedAction[]> {
+export async function runSmsReply(messages: InboundSms[], trace?: Trace, context?: string): Promise<ProposedAction[]> {
   const clean = messages.slice(0, 10).map((m) => ({
     from: (m.from ?? "").slice(0, 40),
     to: (m.to ?? "").slice(0, 40),
     body: (m.body ?? "").slice(0, 600),
   }));
   trace?.mark("tool.read", { messages: clean.length });
-  const drafts = await draftMessages(SMS_SYSTEM, clean.map((m) => `From ${m.from}: ${m.body}`), trace, 500);
+  const drafts = await draftMessages(sys(SMS_SYSTEM, context), clean.map((m) => `From ${m.from}: ${m.body}`), trace, 500);
   return clean.map((m, i) => {
     const draft = drafts[i]?.draft?.slice(0, 480) || `Thanks for your text! We got your message and will reply shortly. — the team`;
     return {

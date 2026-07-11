@@ -25,6 +25,7 @@ import {
   Plug,
   ShieldCheck,
   ShoppingBag,
+  Sparkles,
   Users,
   X,
 } from "lucide-react";
@@ -43,6 +44,7 @@ type Props = {
   connections: PortalConnection[];
   audit: PortalAudit[];
   approvals: PortalApproval[];
+  onboarded: boolean;
   isDemo: boolean;
   authEnabled: boolean;
   userEmail: string | null;
@@ -113,7 +115,7 @@ const RUNNERS: { id: string; label: string; sample: Record<string, unknown> }[] 
 const TABS = ["overview", "agents", "approvals", "connections", "audit"] as const;
 
 export function PortalDashboard(props: Props) {
-  const { clientName, kpis, deltas, logs, connections, isDemo, authEnabled, userEmail } = props;
+  const { clientName, kpis, deltas, logs, connections, onboarded, isDemo, authEnabled, userEmail } = props;
   const { t } = useLocale();
   const [tab, setTab] = useState<Tab>(() => {
     if (typeof window === "undefined") return "overview";
@@ -266,6 +268,23 @@ export function PortalDashboard(props: Props) {
             {activeCount} active · {connections.length} connections · every action audited.
           </p>
         </motion.div>
+
+        {/* Onboarding nudge — only for a live client who hasn't finished setup */}
+        {!isDemo && !onboarded && (
+          <Link
+            href="/portal/onboarding"
+            className="mb-6 flex flex-wrap items-center gap-3 rounded-2xl border border-cyan-electric/30 bg-cyan-electric/10 px-5 py-4 transition hover:bg-cyan-electric/15"
+          >
+            <Sparkles className="h-5 w-5 text-cyan-electric" />
+            <div className="min-w-0 flex-1">
+              <p className="font-medium">Finish setting up your agents</p>
+              <p className="text-sm text-muted-foreground">Pick a pack, add your business details, and connect your tools — 2 minutes.</p>
+            </div>
+            <span className="inline-flex items-center gap-1 text-sm font-semibold text-cyan-electric">
+              Get set up <ArrowUpRight className="h-4 w-4" />
+            </span>
+          </Link>
+        )}
 
         {/* Tabs */}
         <div className="mb-6 flex flex-wrap gap-1 rounded-full border border-border bg-card/40 p-1 text-sm">

@@ -16,6 +16,7 @@ export type PortalAudit = { time: string; actor: string; action: string; detail:
 export type PortalApproval = { id: string; agent: string; action: string; summary: string; createdAt: string };
 export type PortalData = {
   clientName: string;
+  onboarded: boolean;
   kpis: PortalKpis;
   automations: PortalAutomation[];
   logs: PortalLog[];
@@ -59,7 +60,7 @@ export async function getPortalData(email: string): Promise<PortalData | null> {
 
     const { data: client } = await supabase
       .from("clients")
-      .select("id, name")
+      .select("id, name, onboarded")
       .eq("email", email)
       .maybeSingle();
     if (!client) return null;
@@ -150,7 +151,7 @@ export async function getPortalData(email: string): Promise<PortalData | null> {
       roi: `$${totalSaved.toLocaleString()}`,
     };
 
-    return { clientName: client.name, kpis, automations: autos, logs, connections: conns, audit: auditRows, approvals };
+    return { clientName: client.name, onboarded: Boolean((client as { onboarded?: boolean }).onboarded), kpis, automations: autos, logs, connections: conns, audit: auditRows, approvals };
   } catch {
     return null;
   }

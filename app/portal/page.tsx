@@ -6,6 +6,7 @@ import { ensureClientProvisioned } from "@/lib/provisioning";
 // Demo shown to visitors and any signed-in client without live data yet.
 const DEMO: PortalData & { deltas: { runs: string; hours: string; success: string; roi: string } } = {
   clientName: "Nona Bistro",
+  onboarded: true,
   kpis: { runs: "18,490", hours: "147h", success: "99.1%", roi: "$12,510" },
   deltas: { runs: "+23%", hours: "+18h", success: "+0.2%", roi: "+$2.1k" },
   automations: [
@@ -75,6 +76,7 @@ export default async function PortalPage() {
       connections={view.connections}
       audit={view.audit}
       approvals={view.approvals}
+      onboarded={view.onboarded}
       isDemo={isDemo}
       authEnabled={authEnabled}
       userEmail={userEmail}

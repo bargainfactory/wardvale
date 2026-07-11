@@ -3,6 +3,7 @@ import { createHmac, timingSafeEqual } from "node:crypto";
 import { getServiceClient } from "@/lib/supabase-server";
 import { clientForInboundNumber } from "@/lib/integrations";
 import { runSmsReply } from "@/lib/runtime";
+import { loadContext } from "@/lib/context";
 import { startTrace } from "@/lib/trace";
 
 const TWIML_OK = '<?xml version="1.0" encoding="UTF-8"?><Response></Response>';
@@ -60,7 +61,8 @@ export async function POST(req: Request) {
       if (cid) {
         const trace = startTrace("agent.sms-reply");
         trace.setInput(params.Body);
-        const actions = await runSmsReply([{ from: params.From, to: params.To, body: params.Body }], trace);
+        const context = await loadContext(cid);
+        const actions = await runSmsReply([{ from: params.From, to: params.To, body: params.Body }], trace, context);
         const draft = actions.find((a) => a.needsApproval && a.draft);
         if (draft) {
           await supabase.from("approvals").insert({

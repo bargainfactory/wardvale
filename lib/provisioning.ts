@@ -100,16 +100,18 @@ export async function ensureClientProvisioned(email: string): Promise<void> {
  * in the UI/route), set the profile tone, and record the industry. Connectors
  * are surfaced as recommendations in onboarding, not force-connected.
  */
-export async function applyPack(clientId: string, packId: string): Promise<boolean> {
+export async function applyPack(clientId: string, packId: string, maxEnabled = Infinity): Promise<boolean> {
   const supabase = getServiceClient();
   const pack = getPack(packId);
   if (!supabase || !pack) return false;
 
-  // Enable the pack's agents, disable the rest — a clean, predictable install.
+  // Enable the pack's agents (capped by the plan's max), disable the rest — a
+  // clean, predictable install.
+  const enabledKeys = new Set(pack.agents.slice(0, maxEnabled));
   for (const a of AGENTS) {
     await supabase
       .from("agent_config")
-      .update({ enabled: pack.agents.includes(a.key) })
+      .update({ enabled: enabledKeys.has(a.key) })
       .eq("client_id", clientId)
       .eq("agent_key", a.key);
   }

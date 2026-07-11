@@ -15,6 +15,7 @@ import {
   type ProposedAction,
 } from "@/lib/runtime";
 import { getServiceClient } from "@/lib/supabase-server";
+import { loadContext } from "@/lib/context";
 import {
   pullOverdueInvoices,
   pullAbandonedCheckouts,
@@ -57,6 +58,17 @@ export async function POST(req: Request) {
       req.headers.get("x-api-key")?.trim() ||
       "";
 
+    // Load the client's business context once so every agent drafts in their
+    // voice, using their real hours/services/pricing — no per-client prompt code.
+    let context: string | undefined;
+    if (key) {
+      const svc = getServiceClient();
+      if (svc) {
+        const { data: c } = await svc.from("clients").select("id").eq("ingest_key", key).maybeSingle();
+        if (c) context = await loadContext(c.id);
+      }
+    }
+
     // Each agent runs on data passed in the body, or — when a known client's
     // ingest key is present and no data is supplied — on LIVE data pulled from
     // that client's connected tool. Outbound actions are queued for approval.
@@ -72,7 +84,7 @@ export async function POST(req: Request) {
           }
         }
         trace.setInput(invoices.map((v) => v?.number ?? "").join("; "));
-        actions = await runArFollowup(invoices, trace);
+        actions = await runArFollowup(invoices, trace, context);
         break;
       }
       case "cart-recovery": {
@@ -85,7 +97,7 @@ export async function POST(req: Request) {
           }
         }
         trace.setInput(carts.map((c) => c?.customer ?? "").join("; "));
-        actions = await runCartRecovery(carts, trace);
+        actions = await runCartRecovery(carts, trace, context);
         break;
       }
       case "review-request": {
@@ -98,7 +110,7 @@ export async function POST(req: Request) {
           }
         }
         trace.setInput(targets.map((t) => t?.customer ?? "").join("; "));
-        actions = await runReviewRequest(targets, trace);
+        actions = await runReviewRequest(targets, trace, context);
         break;
       }
       case "lead-qualification": {
@@ -111,7 +123,7 @@ export async function POST(req: Request) {
           }
         }
         trace.setInput(leads.map((l) => l?.name ?? "").join("; "));
-        actions = await runLeadQualification(leads, trace);
+        actions = await runLeadQualification(leads, trace, context);
         break;
       }
       case "support-triage": {
@@ -124,13 +136,13 @@ export async function POST(req: Request) {
           }
         }
         trace.setInput(messages.map((m) => m?.subject ?? "").join("; "));
-        actions = await runInboxTriage(messages, trace);
+        actions = await runInboxTriage(messages, trace, context);
         break;
       }
       default: {
         const messages = Array.isArray(body.messages) ? body.messages : [];
         trace.setInput(messages.map((m) => m?.subject ?? "").join("; "));
-        actions = await runInboxTriage(messages, trace);
+        actions = await runInboxTriage(messages, trace, context);
       }
     }
     const needApproval = actions.filter((a) => a.needsApproval);
