@@ -8,7 +8,9 @@ import {
   ArrowUpRight,
   Bot,
   Calendar,
+  Check,
   CheckCircle2,
+  ClipboardCheck,
   Clock,
   CreditCard,
   LayoutDashboard,
@@ -23,12 +25,13 @@ import {
   ShieldCheck,
   ShoppingBag,
   Users,
+  X,
 } from "lucide-react";
 import { PageLayout } from "@/components/page-layout";
 import { Button } from "@/components/ui/button";
 import { createClient } from "@/lib/supabase";
 import { useLocale } from "@/lib/locale-context";
-import type { PortalAutomation, PortalAudit, PortalConnection, PortalKpis, PortalLog } from "@/lib/portal";
+import type { PortalApproval, PortalAutomation, PortalAudit, PortalConnection, PortalKpis, PortalLog } from "@/lib/portal";
 
 type Props = {
   clientName: string;
@@ -38,12 +41,13 @@ type Props = {
   logs: PortalLog[];
   connections: PortalConnection[];
   audit: PortalAudit[];
+  approvals: PortalApproval[];
   isDemo: boolean;
   authEnabled: boolean;
   userEmail: string | null;
 };
 
-type Tab = "overview" | "agents" | "connections" | "audit";
+type Tab = "overview" | "agents" | "approvals" | "connections" | "audit";
 
 const PROVIDER_ICON: Record<string, typeof Mail> = {
   gmail: Mail,
@@ -69,7 +73,27 @@ export function PortalDashboard(props: Props) {
   const [tab, setTab] = useState<Tab>("overview");
   const [agents, setAgents] = useState<PortalAutomation[]>(props.automations);
   const [audit, setAudit] = useState<PortalAudit[]>(props.audit);
+  const [approvals, setApprovals] = useState<PortalApproval[]>(props.approvals);
   const [busy, setBusy] = useState<string | null>(null);
+
+  async function decide(a: PortalApproval, decision: "approved" | "rejected") {
+    setApprovals((list) => list.filter((x) => x.id !== a.id));
+    setAudit((log) => [
+      { time: "just now", actor: userEmail ?? "you", action: `approval.${decision}`, detail: a.summary },
+      ...log,
+    ]);
+    if (!isDemo) {
+      try {
+        await fetch("/api/portal/approvals/decide", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ id: a.id, decision }),
+        });
+      } catch {
+        /* optimistic — already removed */
+      }
+    }
+  }
 
   async function toggleAgent(a: PortalAutomation) {
     const next = a.status === "active" ? "paused" : "active";
@@ -140,6 +164,7 @@ export function PortalDashboard(props: Props) {
         <div className="mb-6 flex flex-wrap gap-1 rounded-full border border-border bg-card/40 p-1 text-sm">
           <TabButton icon={LayoutDashboard} label="Overview" active={tab === "overview"} onClick={() => setTab("overview")} />
           <TabButton icon={Bot} label={`Agents (${agents.length})`} active={tab === "agents"} onClick={() => setTab("agents")} />
+          <TabButton icon={ClipboardCheck} label={`Approvals (${approvals.length})`} active={tab === "approvals"} onClick={() => setTab("approvals")} />
           <TabButton icon={Plug} label={`Connections (${connections.length})`} active={tab === "connections"} onClick={() => setTab("connections")} />
           <TabButton icon={ShieldCheck} label="Audit" active={tab === "audit"} onClick={() => setTab("audit")} />
         </div>
@@ -234,6 +259,52 @@ export function PortalDashboard(props: Props) {
                 </table>
               )}
             </div>
+          </div>
+        )}
+
+        {tab === "approvals" && (
+          <div className="rounded-3xl border border-border bg-card/40 backdrop-blur">
+            <div className="flex items-center justify-between border-b border-border px-6 py-4">
+              <h2 className="flex items-center gap-2 font-display font-semibold">
+                <ClipboardCheck className="h-4 w-4 text-cyan-electric" /> Pending approvals
+              </h2>
+              <span className="text-xs text-muted-foreground">Agents draft — you approve before anything is sent</span>
+            </div>
+            {approvals.length === 0 ? (
+              <p className="px-6 py-10 text-center text-sm text-muted-foreground">
+                Nothing waiting — your agents are all caught up.
+              </p>
+            ) : (
+              <ul className="divide-y divide-border/50">
+                {approvals.map((a) => (
+                  <li key={a.id} className="flex flex-wrap items-center gap-3 px-6 py-4">
+                    <div className="min-w-0 flex-1">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className="rounded-md bg-white/5 px-2 py-0.5 font-mono text-[11px] text-cyan-electric">{a.action}</span>
+                        <span className="text-xs text-muted-foreground">
+                          {a.agent} · {a.createdAt}
+                        </span>
+                      </div>
+                      <p className="mt-1 text-sm">{a.summary}</p>
+                    </div>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => decide(a, "approved")}
+                        className="inline-flex items-center gap-1.5 rounded-full border border-emerald-400/30 px-3 py-1 text-xs font-medium text-emerald-300 transition hover:bg-emerald-400/10"
+                      >
+                        <Check className="h-3 w-3" /> Approve
+                      </button>
+                      <button
+                        onClick={() => decide(a, "rejected")}
+                        className="inline-flex items-center gap-1.5 rounded-full border border-red-500/30 px-3 py-1 text-xs font-medium text-red-400 transition hover:bg-red-500/10"
+                      >
+                        <X className="h-3 w-3" /> Reject
+                      </button>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            )}
           </div>
         )}
 

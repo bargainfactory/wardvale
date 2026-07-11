@@ -32,6 +32,9 @@ export async function POST(req: Request) {
       allow_promotion_codes: true,
       billing_address_collection: "required",
       metadata: { tier, ...(tier === "growth" && variant ? { growth_variant: variant } : {}) },
+    }, {
+      // Provider-level idempotency: dedupe accidental double-clicks in a minute.
+      idempotencyKey: `co_${tier}_${variant ?? "A"}_${Math.floor(Date.now() / 60000)}`,
     });
 
     return NextResponse.json({ url: session.url });

@@ -4,6 +4,9 @@ import { rateLimit, clientIp } from "@/lib/rate-limit";
 import { saveLead } from "@/lib/leads";
 import { sendWorkflowBlueprint, type Blueprint } from "@/lib/email";
 import type { ChatCompletionMessageParam } from "openai/resources/chat/completions";
+import { fenceUntrusted, SECURITY_PREAMBLE } from "@/lib/guardrails";
+import { overBudget, recordTokens, DAILY_TOKEN_CAP } from "@/lib/usage";
+import { firstTime, idemKey } from "@/lib/idempotency";
 
 type Msg = { role: "user" | "assistant"; content: string };
 type Attachment = { kind?: "image" | "text"; name?: string; dataUrl?: string; text?: string };
@@ -46,6 +49,10 @@ export async function POST(req: Request) {
         businessType?: string;
         blueprint?: Blueprint;
       };
+      // Idempotency: a double-submit shouldn't save the lead or email twice.
+      if (!firstTime(idemKey("wf-action", email, blueprint?.title), 5 * 60 * 1000)) {
+        return NextResponse.json({ ok: true, deduped: true });
+      }
       await saveLead({
         name,
         email,
@@ -71,7 +78,9 @@ export async function POST(req: Request) {
       answered >= 7 ? "\n\nYou now have plenty of detail — set done=true and return the blueprint." : "";
 
     const attachment: Attachment | undefined = body.attachment;
-    const apiMessages: ChatCompletionMessageParam[] = [{ role: "system", content: SYSTEM + nudge }];
+    const apiMessages: ChatCompletionMessageParam[] = [
+      { role: "system", content: `${SECURITY_PREAMBLE}\n\n${SYSTEM}${nudge}` },
+    ];
     messages.forEach((m, i) => {
       const isLast = i === messages.length - 1;
       if (isLast && m.role === "user" && attachment) {
@@ -90,13 +99,18 @@ export async function POST(req: Request) {
         if (attachment.kind === "text" && attachment.text) {
           apiMessages.push({
             role: "user",
-            content: `${m.content}\n\n[Attached file: ${attachment.name ?? "file"}]\n${attachment.text.slice(0, 8000)}`,
+            content: `${m.content}\n\n[Attached file: ${attachment.name ?? "file"}]\n${fenceUntrusted(attachment.text)}`,
           });
           return;
         }
       }
       apiMessages.push({ role: m.role, content: m.content });
     });
+
+    // Cost guardrail: fall back to the scripted flow if this IP is over budget.
+    if (overBudget(`ai:${ip}`, DAILY_TOKEN_CAP)) {
+      return NextResponse.json(scriptedFallback(messages));
+    }
 
     const completion = await getOpenAI().chat.completions.create({
       model: "gpt-4o-mini",
@@ -105,6 +119,7 @@ export async function POST(req: Request) {
       response_format: { type: "json_object" },
       messages: apiMessages,
     });
+    recordTokens(`ai:${ip}`, completion.usage?.total_tokens ?? 0);
 
     const parsed = parseJson(completion.choices[0]?.message?.content ?? "");
     if (!parsed) return NextResponse.json(scriptedFallback(messages));

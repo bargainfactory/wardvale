@@ -36,6 +36,11 @@ const DEMO: PortalData & { deltas: { runs: string; hours: string; success: strin
     { time: "Yesterday", actor: "marco@nonabistro.com", action: "connection.added", detail: "Twilio SMS (send)" },
     { time: "Yesterday", actor: "system", action: "guardrail.blocked", detail: "Outbound to unverified domain" },
   ],
+  approvals: [
+    { id: "p1", agent: "Inbox triage agent", action: "email.send", summary: "Reply to catering inquiry from Priya (party of 40)", createdAt: "2m ago" },
+    { id: "p2", agent: "Review response bot", action: "review.reply", summary: "Public reply to a 3★ Google review", createdAt: "18m ago" },
+    { id: "p3", agent: "Cart recovery flow", action: "discount.issue", summary: "Send a 10% code to recover a $240 cart", createdAt: "1h ago" },
+  ],
 };
 
 export default async function PortalPage() {
@@ -60,6 +65,7 @@ export default async function PortalPage() {
       logs={view.logs}
       connections={view.connections}
       audit={view.audit}
+      approvals={view.approvals}
       isDemo={isDemo}
       authEnabled={authEnabled}
       userEmail={userEmail}

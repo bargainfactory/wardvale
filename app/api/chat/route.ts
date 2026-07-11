@@ -1,8 +1,12 @@
 import { NextResponse } from "next/server";
 import { getOpenAI } from "@/lib/openai";
 import { rateLimit, clientIp } from "@/lib/rate-limit";
+import { detectInjection, SECURITY_PREAMBLE } from "@/lib/guardrails";
+import { overBudget, recordTokens, DAILY_TOKEN_CAP } from "@/lib/usage";
 
-const SYSTEM_PROMPT = `You are the FlowForge AI website assistant. Be concise, helpful, and friendly. You sell premium AI-powered automation (Zapier flows + custom GPT agents) to small businesses on monthly retainers ($500–$5,000/mo, plus custom Enterprise).
+const SYSTEM_PROMPT = `${SECURITY_PREAMBLE}
+
+You are the FlowForge AI website assistant. Be concise, helpful, and friendly. You sell premium AI-powered automation (Zapier flows + custom GPT agents) to small businesses on monthly retainers ($500–$5,000/mo, plus custom Enterprise).
 
 Key info:
 - Services: lead capture, onboarding autopilot, inbox triage, custom agents
@@ -16,7 +20,8 @@ Key info:
 Keep answers under 3 sentences unless asked for detail.`;
 
 export async function POST(req: Request) {
-  const rl = await rateLimit(`chat:${clientIp(req)}`, 20, 60_000);
+  const ip = clientIp(req);
+  const rl = await rateLimit(`chat:${ip}`, 20, 60_000);
   if (!rl.ok) {
     return NextResponse.json(
       { reply: "You're sending messages a little fast — give it a moment and try again." },
@@ -28,6 +33,15 @@ export async function POST(req: Request) {
     const body = await req.json();
     const messages = body.messages as { role: "user" | "assistant"; content: string }[];
 
+    // Guardrail: refuse likely prompt-injection instead of processing it.
+    const lastUser = [...messages].reverse().find((m) => m.role === "user")?.content ?? "";
+    if (detectInjection(lastUser).flagged) {
+      return NextResponse.json({
+        reply:
+          "I can only help with questions about FlowForge — our services, pricing, and integrations. What would you like to know?",
+      });
+    }
+
     if (!process.env.OPENAI_API_KEY) {
       return NextResponse.json({
         reply:
@@ -35,15 +49,20 @@ export async function POST(req: Request) {
       });
     }
 
+    // Cost guardrail: bound daily inference spend per IP.
+    if (overBudget(`ai:${ip}`, DAILY_TOKEN_CAP)) {
+      return NextResponse.json({
+        reply: "We're at capacity for automated replies right now — please use the quote form or email hello@flowforge.ai.",
+      });
+    }
+
     const completion = await getOpenAI().chat.completions.create({
       model: "gpt-4o-mini",
       max_tokens: 250,
       temperature: 0.7,
-      messages: [
-        { role: "system", content: SYSTEM_PROMPT },
-        ...messages.slice(-8),
-      ],
+      messages: [{ role: "system", content: SYSTEM_PROMPT }, ...messages.slice(-8)],
     });
+    recordTokens(`ai:${ip}`, completion.usage?.total_tokens ?? 0);
 
     return NextResponse.json({
       reply: completion.choices[0]?.message?.content ?? "Sorry, try again.",

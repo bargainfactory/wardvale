@@ -180,6 +180,37 @@ create policy automations_self_update on public.automations
     client_id in (select id from public.clients where email = (auth.jwt() ->> 'email'))
   );
 
+-- Human-in-the-loop: agents queue gated actions (send, charge, publish) here
+-- for owner sign-off. The runtime writes 'pending'; the owner approves/rejects.
+create table if not exists public.approvals (
+  id             uuid primary key default gen_random_uuid(),
+  client_id      uuid not null references public.clients (id) on delete cascade,
+  automation_id  uuid references public.automations (id) on delete set null,
+  agent          text,
+  action         text not null,
+  summary        text,
+  payload        jsonb not null default '{}'::jsonb,
+  status         text not null default 'pending' check (status in ('pending', 'approved', 'rejected')),
+  decided_by     text,
+  created_at     timestamptz not null default now(),
+  decided_at     timestamptz
+);
+create index if not exists approvals_client_status_idx on public.approvals (client_id, status, created_at desc);
+
+alter table public.approvals enable row level security;
+drop policy if exists approvals_self_read on public.approvals;
+create policy approvals_self_read on public.approvals
+  for select using (
+    client_id in (select id from public.clients where email = (auth.jwt() ->> 'email'))
+  );
+drop policy if exists approvals_self_update on public.approvals;
+create policy approvals_self_update on public.approvals
+  for update using (
+    client_id in (select id from public.clients where email = (auth.jwt() ->> 'email'))
+  ) with check (
+    client_id in (select id from public.clients where email = (auth.jwt() ->> 'email'))
+  );
+
 -- ── First-party product analytics + A/B experiments ──────────────────────────
 create table if not exists public.events (
   id          uuid primary key default gen_random_uuid(),

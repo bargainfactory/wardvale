@@ -13,6 +13,7 @@ export type PortalLog = { time: string; event: string; type: string };
 export type PortalKpis = { runs: string; hours: string; success: string; roi: string };
 export type PortalConnection = { provider: string; status: string; scope: string };
 export type PortalAudit = { time: string; actor: string; action: string; detail: string };
+export type PortalApproval = { id: string; agent: string; action: string; summary: string; createdAt: string };
 export type PortalData = {
   clientName: string;
   kpis: PortalKpis;
@@ -20,6 +21,7 @@ export type PortalData = {
   logs: PortalLog[];
   connections: PortalConnection[];
   audit: PortalAudit[];
+  approvals: PortalApproval[];
 };
 
 function relTime(iso: string): string {
@@ -62,24 +64,37 @@ export async function getPortalData(email: string): Promise<PortalData | null> {
       .maybeSingle();
     if (!client) return null;
 
-    const [{ data: automations }, { data: runs }, { data: rollup }, { data: connections }, { data: audit }] =
-      await Promise.all([
-        supabase.from("automations").select("id, name, status").eq("client_id", client.id),
-        supabase
-          .from("runs")
-          .select("automation_id, status, minutes_saved, dollars_saved, detail, created_at")
-          .eq("client_id", client.id)
-          .order("created_at", { ascending: false })
-          .limit(500),
-        supabase.from("client_month_rollup").select("*").eq("client_id", client.id).maybeSingle(),
-        supabase.from("connections").select("provider, status, scope").eq("client_id", client.id),
-        supabase
-          .from("agent_audit")
-          .select("actor, action, detail, created_at")
-          .eq("client_id", client.id)
-          .order("created_at", { ascending: false })
-          .limit(20),
-      ]);
+    const [
+      { data: automations },
+      { data: runs },
+      { data: rollup },
+      { data: connections },
+      { data: audit },
+      { data: approvalsData },
+    ] = await Promise.all([
+      supabase.from("automations").select("id, name, status").eq("client_id", client.id),
+      supabase
+        .from("runs")
+        .select("automation_id, status, minutes_saved, dollars_saved, detail, created_at")
+        .eq("client_id", client.id)
+        .order("created_at", { ascending: false })
+        .limit(500),
+      supabase.from("client_month_rollup").select("*").eq("client_id", client.id).maybeSingle(),
+      supabase.from("connections").select("provider, status, scope").eq("client_id", client.id),
+      supabase
+        .from("agent_audit")
+        .select("actor, action, detail, created_at")
+        .eq("client_id", client.id)
+        .order("created_at", { ascending: false })
+        .limit(20),
+      supabase
+        .from("approvals")
+        .select("id, agent, action, summary, created_at")
+        .eq("client_id", client.id)
+        .eq("status", "pending")
+        .order("created_at", { ascending: false })
+        .limit(20),
+    ]);
 
     const runList: RunRow[] = (runs as RunRow[] | null) ?? [];
 
@@ -122,6 +137,10 @@ export async function getPortalData(email: string): Promise<PortalData | null> {
       (a) => ({ time: timeOf(a.created_at), actor: a.actor ?? "system", action: a.action, detail: a.detail ?? "" })
     );
 
+    const approvals: PortalApproval[] = ((approvalsData as { id: string; agent: string | null; action: string; summary: string | null; created_at: string }[] | null) ?? []).map(
+      (a) => ({ id: a.id, agent: a.agent ?? "agent", action: a.action, summary: a.summary ?? "", createdAt: relTime(a.created_at) })
+    );
+
     const roll = rollup as { runs_this_month?: number; hours_saved?: number; success_rate?: number } | null;
     const totalSaved = Math.round(runList.reduce((s, r) => s + (Number(r.dollars_saved) || 0), 0));
     const kpis: PortalKpis = {
@@ -131,7 +150,7 @@ export async function getPortalData(email: string): Promise<PortalData | null> {
       roi: `$${totalSaved.toLocaleString()}`,
     };
 
-    return { clientName: client.name, kpis, automations: autos, logs, connections: conns, audit: auditRows };
+    return { clientName: client.name, kpis, automations: autos, logs, connections: conns, audit: auditRows, approvals };
   } catch {
     return null;
   }
