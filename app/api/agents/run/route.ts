@@ -137,8 +137,11 @@ export async function POST(req: Request) {
     trace.mark("decided", { total: actions.length, queued: needApproval.length });
     trace.setOutput(JSON.stringify(actions).slice(0, 4000));
 
-    // If a client is identified, queue the gated actions for approval + audit.
+    // If a client is identified, queue the gated actions for approval + audit,
+    // and return the inserted rows (with real ids) so the portal can render them
+    // in place without a reload.
     let queued = 0;
+    let approvals: { id: string; agent: string; action: string; summary: string; createdAt: string }[] = [];
     if (key) {
       const supabase = getServiceClient();
       if (supabase) {
@@ -152,14 +155,20 @@ export async function POST(req: Request) {
             payload: { draft: a.draft ?? null, source: a.source, to: a.to ?? null },
           }));
           if (rows.length) {
-            await supabase.from("approvals").insert(rows);
-            queued = rows.length;
+            const { data: inserted } = await supabase
+              .from("approvals")
+              .insert(rows)
+              .select("id, agent, action, summary");
+            approvals = ((inserted as { id: string; agent: string | null; action: string; summary: string | null }[] | null) ?? []).map(
+              (a) => ({ id: a.id, agent: a.agent ?? "agent", action: a.action, summary: a.summary ?? "", createdAt: "just now" })
+            );
+            queued = approvals.length;
           }
           await supabase.from("agent_audit").insert({
             client_id: client.id,
             actor: "runtime",
             action: "agent.run",
-            detail: `Inbox triage: ${actions.length} decided, ${queued} queued for approval`,
+            detail: `${body.agent ?? "inbox-triage"}: ${actions.length} decided, ${queued} queued for approval`,
           });
           trace.flag("persisted", true);
         }
@@ -167,7 +176,7 @@ export async function POST(req: Request) {
     }
 
     await trace.end();
-    return NextResponse.json({ ok: true, decided: actions.length, queued, actions });
+    return NextResponse.json({ ok: true, decided: actions.length, queued, actions, approvals });
   } catch {
     trace.setStatus("error");
     await trace.end();

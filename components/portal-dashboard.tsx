@@ -134,18 +134,24 @@ export function PortalDashboard(props: Props) {
     setRunning(r.id);
     try {
       if (!isDemo) {
+        // Live: runs on the client's own connected data and persists. The
+        // endpoint returns the queued approvals WITH their real ids, so we merge
+        // them in place — no reload — and they're immediately approvable.
         const res = await fetch("/api/portal/agents/run", {
           method: "POST",
           headers: { "content-type": "application/json" },
           body: JSON.stringify({ agent: r.id }),
         });
-        if (res.ok) {
-          // Persisted server-side — reload so the queued approvals (with real ids)
-          // render and can be approved/rejected.
-          window.location.href = "/portal?tab=approvals";
-          return;
-        }
+        const data = (await res.json()) as { decided?: number; queued?: number; approvals?: PortalApproval[] };
+        const created = data.approvals ?? [];
+        setApprovals((list) => [...created, ...list]);
+        setAudit((log) => [
+          { time: "just now", actor: "runtime", action: "agent.run", detail: `${r.label}: ${data.decided ?? 0} decided, ${created.length} queued for approval` },
+          ...log,
+        ]);
+        setTab("approvals");
       } else {
+        // Demo: runs on a sample dataset; merge the proposed actions locally.
         const res = await fetch("/api/agents/run", {
           method: "POST",
           headers: { "content-type": "application/json" },
