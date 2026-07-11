@@ -14,6 +14,7 @@ import {
   Clock,
   CreditCard,
   LayoutDashboard,
+  Loader2,
   Lock,
   LogOut,
   Mail,
@@ -67,6 +68,15 @@ function providerIcon(name: string) {
   return Plug;
 }
 
+// Sample inbox for the "Run a cycle" demo — a real reply, a promo, an angry
+// customer, and a booking question, to show the agent's routing.
+const SAMPLE_INBOX = [
+  { from: "maria@events.com", subject: "Catering for 40 on the 22nd?", body: "Hi! Do you cater private events? We're a party of 40 on the 22nd." },
+  { from: "no-reply@promos.com", subject: "🔥 50% off this weekend only", body: "Shop our biggest sale of the year. Unsubscribe anytime." },
+  { from: "upset@customer.com", subject: "Terrible experience — I want a refund", body: "This was unacceptable and I want my money back now." },
+  { from: "jon@acme.com", subject: "Are you open next Friday evening?", body: "Checking availability for a table next Friday." },
+];
+
 export function PortalDashboard(props: Props) {
   const { clientName, kpis, deltas, logs, connections, isDemo, authEnabled, userEmail } = props;
   const { t } = useLocale();
@@ -75,6 +85,42 @@ export function PortalDashboard(props: Props) {
   const [audit, setAudit] = useState<PortalAudit[]>(props.audit);
   const [approvals, setApprovals] = useState<PortalApproval[]>(props.approvals);
   const [busy, setBusy] = useState<string | null>(null);
+  const [running, setRunning] = useState(false);
+
+  // Trigger one end-to-end agent cycle: read → decide (guarded, traced) → queue
+  // approval-gated actions. Demonstrates the full secure loop live.
+  async function runCycle() {
+    setRunning(true);
+    try {
+      const res = await fetch("/api/agents/run", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ messages: SAMPLE_INBOX }),
+      });
+      const data = (await res.json()) as {
+        decided?: number;
+        actions?: { action: string; agent: string; summary: string; needsApproval: boolean }[];
+      };
+      const created = (data.actions ?? [])
+        .filter((a) => a.needsApproval)
+        .map((a, i) => ({
+          id: `run-${i}-${Math.random().toString(36).slice(2)}`,
+          agent: a.agent,
+          action: a.action,
+          summary: a.summary,
+          createdAt: "just now",
+        }));
+      setApprovals((list) => [...created, ...list]);
+      setAudit((log) => [
+        { time: "just now", actor: "runtime", action: "agent.run", detail: `Inbox triage: ${data.decided ?? 0} decided, ${created.length} queued for approval` },
+        ...log,
+      ]);
+      setTab("approvals");
+    } catch {
+      /* ignore */
+    }
+    setRunning(false);
+  }
 
   async function decide(a: PortalApproval, decision: "approved" | "rejected") {
     setApprovals((list) => list.filter((x) => x.id !== a.id));
@@ -201,7 +247,17 @@ export function PortalDashboard(props: Props) {
               <h2 className="flex items-center gap-2 font-display font-semibold">
                 <Bot className="h-4 w-4 text-cyan-electric" /> Agents
               </h2>
-              <span className="text-xs text-muted-foreground">Pause any agent instantly — the kill switch</span>
+              <div className="flex items-center gap-3">
+                <span className="hidden text-xs text-muted-foreground sm:inline">Pause any agent — the kill switch</span>
+                <button
+                  onClick={runCycle}
+                  disabled={running}
+                  className="inline-flex items-center gap-1.5 rounded-full border border-cyan-electric/30 bg-cyan-electric/10 px-3 py-1 text-xs font-semibold text-cyan-electric transition hover:bg-cyan-electric/20 disabled:opacity-50"
+                >
+                  {running ? <Loader2 className="h-3 w-3 animate-spin" /> : <Play className="h-3 w-3" />}
+                  {running ? "Running…" : "Run a cycle"}
+                </button>
+              </div>
             </div>
             <div className="overflow-x-auto">
               {agents.length === 0 ? (
