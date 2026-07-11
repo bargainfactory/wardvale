@@ -396,9 +396,12 @@ export function PortalDashboard(props: Props) {
                 </div>
               );
             })}
-            <div className="flex items-center justify-center rounded-2xl border border-dashed border-border p-5 text-sm text-muted-foreground">
+            <Link
+              href="/connections"
+              className="flex items-center justify-center rounded-2xl border border-dashed border-border p-5 text-sm text-muted-foreground transition hover:border-cyan-electric/40 hover:text-cyan-electric"
+            >
               <Plug className="mr-2 h-4 w-4" /> Connect another tool
-            </div>
+            </Link>
           </div>
         )}
 

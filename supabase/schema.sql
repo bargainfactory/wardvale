@@ -144,6 +144,14 @@ create table if not exists public.connections (
 );
 create index if not exists connections_client_idx on public.connections (client_id);
 
+-- OAuth tokens for connectors. Server-only (service role) — the RLS read policy
+-- and every app query select only provider/status/scope, never these columns.
+alter table public.connections add column if not exists access_token text;
+alter table public.connections add column if not exists refresh_token text;
+alter table public.connections add column if not exists expires_at timestamptz;
+alter table public.connections add column if not exists external_id text;
+create unique index if not exists connections_client_provider_uidx on public.connections (client_id, provider);
+
 -- Immutable governance audit: pauses/resumes, approvals, config changes.
 create table if not exists public.agent_audit (
   id             uuid primary key default gen_random_uuid(),

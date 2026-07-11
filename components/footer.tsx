@@ -45,6 +45,7 @@ export function Footer() {
             </h4>
             <ul className="space-y-2 text-sm">
               <li><Link href="/connect" className="hover:text-cyan-electric">See it on your data</Link></li>
+              <li><Link href="/connections" className="hover:text-cyan-electric">Connections</Link></li>
               <li><Link href="/build" className="hover:text-cyan-electric">Build your automation</Link></li>
               <li><Link href="/mcp" className="hover:text-cyan-electric">MCP for AI assistants</Link></li>
               <li><Link href="/pricing#calculator" className="hover:text-cyan-electric">{t("footer.roiCalc")}</Link></li>

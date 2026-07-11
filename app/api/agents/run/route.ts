@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { rateLimit, clientIp } from "@/lib/rate-limit";
 import { startTrace } from "@/lib/trace";
-import { runInboxTriage, type InboxMessage } from "@/lib/runtime";
+import { runInboxTriage, runArFollowup, type InboxMessage, type Invoice, type ProposedAction } from "@/lib/runtime";
 import { getServiceClient } from "@/lib/supabase-server";
 
 /**
@@ -22,11 +22,22 @@ export async function POST(req: Request) {
 
   const trace = startTrace("agent.run");
   try {
-    const body = (await req.json().catch(() => ({}))) as { messages?: InboxMessage[] };
-    const messages = Array.isArray(body.messages) ? body.messages : [];
-    trace.setInput(messages.map((m) => m?.subject ?? "").join("; "));
+    const body = (await req.json().catch(() => ({}))) as {
+      agent?: string;
+      messages?: InboxMessage[];
+      invoices?: Invoice[];
+    };
 
-    const actions = await runInboxTriage(messages, trace);
+    let actions: ProposedAction[];
+    if (body.agent === "ar-followup") {
+      const invoices = Array.isArray(body.invoices) ? body.invoices : [];
+      trace.setInput(invoices.map((v) => v?.number ?? "").join("; "));
+      actions = await runArFollowup(invoices, trace);
+    } else {
+      const messages = Array.isArray(body.messages) ? body.messages : [];
+      trace.setInput(messages.map((m) => m?.subject ?? "").join("; "));
+      actions = await runInboxTriage(messages, trace);
+    }
     const needApproval = actions.filter((a) => a.needsApproval);
     trace.mark("decided", { total: actions.length, queued: needApproval.length });
     trace.setOutput(JSON.stringify(actions).slice(0, 4000));
