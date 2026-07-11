@@ -5,8 +5,10 @@ import {
   Bot,
   Calendar,
   Check,
+  FileText,
   Loader2,
   Mic,
+  Paperclip,
   Send,
   Sparkles,
   Square,
@@ -14,6 +16,7 @@ import {
   Volume2,
   VolumeX,
   Wand2,
+  X,
   Zap,
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
@@ -46,6 +49,19 @@ type Phase = "intro" | "asking" | "thinking" | "done";
 
 const CALENDLY = process.env.NEXT_PUBLIC_CALENDLY_URL ?? "https://calendly.com/flowforge/discovery";
 
+type Attachment = { kind: "image" | "text"; name: string; dataUrl?: string; text?: string };
+const MAX_FILE_BYTES = 3 * 1024 * 1024;
+
+function readFile(file: File, as: "dataURL" | "text"): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result));
+    reader.onerror = () => reject(reader.error);
+    if (as === "dataURL") reader.readAsDataURL(file);
+    else reader.readAsText(file);
+  });
+}
+
 export function WorkflowBuilder() {
   const [phase, setPhase] = useState<Phase>("intro");
   const [messages, setMessages] = useState<Msg[]>([]);
@@ -53,7 +69,10 @@ export function WorkflowBuilder() {
   const [progress, setProgress] = useState(0);
   const [blueprint, setBlueprint] = useState<Blueprint | null>(null);
   const [voiceOut, setVoiceOut] = useState(false);
+  const [attachment, setAttachment] = useState<Attachment | null>(null);
+  const [fileError, setFileError] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const fileRef = useRef<HTMLInputElement>(null);
 
   const { supported, listening, transcript, level, error, start, stop, reset } = useSpeechRecognition();
 
@@ -108,15 +127,48 @@ export function WorkflowBuilder() {
 
   async function send() {
     const answer = input.trim();
-    if (!answer || phase === "thinking") return;
+    if ((!answer && !attachment) || phase === "thinking") return;
     if (listening) stop();
-    const history = [...messages, { role: "user" as const, content: answer }];
+    const content = answer || (attachment ? `(Shared a file: ${attachment.name})` : "");
+    const history = [...messages, { role: "user" as const, content }];
+    const sentAttachment = attachment;
     setMessages(history);
     setInput("");
+    setAttachment(null);
+    setFileError(null);
     reset();
     setPhase("thinking");
-    const reply = await call({ messages: history });
+    const reply = await call({ messages: history, attachment: sentAttachment ?? undefined });
     apply(reply, history);
+  }
+
+  async function handleFile(file: File | undefined) {
+    if (!file) return;
+    setFileError(null);
+    if (file.size > MAX_FILE_BYTES) {
+      setFileError("That file is over 3 MB — please attach a smaller one.");
+      return;
+    }
+    const isImage = file.type.startsWith("image/");
+    const isText =
+      /^text\//.test(file.type) ||
+      /(csv|json|markdown)/.test(file.type) ||
+      /\.(txt|csv|md|json|tsv|log)$/i.test(file.name);
+    try {
+      if (isImage) {
+        const dataUrl = await readFile(file, "dataURL");
+        setAttachment({ kind: "image", name: file.name, dataUrl });
+        track("builder_attachment", { kind: "image" });
+      } else if (isText) {
+        const text = (await readFile(file, "text")).slice(0, 8000);
+        setAttachment({ kind: "text", name: file.name, text });
+        track("builder_attachment", { kind: "text" });
+      } else {
+        setFileError("Attach a screenshot/image or a text/CSV file.");
+      }
+    } catch {
+      setFileError("Couldn't read that file. Try another.");
+    }
   }
 
   function toggleMic() {
@@ -241,6 +293,34 @@ export function WorkflowBuilder() {
                       </motion.div>
                     )}
                   </AnimatePresence>
+                  {attachment && (
+                    <div className="mb-2 flex items-center gap-2 rounded-xl border border-cyan-electric/30 bg-cyan-electric/10 px-3 py-2 text-sm">
+                      {attachment.kind === "image" && attachment.dataUrl ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={attachment.dataUrl} alt="" className="h-8 w-8 rounded object-cover" />
+                      ) : (
+                        <FileText className="h-4 w-4 shrink-0 text-cyan-electric" />
+                      )}
+                      <span className="min-w-0 flex-1 truncate">{attachment.name}</span>
+                      <button
+                        onClick={() => setAttachment(null)}
+                        aria-label="Remove attachment"
+                        className="shrink-0 text-muted-foreground transition hover:text-foreground"
+                      >
+                        <X className="h-4 w-4" />
+                      </button>
+                    </div>
+                  )}
+                  <input
+                    ref={fileRef}
+                    type="file"
+                    accept="image/*,.txt,.csv,.md,.json,.tsv,.log"
+                    className="hidden"
+                    onChange={(e) => {
+                      handleFile(e.target.files?.[0]);
+                      e.target.value = "";
+                    }}
+                  />
                   <div className={`flex items-end gap-2 rounded-2xl border bg-card/40 p-2 transition-colors ${listening ? "border-cyan-electric/50" : "border-border focus-within:border-cyan-electric/50"}`}>
                     <textarea
                       value={input}
@@ -255,6 +335,14 @@ export function WorkflowBuilder() {
                       placeholder={listening ? "Speak now — your words appear here…" : "Type your answer, or tap the mic to talk"}
                       className="max-h-32 flex-1 resize-none bg-transparent px-2 py-1.5 text-sm placeholder:text-muted-foreground focus:outline-none"
                     />
+                    <button
+                      onClick={() => fileRef.current?.click()}
+                      aria-label="Attach a file"
+                      title="Attach a screenshot, CSV, or doc"
+                      className="grid h-10 w-10 shrink-0 place-items-center rounded-xl border border-border text-muted-foreground transition hover:text-cyan-electric"
+                    >
+                      <Paperclip className="h-4 w-4" />
+                    </button>
                     {supported && (
                       <button
                         onClick={toggleMic}
@@ -270,22 +358,20 @@ export function WorkflowBuilder() {
                     )}
                     <button
                       onClick={send}
-                      disabled={!input.trim() || phase === "thinking"}
+                      disabled={(!input.trim() && !attachment) || phase === "thinking"}
                       aria-label="Send"
                       className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-gradient-to-br from-cyan-electric to-indigo-400 text-navy-900 transition disabled:opacity-40"
                     >
                       <Send className="h-4 w-4" />
                     </button>
                   </div>
-                  {error ? (
-                    <p className="mt-2 text-center text-xs text-red-400">{error}</p>
+                  {error || fileError ? (
+                    <p className="mt-2 text-center text-xs text-red-400">{fileError || error}</p>
                   ) : (
                     <p className="mt-2 text-center text-xs text-muted-foreground">
                       {listening
                         ? "Speak naturally — pause when you're done, then Send."
-                        : supported
-                        ? "Type, or tap the mic to talk · Enter to send"
-                        : "Enter to send · Shift+Enter for a new line"}
+                        : "Type, talk, or attach a screenshot/CSV · Enter to send"}
                     </p>
                   )}
                   {!supported && (

@@ -3,8 +3,10 @@ import { getOpenAI } from "@/lib/openai";
 import { rateLimit, clientIp } from "@/lib/rate-limit";
 import { saveLead } from "@/lib/leads";
 import { sendWorkflowBlueprint, type Blueprint } from "@/lib/email";
+import type { ChatCompletionMessageParam } from "openai/resources/chat/completions";
 
 type Msg = { role: "user" | "assistant"; content: string };
+type Attachment = { kind?: "image" | "text"; name?: string; dataUrl?: string; text?: string };
 
 const SYSTEM = `You are FlowForge AI's workflow discovery agent. Through a short back-and-forth you help a small-business owner describe ONE workflow they want automated, then produce a concrete automation blueprint.
 
@@ -68,12 +70,40 @@ export async function POST(req: Request) {
     const nudge =
       answered >= 7 ? "\n\nYou now have plenty of detail — set done=true and return the blueprint." : "";
 
+    const attachment: Attachment | undefined = body.attachment;
+    const apiMessages: ChatCompletionMessageParam[] = [{ role: "system", content: SYSTEM + nudge }];
+    messages.forEach((m, i) => {
+      const isLast = i === messages.length - 1;
+      if (isLast && m.role === "user" && attachment) {
+        // Image → vision content part; small enough to inline as a data URL.
+        if (attachment.kind === "image" && attachment.dataUrl && attachment.dataUrl.length < 7_000_000) {
+          apiMessages.push({
+            role: "user",
+            content: [
+              { type: "text", text: m.content || "Here's what I'm working with — use it to scope the automation." },
+              { type: "image_url", image_url: { url: attachment.dataUrl } },
+            ],
+          });
+          return;
+        }
+        // Text/CSV → append the extracted content for grounding.
+        if (attachment.kind === "text" && attachment.text) {
+          apiMessages.push({
+            role: "user",
+            content: `${m.content}\n\n[Attached file: ${attachment.name ?? "file"}]\n${attachment.text.slice(0, 8000)}`,
+          });
+          return;
+        }
+      }
+      apiMessages.push({ role: m.role, content: m.content });
+    });
+
     const completion = await getOpenAI().chat.completions.create({
       model: "gpt-4o-mini",
       max_tokens: 700,
       temperature: 0.6,
       response_format: { type: "json_object" },
-      messages: [{ role: "system", content: SYSTEM + nudge }, ...messages],
+      messages: apiMessages,
     });
 
     const parsed = parseJson(completion.choices[0]?.message?.content ?? "");
