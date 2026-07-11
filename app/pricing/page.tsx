@@ -10,13 +10,30 @@ import { Button } from "@/components/ui/button";
 import { ContactForm } from "@/components/contact-form";
 import { FAQ } from "@/components/faq";
 import { GuaranteeBanner } from "@/components/guarantee";
-import { track } from "@/lib/analytics";
+import { track, getVariant } from "@/lib/analytics";
+
+// Growth price experiment: variant A = $2,000, variant B = $2,500.
+const GROWTH_PRICE_B = 2500;
+function growthPriceFor(variant: "A" | "B", base: number) {
+  return variant === "B" ? GROWTH_PRICE_B : base;
+}
 import { tiers } from "@/lib/data";
 import { cn, formatCurrency } from "@/lib/utils";
 import { useLocale } from "@/lib/locale-context";
 
 export default function PricingPage() {
   const { t } = useLocale();
+
+  // Sticky per-visitor variant; server + first client render use "A" (no
+  // hydration mismatch), then we resolve the real variant after mount.
+  const [growthVariant, setGrowthVariant] = useState<"A" | "B">("A");
+  useEffect(() => {
+    const v = getVariant("growth_price");
+    setGrowthVariant(v);
+    track("pricing_view", { growth_variant: v, growth_price: growthPriceFor(v, 2000) });
+  }, []);
+  const priceFor = (tier: { id: string; price: number }) =>
+    tier.id === "growth" ? growthPriceFor(growthVariant, tier.price) : tier.price;
 
   useEffect(() => {
     if (window.location.hash === "#quote") {
@@ -81,7 +98,7 @@ export default function PricingPage() {
 
                 <div className="mt-6 flex items-baseline gap-1">
                   <span className="font-display text-5xl font-semibold tabular-nums">
-                    ${tier.price.toLocaleString()}
+                    ${priceFor(tier).toLocaleString()}
                   </span>
                   <span className="text-sm text-muted-foreground">{t("pricing.perMonth")}</span>
                 </div>
@@ -95,8 +112,8 @@ export default function PricingPage() {
                     </span>
                   </p>
                   <p className="mt-0.5 text-xs text-muted-foreground tabular-nums">
-                    ≈ {(tier.typicalSavings / tier.price).toFixed(1)}× {t("pricing.valueReturn")} ·{" "}
-                    {t("pricing.valuePayback")} ~{Math.round((tier.price / tier.typicalSavings) * 30)}{" "}
+                    ≈ {(tier.typicalSavings / priceFor(tier)).toFixed(1)}× {t("pricing.valueReturn")} ·{" "}
+                    {t("pricing.valuePayback")} ~{Math.round((priceFor(tier) / tier.typicalSavings) * 30)}{" "}
                     {t("pricing.valueDays")}
                   </p>
                 </div>
@@ -114,7 +131,7 @@ export default function PricingPage() {
                   <Button
                     variant={tier.highlighted ? "primary" : "outline"}
                     className="w-full"
-                    onClick={() => startCheckout(tier.id)}
+                    onClick={() => startCheckout(tier.id, tier.id === "growth" ? growthVariant : undefined)}
                   >
                     {t("pricing.start")} {t(`tier.${tier.id}.name`)}
                   </Button>
@@ -244,13 +261,16 @@ export default function PricingPage() {
   );
 }
 
-async function startCheckout(tierId: string) {
-  track("checkout_click", { tier: tierId });
+async function startCheckout(tierId: string, variant?: "A" | "B") {
+  track("checkout_click", {
+    tier: tierId,
+    ...(tierId === "growth" ? { growth_variant: variant, growth_price: growthPriceFor(variant ?? "A", 2000) } : {}),
+  });
   try {
     const res = await fetch("/api/stripe/checkout", {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ tier: tierId }),
+      body: JSON.stringify({ tier: tierId, variant }),
     });
     const data = (await res.json()) as { url?: string; error?: string };
     if (data.url) window.location.href = data.url;

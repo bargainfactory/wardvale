@@ -9,8 +9,12 @@ const priceMap: Record<string, string | undefined> = {
 
 export async function POST(req: Request) {
   try {
-    const { tier } = (await req.json()) as { tier: string };
-    const priceId = priceMap[tier];
+    const { tier, variant } = (await req.json()) as { tier: string; variant?: string };
+    // Growth price A/B test: variant B uses a second Stripe price if configured.
+    let priceId = priceMap[tier];
+    if (tier === "growth" && variant === "B" && process.env.STRIPE_PRICE_GROWTH_B) {
+      priceId = process.env.STRIPE_PRICE_GROWTH_B;
+    }
 
     if (!priceId || !process.env.STRIPE_SECRET_KEY) {
       return NextResponse.json(
@@ -26,7 +30,7 @@ export async function POST(req: Request) {
       cancel_url: `${process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000"}/#pricing`,
       allow_promotion_codes: true,
       billing_address_collection: "required",
-      metadata: { tier },
+      metadata: { tier, ...(tier === "growth" && variant ? { growth_variant: variant } : {}) },
     });
 
     return NextResponse.json({ url: session.url });

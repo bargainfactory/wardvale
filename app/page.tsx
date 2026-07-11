@@ -20,11 +20,13 @@ import {
   Briefcase,
   Wrench,
 } from "lucide-react";
+import { useEffect, useState } from "react";
 import { PageLayout } from "@/components/page-layout";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { testimonials, trustBadges, tiers } from "@/lib/data";
 import { useLocale } from "@/lib/locale-context";
+import { getVariant } from "@/lib/analytics";
 import { WorkflowBuilder } from "@/components/workflow-builder";
 import { GuaranteeBanner } from "@/components/guarantee";
 
@@ -37,6 +39,12 @@ const resultTeasers = [
 
 export default function Home() {
   const { t } = useLocale();
+
+  // Keep the Growth teaser price consistent with the /pricing A/B test.
+  const [growthVariant, setGrowthVariant] = useState<"A" | "B">("A");
+  useEffect(() => {
+    setGrowthVariant(getVariant("growth_price"));
+  }, []);
 
   const workflow = [
     { icon: Mail, label: t("workflow.step1"), sub: t("workflow.step1.sub"), accent: "from-cyan-electric/20 to-cyan-electric/5" },
@@ -305,7 +313,7 @@ export default function Home() {
                   <p className="text-xs font-semibold uppercase tracking-[0.2em] text-cyan-electric">{t(`tier.${tier.id}.tag`)}</p>
                   <h3 className="mt-1 font-display text-xl font-semibold">{t(`tier.${tier.id}.name`)}</h3>
                   <div className="mt-3 flex items-baseline gap-1">
-                    <span className="font-display text-4xl font-semibold tabular-nums">${tier.price.toLocaleString()}</span>
+                    <span className="font-display text-4xl font-semibold tabular-nums">${(tier.id === "growth" && growthVariant === "B" ? 2500 : tier.price).toLocaleString()}</span>
                     <span className="text-sm text-muted-foreground">{t("pricing.perMo")}</span>
                   </div>
                   <p className="mt-1 text-xs font-medium text-cyan-electric tabular-nums">
