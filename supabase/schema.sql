@@ -226,3 +226,26 @@ create index if not exists events_name_created_idx on public.events (name, creat
 
 -- Server-only writes (service role); no public policies.
 alter table public.events enable row level security;
+
+-- ── Agent decision tracing ───────────────────────────────────────────────────
+-- One row per agent invocation: spans (guardrail/model/parse), timings, tokens,
+-- redacted input/output, and flags. Used to debug decisions and build golden
+-- eval sets from real traffic. Server-only (service role); no public policies.
+create table if not exists public.traces (
+  id          uuid primary key default gen_random_uuid(),
+  route       text not null,
+  session_id  text,
+  status      text not null default 'ok',
+  latency_ms  integer,
+  tokens      integer,
+  input       text,
+  output      text,
+  spans       jsonb not null default '[]'::jsonb,
+  flags       jsonb not null default '{}'::jsonb,
+  created_at  timestamptz not null default now()
+);
+
+create index if not exists traces_route_created_idx on public.traces (route, created_at desc);
+create index if not exists traces_status_idx on public.traces (status);
+
+alter table public.traces enable row level security;

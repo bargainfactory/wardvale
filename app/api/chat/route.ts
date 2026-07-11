@@ -3,6 +3,7 @@ import { getOpenAI } from "@/lib/openai";
 import { rateLimit, clientIp } from "@/lib/rate-limit";
 import { detectInjection, SECURITY_PREAMBLE } from "@/lib/guardrails";
 import { overBudget, recordTokens, DAILY_TOKEN_CAP } from "@/lib/usage";
+import { startTrace } from "@/lib/trace";
 
 const SYSTEM_PROMPT = `${SECURITY_PREAMBLE}
 
@@ -33,9 +34,14 @@ export async function POST(req: Request) {
     const body = await req.json();
     const messages = body.messages as { role: "user" | "assistant"; content: string }[];
 
+    const trace = startTrace("chat", typeof body?.sessionId === "string" ? body.sessionId : undefined);
     // Guardrail: refuse likely prompt-injection instead of processing it.
     const lastUser = [...messages].reverse().find((m) => m.role === "user")?.content ?? "";
+    trace.setInput(lastUser);
     if (detectInjection(lastUser).flagged) {
+      trace.flag("injection", true);
+      trace.setStatus("refused");
+      await trace.end();
       return NextResponse.json({
         reply:
           "I can only help with questions about FlowForge — our services, pricing, and integrations. What would you like to know?",
@@ -51,22 +57,30 @@ export async function POST(req: Request) {
 
     // Cost guardrail: bound daily inference spend per IP.
     if (overBudget(`ai:${ip}`, DAILY_TOKEN_CAP)) {
+      trace.flag("overBudget", true);
+      trace.setStatus("fallback");
+      await trace.end();
       return NextResponse.json({
         reply: "We're at capacity for automated replies right now — please use the quote form or email hello@flowforge.ai.",
       });
     }
 
+    trace.mark("model.start");
     const completion = await getOpenAI().chat.completions.create({
       model: "gpt-4o-mini",
       max_tokens: 250,
       temperature: 0.7,
       messages: [{ role: "system", content: SYSTEM_PROMPT }, ...messages.slice(-8)],
     });
-    recordTokens(`ai:${ip}`, completion.usage?.total_tokens ?? 0);
+    const tokens = completion.usage?.total_tokens ?? 0;
+    recordTokens(`ai:${ip}`, tokens);
+    const reply = completion.choices[0]?.message?.content ?? "Sorry, try again.";
+    trace.mark("model.end", { tokens });
+    trace.setTokens(tokens);
+    trace.setOutput(reply);
+    await trace.end();
 
-    return NextResponse.json({
-      reply: completion.choices[0]?.message?.content ?? "Sorry, try again.",
-    });
+    return NextResponse.json({ reply });
   } catch {
     return NextResponse.json({
       reply: "I'm having trouble connecting right now. Please try the quote form below or email hello@flowforge.ai.",

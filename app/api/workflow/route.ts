@@ -7,6 +7,7 @@ import type { ChatCompletionMessageParam } from "openai/resources/chat/completio
 import { fenceUntrusted, SECURITY_PREAMBLE } from "@/lib/guardrails";
 import { overBudget, recordTokens, DAILY_TOKEN_CAP } from "@/lib/usage";
 import { firstTime, idemKey } from "@/lib/idempotency";
+import { startTrace } from "@/lib/trace";
 
 type Msg = { role: "user" | "assistant"; content: string };
 type Attachment = { kind?: "image" | "text"; name?: string; dataUrl?: string; text?: string };
@@ -69,7 +70,13 @@ export async function POST(req: Request) {
 
     const messages: Msg[] = Array.isArray(body.messages) ? body.messages : [];
 
+    const trace = startTrace("workflow", typeof body?.sessionId === "string" ? body.sessionId : undefined);
+    trace.setInput([...messages].reverse().find((m) => m.role === "user")?.content ?? "");
+
     if (!process.env.OPENAI_API_KEY) {
+      trace.flag("noKey", true);
+      trace.setStatus("fallback");
+      await trace.end();
       return NextResponse.json(scriptedFallback(messages));
     }
 
@@ -109,9 +116,14 @@ export async function POST(req: Request) {
 
     // Cost guardrail: fall back to the scripted flow if this IP is over budget.
     if (overBudget(`ai:${ip}`, DAILY_TOKEN_CAP)) {
+      trace.flag("overBudget", true);
+      trace.setStatus("fallback");
+      await trace.end();
       return NextResponse.json(scriptedFallback(messages));
     }
 
+    if (attachment) trace.flag("attachment", attachment.kind ?? "unknown");
+    trace.mark("model.start");
     const completion = await getOpenAI().chat.completions.create({
       model: "gpt-4o-mini",
       max_tokens: 700,
@@ -119,10 +131,21 @@ export async function POST(req: Request) {
       response_format: { type: "json_object" },
       messages: apiMessages,
     });
-    recordTokens(`ai:${ip}`, completion.usage?.total_tokens ?? 0);
+    const tokens = completion.usage?.total_tokens ?? 0;
+    recordTokens(`ai:${ip}`, tokens);
+    const content = completion.choices[0]?.message?.content ?? "";
+    trace.mark("model.end", { tokens });
+    trace.setTokens(tokens);
+    trace.setOutput(content);
 
-    const parsed = parseJson(completion.choices[0]?.message?.content ?? "");
-    if (!parsed) return NextResponse.json(scriptedFallback(messages));
+    const parsed = parseJson(content);
+    if (!parsed) {
+      trace.setStatus("parse_fail");
+      await trace.end();
+      return NextResponse.json(scriptedFallback(messages));
+    }
+    trace.flag("done", Boolean(parsed.done));
+    await trace.end();
     return NextResponse.json(parsed);
   } catch {
     return NextResponse.json({
