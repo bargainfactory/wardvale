@@ -1,5 +1,6 @@
 import { createServerSupabase } from "@/lib/supabase-ssr";
 import { agentName } from "@/lib/agents-catalog";
+import { getConnectorByName } from "@/lib/connectors";
 
 export type PortalAutomation = {
   id: string;
@@ -12,7 +13,13 @@ export type PortalAutomation = {
 };
 export type PortalLog = { time: string; event: string; type: string };
 export type PortalKpis = { runs: string; hours: string; success: string; roi: string };
-export type PortalConnection = { provider: string; status: string; scope: string };
+export type PortalConnection = {
+  provider: string;
+  status: string;
+  scope: string;
+  health?: "ok" | "expired" | "error";
+  reconnectHref?: string;
+};
 export type PortalAudit = { time: string; actor: string; action: string; detail: string };
 export type PortalApproval = { id: string; agent: string; action: string; summary: string; createdAt: string };
 export type PortalAgentConfig = { key: string; name: string; enabled: boolean; autoSend: boolean; schedule: string };
@@ -86,7 +93,7 @@ export async function getPortalData(email: string): Promise<PortalData | null> {
         .order("created_at", { ascending: false })
         .limit(500),
       supabase.from("client_month_rollup").select("*").eq("client_id", client.id).maybeSingle(),
-      supabase.from("connections").select("provider, status, scope").eq("client_id", client.id),
+      supabase.from("connections").select("provider, status, scope, expires_at").eq("client_id", client.id),
       supabase
         .from("agent_audit")
         .select("actor, action, detail, created_at")
@@ -136,8 +143,20 @@ export async function getPortalData(email: string): Promise<PortalData | null> {
       type: r.status === "success" ? "success" : "info",
     }));
 
-    const conns: PortalConnection[] = ((connections as { provider: string; status: string; scope: string | null }[] | null) ?? []).map(
-      (c) => ({ provider: c.provider, status: c.status, scope: c.scope ?? "read/write" })
+    const conns: PortalConnection[] = ((connections as { provider: string; status: string; scope: string | null; expires_at: string | null }[] | null) ?? []).map(
+      (c) => {
+        const expired = c.expires_at ? new Date(c.expires_at).getTime() < Date.now() : false;
+        const health: PortalConnection["health"] =
+          c.status === "error" || c.status === "disconnected" ? "error" : expired ? "expired" : "ok";
+        // API-key connectors reconnect via the paste-key form; OAuth via the flow.
+        const conn = getConnectorByName(c.provider);
+        const reconnectHref = conn
+          ? conn.tokenAuth === "apikey"
+            ? "/connections"
+            : `/api/connect/${conn.id}/start`
+          : undefined;
+        return { provider: c.provider, status: c.status, scope: c.scope ?? "read/write", health, reconnectHref };
+      }
     );
 
     const auditRows: PortalAudit[] = ((audit as { actor: string | null; action: string; detail: string | null; created_at: string }[] | null) ?? []).map(

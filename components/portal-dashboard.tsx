@@ -561,6 +561,15 @@ export function PortalDashboard(props: Props) {
                   <p className="mt-3 text-xs text-muted-foreground">
                     Scope: <span className="text-foreground">{c.scope}</span>
                   </p>
+                  {(c.health === "expired" || c.health === "error") && c.reconnectHref && (
+                    <a
+                      href={c.reconnectHref}
+                      className="mt-3 inline-flex items-center gap-1.5 rounded-full border border-yellow-400/30 bg-yellow-400/10 px-3 py-1 text-xs font-medium text-yellow-300 transition hover:bg-yellow-400/20"
+                    >
+                      <ArrowUpRight className="h-3 w-3" />
+                      {c.health === "expired" ? "Reconnect — access expired" : "Reconnect"}
+                    </a>
+                  )}
                 </div>
               );
             })}

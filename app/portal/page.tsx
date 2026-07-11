@@ -38,7 +38,7 @@ const DEMO: PortalData & { deltas: { runs: string; hours: string; success: strin
     { provider: "Calendly", status: "connected", scope: "read + create events" },
     { provider: "HubSpot", status: "connected", scope: "read + write contacts" },
     { provider: "Twilio SMS", status: "connected", scope: "send SMS" },
-    { provider: "Stripe", status: "error", scope: "read charges — reauth needed" },
+    { provider: "Stripe", status: "error", scope: "read charges — reauth needed", health: "error", reconnectHref: "/connections" },
   ],
   audit: [
     { time: "11:40 AM", actor: "marco@nonabistro.com", action: "agent.paused", detail: "Cart recovery flow" },
