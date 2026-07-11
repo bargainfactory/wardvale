@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createServerSupabase, getPortalUserEmail } from "@/lib/supabase-ssr";
 import { getServiceClient } from "@/lib/supabase-server";
 import { sendAgentEmail } from "@/lib/email";
+import { sendSmsForClient } from "@/lib/integrations";
 import { startTrace } from "@/lib/trace";
 
 type ApprovalRow = {
@@ -42,9 +43,10 @@ export async function POST(req: Request) {
   const approval = data as ApprovalRow;
   const svc = getServiceClient();
 
-  // Execute the action on approve (currently email.send), fully traced.
+  // Execute the action on approve (email.send via Resend, sms.send via the
+  // client's connected Twilio), fully traced.
   let executed: boolean | undefined;
-  if (decision === "approved" && approval.action === "email.send") {
+  if (decision === "approved" && (approval.action === "email.send" || approval.action === "sms.send")) {
     const to = approval.payload?.to;
     const draft = approval.payload?.draft;
     const subject = approval.payload?.source ?? "your message";
@@ -52,17 +54,24 @@ export async function POST(req: Request) {
     trace.mark("approval.approved", { action: approval.action });
     if (to && draft) {
       trace.setOutput(draft);
-      trace.mark("tool.email.send.start", { to });
-      executed = await sendAgentEmail(to, subject, draft);
-      trace.mark("tool.email.send.end", { sent: executed });
-      trace.flag("tool", "email.send");
+      if (approval.action === "email.send") {
+        trace.mark("tool.email.send.start", { to });
+        executed = await sendAgentEmail(to, subject, draft);
+        trace.mark("tool.email.send.end", { sent: executed });
+        trace.flag("tool", "email.send");
+      } else {
+        trace.mark("tool.sms.send.start", { to });
+        executed = svc ? await sendSmsForClient(svc, approval.client_id, to, draft) : false;
+        trace.mark("tool.sms.send.end", { sent: executed });
+        trace.flag("tool", "sms.send");
+      }
       trace.setStatus(executed ? "ok" : "send_failed");
       if (svc) {
         await svc.from("agent_audit").insert({
           client_id: approval.client_id,
           actor: "runtime",
           action: executed ? "action.executed" : "action.failed",
-          detail: `email.send → ${to} (re: ${subject})`,
+          detail: `${approval.action} → ${to} (re: ${subject})`,
         });
       }
     } else {

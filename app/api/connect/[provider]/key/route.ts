@@ -23,14 +23,17 @@ export async function POST(req: Request, { params }: { params: Promise<{ provide
   if (!email) return NextResponse.redirect(`${origin}/portal/login`, { status: 303 });
 
   const form = await req.formData().catch(() => null);
-  const key = (form?.get("key") ?? "").toString().trim();
-  const secret = (form?.get("secret") ?? "").toString().trim();
-  if (!key) return NextResponse.redirect(`${origin}/connections?error=key&p=${provider}`, { status: 303 });
+  const fields = connector.keyFields ?? [{ name: "key", label: "API key" }];
+  const creds: Record<string, string> = {};
+  for (const f of fields) {
+    const v = (form?.get(f.name) ?? "").toString().trim();
+    if (v) creds[f.name] = v;
+  }
+  if (!creds.key) return NextResponse.redirect(`${origin}/connections?error=key&p=${provider}`, { status: 303 });
 
-  // When both are supplied, `key` is the public id and `secret` is the credential.
-  const token = secret || key;
-  const publicId = secret ? key : null;
-
+  // Store the full credential set as JSON in the (server-only) token column so
+  // multi-part keys (e.g. Twilio SID + auth token + from number) round-trip.
+  // external_id holds the public identifier for display.
   const supabase = getServiceClient();
   if (supabase) {
     const { data: client } = await supabase.from("clients").select("id").eq("email", email).maybeSingle();
@@ -41,10 +44,10 @@ export async function POST(req: Request, { params }: { params: Promise<{ provide
           provider: connector.name,
           status: "connected",
           scope: "apikey",
-          access_token: token,
+          access_token: JSON.stringify(creds),
           refresh_token: null,
           expires_at: null,
-          external_id: publicId,
+          external_id: creds.key,
         },
         { onConflict: "client_id,provider" }
       );

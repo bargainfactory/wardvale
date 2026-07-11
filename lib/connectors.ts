@@ -180,6 +180,7 @@ export const connectors: Connector[] = [
     keyFields: [
       { name: "key", label: "Account SID", placeholder: "AC…" },
       { name: "secret", label: "Auth token", placeholder: "your Twilio auth token" },
+      { name: "from", label: "From number", placeholder: "+15551234567" },
     ],
   },
 
