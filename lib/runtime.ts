@@ -11,6 +11,7 @@ export type ProposedAction = {
   draft?: string;
   needsApproval: boolean;
   source: string;
+  to?: string;
 };
 
 const AGENT = "Inbox triage agent";
@@ -33,15 +34,16 @@ function normalize(x?: string): ProposedAction["action"] {
   return "triage.label";
 }
 
-function toProposed(subject: string, a?: { action?: string; summary?: string; draft?: string }): ProposedAction {
+function toProposed(m: { from: string; subject: string }, a?: { action?: string; summary?: string; draft?: string }): ProposedAction {
   const action = normalize(a?.action);
   return {
     action,
     agent: AGENT,
-    summary: a?.summary?.slice(0, 200) || defaultSummary(subject, action),
+    summary: a?.summary?.slice(0, 200) || defaultSummary(m.subject, action),
     draft: action === "email.send" ? (a?.draft ?? "").slice(0, 1500) || undefined : undefined,
     needsApproval: action === "email.send" || action === "escalate",
-    source: subject,
+    source: m.subject,
+    to: m.from || undefined,
   };
 }
 
@@ -59,7 +61,7 @@ function defaultSummary(subject: string, action: ProposedAction["action"]): stri
 }
 
 /** Keyword heuristic used when OpenAI isn't configured. */
-function heuristic(m: { subject: string; body: string }): ProposedAction {
+function heuristic(m: { from: string; subject: string; body: string }): ProposedAction {
   const s = `${m.subject} ${m.body}`.toLowerCase();
   let action: ProposedAction["action"] = "triage.label";
   if (/unsubscribe|newsletter|\bsale\b|% off|promo/.test(s)) action = "archive";
@@ -72,6 +74,7 @@ function heuristic(m: { subject: string; body: string }): ProposedAction {
     draft: action === "email.send" ? `Hi — thanks for reaching out about "${m.subject}". [Draft pending your approval.]` : undefined,
     needsApproval: action === "email.send" || action === "escalate",
     source: m.subject,
+    to: m.from || undefined,
   };
 }
 
@@ -123,7 +126,7 @@ export async function runInboxTriage(messages: InboxMessage[], trace?: Trace): P
       actions?: { action?: string; summary?: string; draft?: string }[];
     };
     const actions = parsed.actions ?? [];
-    return clean.map((m, i) => toProposed(m.subject, actions[i]));
+    return clean.map((m, i) => toProposed(m, actions[i]));
   } catch {
     trace?.flag("mode", "heuristic-fallback");
     return clean.map((m) => heuristic(m));

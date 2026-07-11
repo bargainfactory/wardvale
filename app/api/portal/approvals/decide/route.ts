@@ -1,11 +1,22 @@
 import { NextResponse } from "next/server";
 import { createServerSupabase, getPortalUserEmail } from "@/lib/supabase-ssr";
 import { getServiceClient } from "@/lib/supabase-server";
+import { sendAgentEmail } from "@/lib/email";
+import { startTrace } from "@/lib/trace";
+
+type ApprovalRow = {
+  id: string;
+  client_id: string;
+  action: string;
+  summary: string | null;
+  payload: { draft?: string; source?: string; to?: string } | null;
+};
 
 /**
  * Approve or reject a queued agent action. RLS (approvals_self_update) ensures a
- * user can only decide their own client's approvals; the decision is recorded to
- * the governance audit log.
+ * user can only decide their own client's approvals. On approve, the action is
+ * EXECUTED (email.send → the drafted reply is actually sent) with tool-execution
+ * trace spans; the decision + execution are recorded to the governance audit.
  */
 export async function POST(req: Request) {
   const email = await getPortalUserEmail();
@@ -24,19 +35,50 @@ export async function POST(req: Request) {
     .update({ status: decision, decided_by: email, decided_at: new Date().toISOString() })
     .eq("id", id)
     .eq("status", "pending")
-    .select("id, client_id, action, summary")
+    .select("id, client_id, action, summary, payload")
     .maybeSingle();
   if (error || !data) return NextResponse.json({ error: "forbidden" }, { status: 403 });
 
+  const approval = data as ApprovalRow;
   const svc = getServiceClient();
+
+  // Execute the action on approve (currently email.send), fully traced.
+  let executed: boolean | undefined;
+  if (decision === "approved" && approval.action === "email.send") {
+    const to = approval.payload?.to;
+    const draft = approval.payload?.draft;
+    const subject = approval.payload?.source ?? "your message";
+    const trace = startTrace("action.execute");
+    trace.mark("approval.approved", { action: approval.action });
+    if (to && draft) {
+      trace.setOutput(draft);
+      trace.mark("tool.email.send.start", { to });
+      executed = await sendAgentEmail(to, subject, draft);
+      trace.mark("tool.email.send.end", { sent: executed });
+      trace.flag("tool", "email.send");
+      trace.setStatus(executed ? "ok" : "send_failed");
+      if (svc) {
+        await svc.from("agent_audit").insert({
+          client_id: approval.client_id,
+          actor: "runtime",
+          action: executed ? "action.executed" : "action.failed",
+          detail: `email.send → ${to} (re: ${subject})`,
+        });
+      }
+    } else {
+      trace.setStatus("skipped_no_recipient");
+    }
+    await trace.end();
+  }
+
   if (svc) {
     await svc.from("agent_audit").insert({
-      client_id: data.client_id,
+      client_id: approval.client_id,
       actor: email,
       action: `approval.${decision}`,
-      detail: data.summary ?? data.action,
+      detail: approval.summary ?? approval.action,
     });
   }
 
-  return NextResponse.json({ ok: true, status: decision });
+  return NextResponse.json({ ok: true, status: decision, executed });
 }

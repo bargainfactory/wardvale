@@ -131,6 +131,13 @@ export async function sendWorkflowBlueprint(input: {
   });
 }
 
+/** Send an agent-drafted reply that a human has approved. */
+export async function sendAgentEmail(to: string, subject: string, body: string): Promise<boolean> {
+  const subj = /^re:/i.test(subject) ? subject : `Re: ${subject}`;
+  const inner = `<p style="color:#e2e8f0;white-space:pre-wrap;line-height:1.5">${escapeHtml(body)}</p>`;
+  return sendEmail({ to, subject: subj, html: shell(inner) });
+}
+
 function escapeHtml(s: string): string {
   return s
     .replace(/&/g, "&amp;")

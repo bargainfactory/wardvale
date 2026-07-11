@@ -47,7 +47,7 @@ export async function POST(req: Request) {
             agent: a.agent,
             action: a.action,
             summary: a.summary,
-            payload: { draft: a.draft ?? null, source: a.source },
+            payload: { draft: a.draft ?? null, source: a.source, to: a.to ?? null },
           }));
           if (rows.length) {
             await supabase.from("approvals").insert(rows);
