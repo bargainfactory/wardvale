@@ -1,6 +1,7 @@
 import { createServerSupabase } from "@/lib/supabase-ssr";
 
 export type PortalAutomation = {
+  id: string;
   name: string;
   status: string;
   runs: number;
@@ -10,11 +11,15 @@ export type PortalAutomation = {
 };
 export type PortalLog = { time: string; event: string; type: string };
 export type PortalKpis = { runs: string; hours: string; success: string; roi: string };
+export type PortalConnection = { provider: string; status: string; scope: string };
+export type PortalAudit = { time: string; actor: string; action: string; detail: string };
 export type PortalData = {
   clientName: string;
   kpis: PortalKpis;
   automations: PortalAutomation[];
   logs: PortalLog[];
+  connections: PortalConnection[];
+  audit: PortalAudit[];
 };
 
 function relTime(iso: string): string {
@@ -27,6 +32,10 @@ function relTime(iso: string): string {
   return `${Math.floor(h / 24)}d ago`;
 }
 
+function timeOf(iso: string): string {
+  return new Date(iso).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+}
+
 type RunRow = {
   automation_id: string | null;
   status: string;
@@ -37,7 +46,7 @@ type RunRow = {
 };
 
 /**
- * Real portal data for a signed-in client, or null when Supabase is
+ * Real control-plane data for a signed-in client, or null when Supabase is
  * unconfigured / the user has no client row / anything errors — callers then
  * fall back to the labeled demo. RLS ensures a user only sees their own rows.
  */
@@ -53,16 +62,24 @@ export async function getPortalData(email: string): Promise<PortalData | null> {
       .maybeSingle();
     if (!client) return null;
 
-    const [{ data: automations }, { data: runs }, { data: rollup }] = await Promise.all([
-      supabase.from("automations").select("id, name, status").eq("client_id", client.id),
-      supabase
-        .from("runs")
-        .select("automation_id, status, minutes_saved, dollars_saved, detail, created_at")
-        .eq("client_id", client.id)
-        .order("created_at", { ascending: false })
-        .limit(500),
-      supabase.from("client_month_rollup").select("*").eq("client_id", client.id).maybeSingle(),
-    ]);
+    const [{ data: automations }, { data: runs }, { data: rollup }, { data: connections }, { data: audit }] =
+      await Promise.all([
+        supabase.from("automations").select("id, name, status").eq("client_id", client.id),
+        supabase
+          .from("runs")
+          .select("automation_id, status, minutes_saved, dollars_saved, detail, created_at")
+          .eq("client_id", client.id)
+          .order("created_at", { ascending: false })
+          .limit(500),
+        supabase.from("client_month_rollup").select("*").eq("client_id", client.id).maybeSingle(),
+        supabase.from("connections").select("provider, status, scope").eq("client_id", client.id),
+        supabase
+          .from("agent_audit")
+          .select("actor, action, detail, created_at")
+          .eq("client_id", client.id)
+          .order("created_at", { ascending: false })
+          .limit(20),
+      ]);
 
     const runList: RunRow[] = (runs as RunRow[] | null) ?? [];
 
@@ -80,6 +97,7 @@ export async function getPortalData(email: string): Promise<PortalData | null> {
       (a) => {
         const agg = byAuto.get(a.id) ?? { runs: 0, ok: 0, saved: 0, last: "" };
         return {
+          id: a.id,
           name: a.name,
           status: a.status,
           runs: agg.runs,
@@ -91,10 +109,18 @@ export async function getPortalData(email: string): Promise<PortalData | null> {
     );
 
     const logs: PortalLog[] = runList.slice(0, 6).map((r) => ({
-      time: new Date(r.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+      time: timeOf(r.created_at),
       event: r.detail ?? "Automation run",
       type: r.status === "success" ? "success" : "info",
     }));
+
+    const conns: PortalConnection[] = ((connections as { provider: string; status: string; scope: string | null }[] | null) ?? []).map(
+      (c) => ({ provider: c.provider, status: c.status, scope: c.scope ?? "read/write" })
+    );
+
+    const auditRows: PortalAudit[] = ((audit as { actor: string | null; action: string; detail: string | null; created_at: string }[] | null) ?? []).map(
+      (a) => ({ time: timeOf(a.created_at), actor: a.actor ?? "system", action: a.action, detail: a.detail ?? "" })
+    );
 
     const roll = rollup as { runs_this_month?: number; hours_saved?: number; success_rate?: number } | null;
     const totalSaved = Math.round(runList.reduce((s, r) => s + (Number(r.dollars_saved) || 0), 0));
@@ -105,7 +131,7 @@ export async function getPortalData(email: string): Promise<PortalData | null> {
       roi: `$${totalSaved.toLocaleString()}`,
     };
 
-    return { clientName: client.name, kpis, automations: autos, logs };
+    return { clientName: client.name, kpis, automations: autos, logs, connections: conns, audit: auditRows };
   } catch {
     return null;
   }

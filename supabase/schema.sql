@@ -130,6 +130,56 @@ create policy runs_self_read on public.runs
     client_id in (select id from public.clients where email = (auth.jwt() ->> 'email'))
   );
 
+-- ── Agent control plane: connections + governance audit ──────────────────────
+alter table public.automations add column if not exists kind text not null default 'agent';
+
+-- Least-privilege connections to the tools agents act on.
+create table if not exists public.connections (
+  id          uuid primary key default gen_random_uuid(),
+  client_id   uuid not null references public.clients (id) on delete cascade,
+  provider    text not null,
+  status      text not null default 'connected' check (status in ('connected', 'error', 'disconnected')),
+  scope       text,
+  created_at  timestamptz not null default now()
+);
+create index if not exists connections_client_idx on public.connections (client_id);
+
+-- Immutable governance audit: pauses/resumes, approvals, config changes.
+create table if not exists public.agent_audit (
+  id             uuid primary key default gen_random_uuid(),
+  client_id      uuid not null references public.clients (id) on delete cascade,
+  automation_id  uuid references public.automations (id) on delete set null,
+  actor          text,
+  action         text not null,
+  detail         text,
+  created_at     timestamptz not null default now()
+);
+create index if not exists agent_audit_client_created_idx on public.agent_audit (client_id, created_at desc);
+
+alter table public.connections enable row level security;
+alter table public.agent_audit enable row level security;
+
+drop policy if exists connections_self_read on public.connections;
+create policy connections_self_read on public.connections
+  for select using (
+    client_id in (select id from public.clients where email = (auth.jwt() ->> 'email'))
+  );
+
+drop policy if exists agent_audit_self_read on public.agent_audit;
+create policy agent_audit_self_read on public.agent_audit
+  for select using (
+    client_id in (select id from public.clients where email = (auth.jwt() ->> 'email'))
+  );
+
+-- Owners can pause/resume (kill switch) only their own agents from the portal.
+drop policy if exists automations_self_update on public.automations;
+create policy automations_self_update on public.automations
+  for update using (
+    client_id in (select id from public.clients where email = (auth.jwt() ->> 'email'))
+  ) with check (
+    client_id in (select id from public.clients where email = (auth.jwt() ->> 'email'))
+  );
+
 -- ── First-party product analytics + A/B experiments ──────────────────────────
 create table if not exists public.events (
   id          uuid primary key default gen_random_uuid(),
