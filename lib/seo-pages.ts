@@ -391,4 +391,109 @@ export const seoPages: SeoPage[] = [
     tools: ["Google Business Profile", "GPT agent", "Twilio SMS"],
     savings: "~$3,200/mo",
   },
+  {
+    slug: "med-spa-booking-and-rebooking-agent",
+    vertical: "Med spas & aesthetics",
+    workflow: "Booking & rebooking agent",
+    h1: "Booking and rebooking agent for med spas and aesthetics",
+    metaTitle: "Med Spa Booking & Rebooking Automation | FlowForge AI",
+    metaDescription:
+      "Book more consults, fill last-minute cancellations, and keep clients on schedule. FlowForge books treatments, rebooks clients, and requests reviews automatically.",
+    problem:
+      "Consult and treatment inquiries come in while your team is with a client, so bookings slip and cancellations leave gaps you never manage to backfill. Recurring treatments like injectables and facials only work on a schedule, yet nobody has time to nudge clients back at the right interval. Every missed rebooking is repeat revenue quietly walking out the door.",
+    solution:
+      "FlowForge deploys an AI agent that books consults and treatments across SMS and WhatsApp, then instantly offers freed-up slots to your waitlist the moment someone cancels. It tracks each client's treatment cycle and reaches out to rebook at the perfect interval, and after each visit it texts happy clients a one-tap link to leave a review.",
+    steps: [
+      { label: "Client requests a consult or treatment", tool: "GPT agent" },
+      { label: "Book & fill cancellations from the waitlist", tool: "booking/PMS" },
+      { label: "Prompt rebooking at the right interval", tool: "SMS/WhatsApp" },
+      { label: "Request a review post-visit", tool: "Twilio" },
+    ],
+    tools: ["Twilio", "GPT agent", "booking/PMS", "SMS/WhatsApp"],
+    savings: "~$4,800/mo",
+  },
+  {
+    slug: "veterinary-appointment-reminders-and-recalls",
+    vertical: "Veterinary clinics",
+    workflow: "Reminders & recalls agent",
+    h1: "Appointment reminder and recall agent for veterinary clinics",
+    metaTitle: "Veterinary Appointment Reminder & Recall Automation | FlowForge AI",
+    metaDescription:
+      "Cut no-shows and bring pets back for their shots. FlowForge sends appointment reminders, vaccine and wellness recalls, and after-hours triage automatically.",
+    problem:
+      "No-shows leave exam rooms empty while your front desk is stretched thin caring for patients, and pets overdue for vaccines or wellness visits slip off the radar because nobody has time to call every owner. After hours, worried clients reach voicemail with no guidance on whether their pet needs urgent care. Each gap costs the clinic revenue and the pet its preventive care.",
+    solution:
+      "FlowForge sends multi-touch appointment reminders that let owners confirm or reschedule with one tap, and it runs recall campaigns that invite pets due for vaccines or wellness checks to rebook automatically. After hours, an AI agent triages messages, answers common questions, and flags true emergencies for your team, so no owner is ever left guessing.",
+    steps: [
+      { label: "Sync upcoming visits & due dates", tool: "practice-management" },
+      { label: "Send confirm / reschedule reminders", tool: "SMS" },
+      { label: "Run vaccine & wellness recalls", tool: "GPT agent" },
+      { label: "Triage after-hours messages", tool: "Calendly" },
+    ],
+    tools: ["practice-management", "GPT agent", "SMS", "Calendly"],
+    savings: "~$3,300/mo",
+  },
+  {
+    slug: "auto-repair-service-scheduling-and-reviews",
+    vertical: "Auto repair & dealerships",
+    workflow: "Service scheduling & review agent",
+    h1: "Service scheduling and review agent for auto repair and dealerships",
+    metaTitle: "Auto Repair Service Scheduling & Review Automation | FlowForge AI",
+    metaDescription:
+      "Book more service jobs, catch every missed call, and stack up 5-star reviews. FlowForge schedules service, follows up on quotes, and requests reviews automatically.",
+    problem:
+      "Calls flood the service desk while advisors are with customers at the counter, so appointment requests hit voicemail and callers simply try the next shop. Estimates go out and never get a follow-up, and satisfied customers drive off without ever being asked for a review. Every missed call and cold quote is service revenue you have already half-earned.",
+    solution:
+      "FlowForge instantly texts back missed callers and books service appointments straight into your shop-management system, so no job slips away. It follows up on open quotes with a friendly sequence that answers questions and nudges approval, then requests a Google review from happy customers once the work is done, steadily building the reputation that wins your next customer.",
+    steps: [
+      { label: "Capture the missed call & text back", tool: "Twilio" },
+      { label: "Book service into the schedule", tool: "shop-management/DMS" },
+      { label: "Follow up on open quotes", tool: "GPT agent" },
+      { label: "Request a review after service", tool: "Google Business Profile" },
+    ],
+    tools: ["Twilio", "GPT agent", "shop-management/DMS", "Google Business Profile"],
+    savings: "~$5,600/mo",
+  },
+  {
+    slug: "insurance-agency-lead-qualification-and-renewals",
+    vertical: "Insurance agencies",
+    workflow: "Lead qualification & renewals agent",
+    h1: "Lead qualification and renewals agent for insurance agencies",
+    metaTitle: "Insurance Lead Qualification & Renewals Automation | FlowForge AI",
+    metaDescription:
+      "Respond to every quote request in seconds and never miss a renewal. FlowForge qualifies inbound leads, chases renewals, and collects documents automatically.",
+    problem:
+      "Inbound quote requests expect an answer in minutes, but your producers are on the phone binding policies when they come in, so warm leads go cold and buy elsewhere. Renewals sneak up and lapse because nobody chased the client in time, and gathering the documents needed to quote turns into an endless back-and-forth. Each gap costs the agency both new business and retention.",
+    solution:
+      "FlowForge responds to new leads instantly with an AI agent that asks qualifying questions about coverage needs, timeline, and current policies, then routes hot prospects to the right producer. It watches renewal dates and reaches out ahead of each one to re-quote and retain the client, and it requests and tracks every document with polite reminders until the file is complete.",
+    steps: [
+      { label: "Capture & qualify the inbound lead", tool: "GPT agent" },
+      { label: "Sync the lead to the CRM", tool: "HubSpot/AMS" },
+      { label: "Chase upcoming renewals", tool: "Gmail" },
+      { label: "Collect documents & signatures", tool: "e-sign" },
+    ],
+    tools: ["HubSpot/AMS", "GPT agent", "Gmail", "e-sign"],
+    savings: "~$4,900/mo",
+  },
+  {
+    slug: "property-management-maintenance-and-tenant-comms",
+    vertical: "Property management",
+    workflow: "Maintenance & tenant comms agent",
+    h1: "Maintenance and tenant communications agent for property management",
+    metaTitle: "Property Management Maintenance & Tenant Comms Automation | FlowForge AI",
+    metaDescription:
+      "Triage maintenance requests, answer tenants 24/7, and fill vacancies faster. FlowForge handles maintenance, tenant Q&A, rent reminders, and lead-to-lease automatically.",
+    problem:
+      "Maintenance requests pour in by call, text, and email at all hours, and sorting the true emergencies from routine fixes eats your team's day. Tenants ask the same questions about rent, lease terms, and move-out over and over, while prospective renters who inquire after hours go unanswered and lease elsewhere. Manual follow-up simply does not scale across a full portfolio.",
+    solution:
+      "FlowForge runs an AI agent that triages every maintenance request by urgency, dispatches the right vendor, and keeps the tenant updated automatically. It answers common tenant questions around the clock, sends rent reminders before the due date, and responds to new rental inquiries instantly to book showings and move prospects from lead to lease without extra staff.",
+    steps: [
+      { label: "Receive a maintenance or tenant request", tool: "SMS/WhatsApp" },
+      { label: "Triage urgency & answer tenant Q&A", tool: "GPT agent" },
+      { label: "Log the ticket & send rent reminders", tool: "property-management software" },
+      { label: "Convert new inquiries lead-to-lease", tool: "Sheets" },
+    ],
+    tools: ["property-management software", "GPT agent", "SMS/WhatsApp", "Sheets"],
+    savings: "~$5,300/mo",
+  },
 ];

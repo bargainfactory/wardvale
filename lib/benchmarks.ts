@@ -77,6 +77,46 @@ export const benchmarks: Benchmark[] = [
     replyTimeAfter: "under 1 min",
     topAutomation: "Trial-to-member nurture & no-show winback",
   },
+  {
+    vertical: "Med spa",
+    avgMonthlySavings: 5000,
+    avgHoursSaved: 52,
+    replyTimeBefore: "2–6 hours",
+    replyTimeAfter: "under 1 min",
+    topAutomation: "Booking, cancellation-fill & rebooking agent",
+  },
+  {
+    vertical: "Veterinary",
+    avgMonthlySavings: 4400,
+    avgHoursSaved: 50,
+    replyTimeBefore: "3–8 hours",
+    replyTimeAfter: "under 2 min",
+    topAutomation: "Appointment reminders & vaccine recalls",
+  },
+  {
+    vertical: "Auto repair",
+    avgMonthlySavings: 6000,
+    avgHoursSaved: 57,
+    replyTimeBefore: "2–6 hours",
+    replyTimeAfter: "under 30 sec",
+    topAutomation: "Service scheduling & missed-call recovery",
+  },
+  {
+    vertical: "Insurance",
+    avgMonthlySavings: 6500,
+    avgHoursSaved: 60,
+    replyTimeBefore: "1–2 days",
+    replyTimeAfter: "under 5 min",
+    topAutomation: "Lead qualification & renewal chasing",
+  },
+  {
+    vertical: "Property management",
+    avgMonthlySavings: 4600,
+    avgHoursSaved: 55,
+    replyTimeBefore: "4–12 hours",
+    replyTimeAfter: "under 2 min",
+    topAutomation: "Maintenance triage & tenant comms",
+  },
 ];
 
 /**

@@ -1,67 +1,19 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ArrowRight, Building2, Check, Scale, ShoppingBag, Stethoscope, Utensils, Wrench } from "lucide-react";
+import { ArrowRight, Check } from "lucide-react";
 import { PageLayout } from "@/components/page-layout";
 import { Button } from "@/components/ui/button";
 import { GuaranteeBanner } from "@/components/guarantee";
+import { OsConfigurator } from "@/components/os-configurator";
+import { bundles } from "@/lib/solutions";
+import { getBenchmark } from "@/lib/benchmarks";
 
 export const metadata: Metadata = {
   title: "Industry Solutions — Done-for-You Automation Bundles",
   description:
-    "Pre-built automation stacks tuned to your industry: Restaurant OS, Home-Services OS, Clinic OS, Real-Estate OS, Law-Firm OS, and E-commerce OS. Ship in 14 days.",
+    "Pre-built automation stacks tuned to your industry — restaurants, home services, clinics, med spas, veterinary, auto, real estate, law, insurance, property, e-commerce — or configure your own OS with live ROI. Ship in 14 days.",
   alternates: { canonical: "/solutions" },
 };
-
-const bundles = [
-  {
-    name: "Restaurant OS",
-    icon: Utensils,
-    tagline: "Fill tables, protect your reputation, and win back your Sundays.",
-    includes: ["Reservation & review agent", "WhatsApp booking agent", "Inbox & DM triage", "No-show reminders"],
-    savings: "~$3,400/mo",
-    slug: "restaurant-reservation-and-review-agent",
-  },
-  {
-    name: "Home-Services OS",
-    icon: Wrench,
-    tagline: "Never miss an after-hours call — turn every ring into a booked job.",
-    includes: ["AI phone answering agent", "Missed-call → booked job", "Quote follow-up", "Review requests"],
-    savings: "~$4,800/mo",
-    slug: "ai-phone-agent-for-home-services",
-  },
-  {
-    name: "Clinic & Dental OS",
-    icon: Stethoscope,
-    tagline: "A 24/7 front desk that books, reminds, and rebooks — zero hold music.",
-    includes: ["AI voice receptionist", "Appointment reminders", "Rebooking & recalls", "Intake automation"],
-    savings: "~$5,200/mo",
-    slug: "ai-voice-receptionist-for-dental-practices",
-  },
-  {
-    name: "Real-Estate OS",
-    icon: Building2,
-    tagline: "Qualify and nurture every lead the second it lands — day or night.",
-    includes: ["Lead qualification agent", "Multi-touch follow-up", "WhatsApp & SMS agent", "Showing scheduler"],
-    savings: "~$5,600/mo",
-    slug: "real-estate-lead-qualification-and-follow-up",
-  },
-  {
-    name: "Law-Firm OS",
-    icon: Scale,
-    tagline: "Capture every new-client call and collect what you need — automatically.",
-    includes: ["AI intake call agent", "Conflict & intake questions", "Document collection", "Consult scheduling"],
-    savings: "~$4,200/mo",
-    slug: "ai-voice-agent-for-law-firms",
-  },
-  {
-    name: "E-commerce OS",
-    icon: ShoppingBag,
-    tagline: "Recover carts, answer buyers, and grow reviews on autopilot.",
-    includes: ["Abandoned-cart recovery", "WhatsApp sales & support", "Support inbox triage", "Review engine"],
-    savings: "~$7,200/mo",
-    slug: "shopify-store-abandoned-cart-recovery",
-  },
-];
 
 export default function SolutionsPage() {
   return (
@@ -76,20 +28,21 @@ export default function SolutionsPage() {
               A complete automation stack, <span className="gradient-text">built for your industry.</span>
             </h1>
             <p className="mx-auto mt-4 max-w-xl text-lg text-muted-foreground">
-              Skip the guesswork. Each OS is a pre-built bundle of the automations that move the needle in
-              your vertical — deployed, monitored, and tuned to your voice in 14 days.
+              Each OS is a pre-built bundle of the automations that move the needle in your vertical —
+              deployed, monitored, and tuned to your voice in 14 days. Or build your own below.
             </p>
           </div>
         </div>
       </section>
 
-      <section className="pb-20">
+      <section className="pb-16">
         <div className="container">
           <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
             {bundles.map((b) => {
               const Icon = b.icon;
+              const bench = getBenchmark(b.vertical);
               return (
-                <div key={b.name} className="group flex flex-col rounded-3xl glass p-7 transition hover:-translate-y-1 hover:shadow-glow">
+                <div key={b.slug} className="group flex flex-col rounded-3xl glass p-7 transition hover:-translate-y-1 hover:shadow-glow">
                   <div className="flex items-center justify-between">
                     <div className="grid h-12 w-12 place-items-center rounded-2xl bg-gradient-to-br from-cyan-electric/25 to-indigo-500/15 text-cyan-electric">
                       <Icon className="h-5 w-5" strokeWidth={2.25} />
@@ -108,6 +61,14 @@ export default function SolutionsPage() {
                       </li>
                     ))}
                   </ul>
+
+                  {bench && (
+                    <p className="mt-4 text-xs text-muted-foreground">
+                      Peers save ~<span className="font-medium text-cyan-electric">${bench.avgMonthlySavings.toLocaleString()}/mo</span>
+                      {" · "}reply time {bench.replyTimeBefore} → {bench.replyTimeAfter}
+                    </p>
+                  )}
+
                   <div className="mt-6 flex items-center gap-4">
                     <Link href="/build">
                       <Button size="sm">Build yours</Button>
@@ -126,13 +87,32 @@ export default function SolutionsPage() {
         </div>
       </section>
 
-      <section className="pb-16">
+      {/* Moat: build-your-own OS configurator */}
+      <section className="border-y border-border/60 py-20">
+        <div className="container">
+          <div className="mx-auto max-w-2xl text-center">
+            <span className="text-xs font-semibold uppercase tracking-[0.2em] text-cyan-electric">Build your OS</span>
+            <h2 className="mt-3 font-display text-3xl font-semibold tracking-tight sm:text-4xl">
+              Mix and match. <span className="gradient-text">See your ROI live.</span>
+            </h2>
+            <p className="mx-auto mt-3 max-w-xl text-muted-foreground">
+              Start from your industry stack, bolt on the agents you want, and watch the price, savings,
+              and payback update in real time — no sales call required.
+            </p>
+          </div>
+          <div className="mt-12">
+            <OsConfigurator />
+          </div>
+        </div>
+      </section>
+
+      <section className="py-16">
         <div className="container">
           <GuaranteeBanner />
         </div>
       </section>
 
-      <section className="py-16">
+      <section className="pb-16">
         <div className="container">
           <div className="mx-auto max-w-2xl rounded-3xl gradient-border glass-strong p-10 text-center">
             <h2 className="font-display text-3xl font-semibold">Don&rsquo;t see your industry?</h2>
