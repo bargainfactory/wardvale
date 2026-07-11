@@ -18,6 +18,13 @@ const DEMO: PortalData & { deltas: { runs: string; hours: string; success: strin
   ],
   kpis: { runs: "18,490", hours: "147h", success: "99.1%", roi: "$12,510" },
   deltas: { runs: "+23%", hours: "+18h", success: "+0.2%", roi: "+$2.1k" },
+  roi: { realized: 12510, pipeline: 4820, won: 143, resolved: 190, winRate: 75 },
+  outcomes: [
+    { id: "o1", agent: "AR follow-up agent", kind: "ar-followup", value: 2400, status: "pending", detail: "Reminder: Invoice 1043 · $2,400 · 21d overdue", createdAt: "12m ago" },
+    { id: "o2", agent: "Cart recovery agent", kind: "cart-recovery", value: 128, status: "won", detail: "Recovered cart · Ana Lee", createdAt: "1h ago" },
+    { id: "o3", agent: "Review request agent", kind: "review-request", value: 40, status: "pending", detail: "Review ask · Dana R.", createdAt: "2h ago" },
+    { id: "o4", agent: "Lead qualification agent", kind: "lead-qualification", value: 250, status: "won", detail: "Booked · Frank T. (Website form)", createdAt: "Yesterday" },
+  ],
   automations: [
     { id: "a1", name: "Inbox triage agent", status: "active", runs: 12847, successRate: 99.3, saved: 4280, lastRun: "34s ago" },
     { id: "a2", name: "Lead qualifier", status: "active", runs: 3182, successRate: 98.7, saved: 2140, lastRun: "2m ago" },
@@ -88,6 +95,8 @@ export default async function PortalPage() {
       onboarded={view.onboarded}
       plan={view.plan}
       agentConfigs={view.agentConfigs}
+      roi={view.roi}
+      outcomes={view.outcomes}
       isDemo={isDemo}
       authEnabled={authEnabled}
       userEmail={userEmail}

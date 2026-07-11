@@ -13,6 +13,7 @@ import {
   ClipboardCheck,
   Clock,
   CreditCard,
+  DollarSign,
   LayoutDashboard,
   Loader2,
   Lock,
@@ -34,7 +35,7 @@ import { Button } from "@/components/ui/button";
 import { createClient } from "@/lib/supabase";
 import { useLocale } from "@/lib/locale-context";
 import { entitlement, type Schedule } from "@/lib/agents-catalog";
-import type { PortalAgentConfig, PortalApproval, PortalAutomation, PortalAudit, PortalConnection, PortalKpis, PortalLog } from "@/lib/portal";
+import type { PortalAgentConfig, PortalApproval, PortalAutomation, PortalAudit, PortalConnection, PortalKpis, PortalLog, PortalOutcome, PortalRoi } from "@/lib/portal";
 
 type Props = {
   clientName: string;
@@ -48,12 +49,14 @@ type Props = {
   onboarded: boolean;
   plan: string;
   agentConfigs: PortalAgentConfig[];
+  roi: PortalRoi;
+  outcomes: PortalOutcome[];
   isDemo: boolean;
   authEnabled: boolean;
   userEmail: string | null;
 };
 
-type Tab = "overview" | "agents" | "approvals" | "connections" | "audit";
+type Tab = "overview" | "roi" | "agents" | "approvals" | "connections" | "audit";
 
 const PROVIDER_ICON: Record<string, typeof Mail> = {
   gmail: Mail,
@@ -115,7 +118,7 @@ const RUNNERS: { id: string; label: string; sample: Record<string, unknown> }[] 
   { id: "support-triage", label: "Support triage", sample: { agent: "support-triage", messages: SAMPLE_TICKETS } },
 ];
 
-const TABS = ["overview", "agents", "approvals", "connections", "audit"] as const;
+const TABS = ["overview", "roi", "agents", "approvals", "connections", "audit"] as const;
 
 export function PortalDashboard(props: Props) {
   const { clientName, kpis, deltas, logs, connections, onboarded, plan, isDemo, authEnabled, userEmail } = props;
@@ -131,7 +134,26 @@ export function PortalDashboard(props: Props) {
   const [busy, setBusy] = useState<string | null>(null);
   const [running, setRunning] = useState<string | null>(null);
   const [configs, setConfigs] = useState<PortalAgentConfig[]>(props.agentConfigs);
+  const [outcomes, setOutcomes] = useState<PortalOutcome[]>(props.outcomes);
+  const { roi } = props;
   const ent = entitlement(plan);
+
+  // Confirm a pending outcome paid off (realized $) or didn't — optimistic.
+  async function resolveOutcome(id: string, status: "won" | "lost") {
+    const prev = outcomes;
+    setOutcomes((list) => list.map((o) => (o.id === id ? { ...o, status } : o)));
+    if (isDemo) return;
+    try {
+      const res = await fetch("/api/portal/outcomes/decide", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ id, status }),
+      });
+      if (!res.ok) setOutcomes(prev);
+    } catch {
+      setOutcomes(prev);
+    }
+  }
   const enabledCount = configs.filter((c) => c.enabled).length;
 
   // Update one agent's config (enable, auto-send, schedule) — optimistic, with
@@ -319,6 +341,7 @@ export function PortalDashboard(props: Props) {
         {/* Tabs */}
         <div className="mb-6 flex flex-wrap gap-1 rounded-full border border-border bg-card/40 p-1 text-sm">
           <TabButton icon={LayoutDashboard} label="Overview" active={tab === "overview"} onClick={() => setTab("overview")} />
+          <TabButton icon={DollarSign} label="ROI" active={tab === "roi"} onClick={() => setTab("roi")} />
           <TabButton icon={Bot} label={`Agents (${agents.length})`} active={tab === "agents"} onClick={() => setTab("agents")} />
           <TabButton icon={ClipboardCheck} label={`Approvals (${approvals.length})`} active={tab === "approvals"} onClick={() => setTab("approvals")} />
           <TabButton icon={Plug} label={`Connections (${connections.length})`} active={tab === "connections"} onClick={() => setTab("connections")} />
@@ -343,6 +366,80 @@ export function PortalDashboard(props: Props) {
                     <li key={i} className="flex items-center gap-3 px-6 py-3">
                       <span className="text-xs text-muted-foreground tabular-nums">{l.time}</span>
                       <span className="text-sm">{l.event}</span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          </div>
+        )}
+
+        {tab === "roi" && (
+          <div>
+            <div className="grid gap-4 sm:grid-cols-3">
+              <div className="rounded-2xl border border-emerald-400/25 bg-emerald-400/5 p-5">
+                <span className="text-xs text-muted-foreground">Realized value (confirmed)</span>
+                <p className="mt-2 font-display text-3xl font-semibold tabular-nums text-emerald-300">${roi.realized.toLocaleString()}</p>
+                <p className="text-[11px] text-muted-foreground">{roi.won} outcomes won</p>
+              </div>
+              <div className="rounded-2xl border border-border bg-card/40 p-5">
+                <span className="text-xs text-muted-foreground">In pipeline (pending)</span>
+                <p className="mt-2 font-display text-3xl font-semibold tabular-nums text-cyan-electric">${roi.pipeline.toLocaleString()}</p>
+                <p className="text-[11px] text-muted-foreground">value at stake, awaiting outcome</p>
+              </div>
+              <div className="rounded-2xl border border-border bg-card/40 p-5">
+                <span className="text-xs text-muted-foreground">Win rate</span>
+                <p className="mt-2 font-display text-3xl font-semibold tabular-nums">{roi.winRate}%</p>
+                <p className="text-[11px] text-muted-foreground">of {roi.resolved} resolved outcomes</p>
+              </div>
+            </div>
+
+            <div className="mt-6 rounded-3xl border border-border bg-card/40 backdrop-blur">
+              <div className="flex items-center justify-between border-b border-border px-6 py-4">
+                <h2 className="flex items-center gap-2 font-display font-semibold">
+                  <DollarSign className="h-4 w-4 text-cyan-electric" /> Attributed outcomes
+                </h2>
+                <span className="text-xs text-muted-foreground">Confirm what paid off — that&rsquo;s your realized ROI</span>
+              </div>
+              {outcomes.length === 0 ? (
+                <p className="px-6 py-10 text-center text-sm text-muted-foreground">
+                  As agents send actions with money at stake, they&rsquo;ll appear here to track and confirm.
+                </p>
+              ) : (
+                <ul className="divide-y divide-border/50">
+                  {outcomes.map((o) => (
+                    <li key={o.id} className="flex flex-wrap items-center gap-3 px-6 py-3">
+                      <div className="min-w-0 flex-1">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className="font-display font-semibold tabular-nums text-cyan-electric">${o.value.toLocaleString()}</span>
+                          <span className="text-xs text-muted-foreground">{o.agent} · {o.createdAt}</span>
+                        </div>
+                        <p className="mt-0.5 text-sm text-muted-foreground">{o.detail}</p>
+                      </div>
+                      {o.status === "pending" ? (
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => resolveOutcome(o.id, "won")}
+                            className="inline-flex items-center gap-1.5 rounded-full border border-emerald-400/30 px-3 py-1 text-xs font-medium text-emerald-300 transition hover:bg-emerald-400/10"
+                          >
+                            <Check className="h-3 w-3" /> Won
+                          </button>
+                          <button
+                            onClick={() => resolveOutcome(o.id, "lost")}
+                            className="inline-flex items-center gap-1.5 rounded-full border border-border px-3 py-1 text-xs font-medium text-muted-foreground transition hover:bg-white/5"
+                          >
+                            <X className="h-3 w-3" /> Lost
+                          </button>
+                        </div>
+                      ) : (
+                        <span
+                          className={`rounded-full px-2.5 py-0.5 text-[11px] font-medium ${
+                            o.status === "won" ? "bg-emerald-400/10 text-emerald-300" : "bg-white/5 text-muted-foreground"
+                          }`}
+                        >
+                          {o.status}
+                        </span>
+                      )}
                     </li>
                   ))}
                 </ul>

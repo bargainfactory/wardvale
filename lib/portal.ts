@@ -23,17 +23,21 @@ export type PortalConnection = {
 export type PortalAudit = { time: string; actor: string; action: string; detail: string };
 export type PortalApproval = { id: string; agent: string; action: string; summary: string; createdAt: string };
 export type PortalAgentConfig = { key: string; name: string; enabled: boolean; autoSend: boolean; schedule: string };
+export type PortalRoi = { realized: number; pipeline: number; won: number; resolved: number; winRate: number };
+export type PortalOutcome = { id: string; agent: string; kind: string; value: number; status: string; detail: string; createdAt: string };
 export type PortalData = {
   clientName: string;
   onboarded: boolean;
   plan: string;
   kpis: PortalKpis;
+  roi: PortalRoi;
   automations: PortalAutomation[];
   logs: PortalLog[];
   connections: PortalConnection[];
   audit: PortalAudit[];
   approvals: PortalApproval[];
   agentConfigs: PortalAgentConfig[];
+  outcomes: PortalOutcome[];
 };
 
 function relTime(iso: string): string {
@@ -84,6 +88,7 @@ export async function getPortalData(email: string): Promise<PortalData | null> {
       { data: audit },
       { data: approvalsData },
       { data: configData },
+      { data: outcomeData },
     ] = await Promise.all([
       supabase.from("automations").select("id, name, status").eq("client_id", client.id),
       supabase
@@ -108,6 +113,12 @@ export async function getPortalData(email: string): Promise<PortalData | null> {
         .order("created_at", { ascending: false })
         .limit(20),
       supabase.from("agent_config").select("agent_key, enabled, auto_send, schedule").eq("client_id", client.id),
+      supabase
+        .from("outcomes")
+        .select("id, agent, kind, value, status, detail, created_at")
+        .eq("client_id", client.id)
+        .order("created_at", { ascending: false })
+        .limit(100),
     ]);
 
     const runList: RunRow[] = (runs as RunRow[] | null) ?? [];
@@ -171,6 +182,28 @@ export async function getPortalData(email: string): Promise<PortalData | null> {
       (c) => ({ key: c.agent_key, name: agentName(c.agent_key), enabled: c.enabled, autoSend: c.auto_send, schedule: c.schedule })
     );
 
+    const outcomeRows = (outcomeData as { id: string; agent: string | null; kind: string | null; value: number; status: string; detail: string | null; created_at: string }[] | null) ?? [];
+    const realized = outcomeRows.filter((o) => o.status === "won").reduce((s, o) => s + (Number(o.value) || 0), 0);
+    const pipeline = outcomeRows.filter((o) => o.status === "pending").reduce((s, o) => s + (Number(o.value) || 0), 0);
+    const won = outcomeRows.filter((o) => o.status === "won").length;
+    const resolved = outcomeRows.filter((o) => o.status !== "pending").length;
+    const roi: PortalRoi = {
+      realized: Math.round(realized),
+      pipeline: Math.round(pipeline),
+      won,
+      resolved,
+      winRate: resolved ? Math.round((won / resolved) * 100) : 0,
+    };
+    const outcomes: PortalOutcome[] = outcomeRows.slice(0, 30).map((o) => ({
+      id: o.id,
+      agent: o.agent ?? agentName(o.kind ?? ""),
+      kind: o.kind ?? "",
+      value: Math.round(Number(o.value) || 0),
+      status: o.status,
+      detail: o.detail ?? "",
+      createdAt: relTime(o.created_at),
+    }));
+
     const roll = rollup as { runs_this_month?: number; hours_saved?: number; success_rate?: number } | null;
     const totalSaved = Math.round(runList.reduce((s, r) => s + (Number(r.dollars_saved) || 0), 0));
     const kpis: PortalKpis = {
@@ -185,12 +218,14 @@ export async function getPortalData(email: string): Promise<PortalData | null> {
       onboarded: Boolean((client as { onboarded?: boolean }).onboarded),
       plan: (client as { plan?: string }).plan ?? "trial",
       kpis,
+      roi,
       automations: autos,
       logs,
       connections: conns,
       audit: auditRows,
       approvals,
       agentConfigs,
+      outcomes,
     };
   } catch {
     return null;

@@ -18,6 +18,7 @@ import { getServiceClient } from "@/lib/supabase-server";
 import { loadContext } from "@/lib/context";
 import { sendApprovalNotification, sendAgentEmail } from "@/lib/email";
 import { sendSmsForClient } from "@/lib/integrations";
+import { recordOutcome } from "@/lib/outcomes";
 import { firstTime, idemKey } from "@/lib/idempotency";
 import { agentName } from "@/lib/agents-catalog";
 import {
@@ -184,7 +185,19 @@ export async function POST(req: Request) {
                 a.action === "sms.send"
                   ? await sendSmsForClient(supabase, client.id, a.to, a.draft)
                   : await sendAgentEmail(a.to, a.source, a.draft);
-              if (ok) autoSent += 1;
+              if (ok) {
+                autoSent += 1;
+                // A sent action with money at stake becomes pending ROI pipeline.
+                await recordOutcome(supabase, {
+                  clientId: client.id,
+                  agent: a.agent,
+                  action: a.action,
+                  kind: body.agent,
+                  value: a.value,
+                  detail: a.summary,
+                  ref: a.source,
+                });
+              }
               await supabase.from("agent_audit").insert({
                 client_id: client.id,
                 actor: "runtime",
@@ -197,7 +210,7 @@ export async function POST(req: Request) {
                 agent: a.agent,
                 action: a.action,
                 summary: a.summary,
-                payload: { draft: a.draft ?? null, source: a.source, to: a.to ?? null },
+                payload: { draft: a.draft ?? null, source: a.source, to: a.to ?? null, value: a.value ?? null, kind: body.agent ?? null },
               });
             }
           }

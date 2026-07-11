@@ -3,14 +3,16 @@ import { createServerSupabase, getPortalUserEmail } from "@/lib/supabase-ssr";
 import { getServiceClient } from "@/lib/supabase-server";
 import { sendAgentEmail } from "@/lib/email";
 import { sendSmsForClient } from "@/lib/integrations";
+import { recordOutcome } from "@/lib/outcomes";
 import { startTrace } from "@/lib/trace";
 
 type ApprovalRow = {
   id: string;
   client_id: string;
+  agent: string | null;
   action: string;
   summary: string | null;
-  payload: { draft?: string; source?: string; to?: string } | null;
+  payload: { draft?: string; source?: string; to?: string; value?: number; kind?: string } | null;
 };
 
 /**
@@ -36,7 +38,7 @@ export async function POST(req: Request) {
     .update({ status: decision, decided_by: email, decided_at: new Date().toISOString() })
     .eq("id", id)
     .eq("status", "pending")
-    .select("id, client_id, action, summary, payload")
+    .select("id, client_id, agent, action, summary, payload")
     .maybeSingle();
   if (error || !data) return NextResponse.json({ error: "forbidden" }, { status: 403 });
 
@@ -73,6 +75,19 @@ export async function POST(req: Request) {
           action: executed ? "action.executed" : "action.failed",
           detail: `${approval.action} → ${to} (re: ${subject})`,
         });
+        // A sent action with money at stake becomes pending ROI pipeline.
+        if (executed) {
+          await recordOutcome(svc, {
+            clientId: approval.client_id,
+            approvalId: approval.id,
+            agent: approval.agent,
+            action: approval.action,
+            kind: approval.payload?.kind ?? null,
+            value: approval.payload?.value ?? null,
+            detail: approval.summary,
+            ref: approval.payload?.source ?? null,
+          });
+        }
       }
     } else {
       trace.setStatus("skipped_no_recipient");

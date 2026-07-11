@@ -12,7 +12,12 @@ export type ProposedAction = {
   needsApproval: boolean;
   source: string;
   to?: string;
+  value?: number; // dollars at stake, for ROI attribution (0/undefined = not tracked)
 };
+
+// Rough per-action value estimates for agents without a concrete dollar amount.
+// Conservative on purpose — realized ROI is what the outcome resolves to.
+export const VALUE_ESTIMATE = { review: 40, lead: 250 } as const;
 
 /** Prepend the client's business context to a base system prompt when present. */
 function sys(base: string, context?: string): string {
@@ -172,6 +177,7 @@ function arToProposed(v: CleanInvoice, a?: { action?: string; summary?: string; 
     needsApproval: action === "email.send" || action === "escalate",
     source: `Invoice ${v.number}`,
     to: v.email || undefined,
+    value: v.amount,
   };
 }
 
@@ -187,6 +193,7 @@ function arHeuristic(v: CleanInvoice): ProposedAction {
     needsApproval: action === "email.send" || action === "escalate",
     source: `Invoice ${v.number}`,
     to: v.email || undefined,
+    value: v.amount,
   };
 }
 
@@ -324,6 +331,7 @@ export async function runCartRecovery(carts: Cart[], trace?: Trace, context?: st
       needsApproval: true,
       source: `Cart ${c.customer || c.email || i + 1}`,
       to: ch.to,
+      value: c.total,
     };
   });
 }
@@ -364,6 +372,7 @@ export async function runReviewRequest(targets: ReviewTarget[], trace?: Trace, c
       needsApproval: true,
       source: `Review · ${t.customer || t.email || i + 1}`,
       to: ch.to,
+      value: VALUE_ESTIMATE.review,
     };
   });
 }
@@ -405,6 +414,7 @@ export async function runLeadQualification(leads: Lead[], trace?: Trace, context
       needsApproval: true,
       source: `Lead ${l.name || l.email || i + 1}`,
       to: ch.to,
+      value: VALUE_ESTIMATE.lead,
     };
   });
 }

@@ -331,3 +331,38 @@ create policy agent_config_self_update on public.agent_config
   ) with check (
     client_id in (select id from public.clients where email = (auth.jwt() ->> 'email'))
   );
+
+-- ── Outcomes: closed-loop ROI attribution ────────────────────────────────────
+-- One row per executed agent action, with the dollars at stake. Starts 'pending'
+-- (pipeline) and is resolved to 'won' (realized $) or 'lost' — automatically
+-- where we can observe it, or by the owner. This is the proof-of-value dataset.
+create table if not exists public.outcomes (
+  id           uuid primary key default gen_random_uuid(),
+  client_id    uuid not null references public.clients (id) on delete cascade,
+  approval_id  uuid references public.approvals (id) on delete set null,
+  agent        text,
+  action       text,
+  kind         text,                 -- agent key (ar-followup, cart-recovery, …)
+  status       text not null default 'pending' check (status in ('pending', 'won', 'lost')),
+  value        numeric not null default 0,
+  detail       text,
+  ref          text,                 -- external key (invoice #, checkout id) for auto-resolution
+  created_at   timestamptz not null default now(),
+  resolved_at  timestamptz
+);
+create index if not exists outcomes_client_created_idx on public.outcomes (client_id, created_at desc);
+create index if not exists outcomes_client_status_idx on public.outcomes (client_id, status);
+
+alter table public.outcomes enable row level security;
+drop policy if exists outcomes_self_read on public.outcomes;
+create policy outcomes_self_read on public.outcomes
+  for select using (
+    client_id in (select id from public.clients where email = (auth.jwt() ->> 'email'))
+  );
+drop policy if exists outcomes_self_update on public.outcomes;
+create policy outcomes_self_update on public.outcomes
+  for update using (
+    client_id in (select id from public.clients where email = (auth.jwt() ->> 'email'))
+  ) with check (
+    client_id in (select id from public.clients where email = (auth.jwt() ->> 'email'))
+  );
