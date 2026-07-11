@@ -107,6 +107,10 @@ export function getConnector(id: string): Connector | undefined {
   return connectors.find((c) => c.id === id);
 }
 
+export function getConnectorByName(name: string): Connector | undefined {
+  return connectors.find((c) => c.name === name);
+}
+
 /** A connector is usable once its OAuth app credentials + endpoints are set. */
 export function isConnectorConfigured(c: Connector): boolean {
   return Boolean(process.env[c.idEnv] && process.env[c.secretEnv] && c.authUrl && c.tokenUrl);

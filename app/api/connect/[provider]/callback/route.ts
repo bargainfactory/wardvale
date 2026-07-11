@@ -17,6 +17,9 @@ export async function GET(req: Request, { params }: { params: Promise<{ provider
   const url = new URL(req.url);
   const code = url.searchParams.get("code");
   const state = url.searchParams.get("state");
+  // QuickBooks returns the company id (realmId) on the callback; it's required
+  // for every subsequent API call, so we persist it as the connection's external id.
+  const realmId = url.searchParams.get("realmId");
 
   const connector = getConnector(provider);
   if (!connector || !code || !state) return NextResponse.redirect(`${origin}/connections?error=1`);
@@ -65,6 +68,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ provider
             access_token: token.access_token,
             refresh_token: token.refresh_token ?? null,
             expires_at: expiresAt,
+            external_id: realmId,
           },
           { onConflict: "client_id,provider" }
         );

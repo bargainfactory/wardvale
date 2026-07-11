@@ -3,6 +3,7 @@ import { rateLimit, clientIp } from "@/lib/rate-limit";
 import { startTrace } from "@/lib/trace";
 import { runInboxTriage, runArFollowup, type InboxMessage, type Invoice, type ProposedAction } from "@/lib/runtime";
 import { getServiceClient } from "@/lib/supabase-server";
+import { pullOverdueInvoices } from "@/lib/integrations";
 
 /**
  * The first real end-to-end agent cycle: read messages (tool) → decide one
@@ -28,9 +29,25 @@ export async function POST(req: Request) {
       invoices?: Invoice[];
     };
 
+    // A client's ingest key both scopes persistence and unlocks live data pulls
+    // from that client's connected tools (e.g. QuickBooks).
+    const key =
+      req.headers.get("authorization")?.replace(/^Bearer\s+/i, "").trim() ||
+      req.headers.get("x-api-key")?.trim() ||
+      "";
+
     let actions: ProposedAction[];
     if (body.agent === "ar-followup") {
-      const invoices = Array.isArray(body.invoices) ? body.invoices : [];
+      let invoices = Array.isArray(body.invoices) ? body.invoices : [];
+      // No invoices supplied but the caller is a known client → pull LIVE overdue
+      // invoices from their connected QuickBooks instead of running on nothing.
+      if (invoices.length === 0 && key) {
+        const pulled = await pullOverdueInvoices(key, trace);
+        if (pulled) {
+          invoices = pulled.invoices;
+          trace.flag("source", "quickbooks");
+        }
+      }
       trace.setInput(invoices.map((v) => v?.number ?? "").join("; "));
       actions = await runArFollowup(invoices, trace);
     } else {
@@ -44,10 +61,6 @@ export async function POST(req: Request) {
 
     // If a client is identified, queue the gated actions for approval + audit.
     let queued = 0;
-    const key =
-      req.headers.get("authorization")?.replace(/^Bearer\s+/i, "").trim() ||
-      req.headers.get("x-api-key")?.trim() ||
-      "";
     if (key) {
       const supabase = getServiceClient();
       if (supabase) {
