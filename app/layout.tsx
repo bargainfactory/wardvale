@@ -1,8 +1,10 @@
 import type { Metadata, Viewport } from "next";
+import { headers } from "next/headers";
 import { ThemeProvider } from "@/components/theme-provider";
 import { LocaleProvider } from "@/lib/locale-context";
 import { AnalyticsProvider } from "@/components/analytics-provider";
 import { PwaRegister } from "@/components/pwa-register";
+import { locales, type Locale } from "@/lib/i18n";
 import "./globals.css";
 
 export const viewport: Viewport = {
@@ -197,14 +199,26 @@ const jsonLd = {
   ],
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const h = await headers();
+  const locale = ((h.get("x-locale") as Locale | null) ?? "en") as Locale;
+  const path = h.get("x-pathname") ?? "/";
+  const hreflangs = locales.map((l) => ({
+    code: l,
+    href: `${siteUrl}${l === "en" ? "" : `/${l}`}${path === "/" ? "" : path}`,
+  }));
+
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang={locale} suppressHydrationWarning>
       <head>
+        {hreflangs.map((a) => (
+          <link key={a.code} rel="alternate" hrefLang={a.code} href={a.href} />
+        ))}
+        <link rel="alternate" hrefLang="x-default" href={`${siteUrl}${path === "/" ? "" : path}`} />
         <link rel="preconnect" href="https://rsms.me/" />
         <link rel="stylesheet" href="https://rsms.me/inter/inter.css" />
         <link
@@ -223,7 +237,7 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <LocaleProvider>
+          <LocaleProvider initialLocale={locale}>
             {children}
             <AnalyticsProvider />
             <PwaRegister />

@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Menu, X, Zap } from "lucide-react";
 import { ThemeToggle } from "@/components/theme-toggle";
@@ -12,9 +12,23 @@ import { useLocale } from "@/lib/locale-context";
 
 export function Nav() {
   const pathname = usePathname();
+  const router = useRouter();
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
   const { locale, setLocale, t } = useLocale();
+
+  // Current path with any locale prefix stripped (for active-link matching).
+  const normalizedPath = (() => {
+    const parts = pathname.split("/");
+    if ((["es", "fr", "pt", "de"] as string[]).includes(parts[1] ?? "")) parts.splice(1, 1);
+    return parts.join("/") || "/";
+  })();
+
+  // Switch language: update rendered locale + navigate to the localized URL.
+  const changeLocale = (l: Locale) => {
+    setLocale(l);
+    router.push(l === "en" ? normalizedPath : `/${l}${normalizedPath === "/" ? "" : normalizedPath}`);
+  };
 
   const links = [
     { href: "/build", label: "Build" },
@@ -67,7 +81,7 @@ export function Nav() {
                 href={l.href}
                 className={cn(
                   "rounded-full px-4 py-2 text-sm transition-colors hover:text-foreground",
-                  pathname === l.href ? "text-cyan-electric" : "text-muted-foreground"
+                  normalizedPath === l.href ? "text-cyan-electric" : "text-muted-foreground"
                 )}
               >
                 {l.label}
@@ -77,7 +91,7 @@ export function Nav() {
 
           <div className="flex items-center gap-2">
             <div className="hidden md:block">
-              <LocaleSelect locale={locale} onChange={setLocale} />
+              <LocaleSelect locale={locale} onChange={changeLocale} />
             </div>
             <ThemeToggle />
             <Link href="/pricing#quote" className="hidden md:inline-flex">
@@ -110,7 +124,7 @@ export function Nav() {
                 </Link>
               ))}
               <div className="mt-3 flex items-center justify-center">
-                <LocaleSelect locale={locale} onChange={setLocale} />
+                <LocaleSelect locale={locale} onChange={changeLocale} />
               </div>
               <Link href="/pricing#quote" onClick={() => setOpen(false)}>
                 <Button className="mt-3 w-full">{t("nav.cta")}</Button>

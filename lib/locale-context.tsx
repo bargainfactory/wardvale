@@ -1,26 +1,9 @@
 "use client";
 
 import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from "react";
-import { type Locale, locales, dictionaries } from "@/lib/i18n";
+import { type Locale, dictionaries } from "@/lib/i18n";
 
 const STORAGE_KEY = "ff_locale";
-
-function isLocale(v: string): v is Locale {
-  return (locales as string[]).includes(v);
-}
-
-// Prefer an explicit saved choice, else the browser's language, else English.
-function detectLocale(): Locale {
-  try {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    if (stored && isLocale(stored)) return stored;
-    const nav = (navigator.languages?.[0] || navigator.language || "en").slice(0, 2).toLowerCase();
-    if (isLocale(nav)) return nav;
-  } catch {
-    /* storage blocked */
-  }
-  return "en";
-}
 
 type LocaleCtx = {
   locale: Locale;
@@ -34,15 +17,24 @@ const Ctx = createContext<LocaleCtx>({
   t: (key) => key,
 });
 
-export function LocaleProvider({ children }: { children: ReactNode }) {
-  const [locale, setLocaleState] = useState<Locale>("en");
+/**
+ * The initial locale is decided by middleware from the URL (e.g. /pt) and
+ * passed in from the server layout, so the SSR HTML is already localized.
+ * setLocale updates the rendered language + persists the choice; the language
+ * switcher also navigates to the matching localized URL.
+ */
+export function LocaleProvider({
+  children,
+  initialLocale = "en",
+}: {
+  children: ReactNode;
+  initialLocale?: Locale;
+}) {
+  const [locale, setLocaleState] = useState<Locale>(initialLocale);
 
-  // Auto-detect on first client render (server always renders English).
   useEffect(() => {
-    const detected = detectLocale();
-    if (detected !== "en") setLocaleState(detected);
-    document.documentElement.lang = detected;
-  }, []);
+    if (typeof document !== "undefined") document.documentElement.lang = initialLocale;
+  }, [initialLocale]);
 
   const setLocale = useCallback((l: Locale) => {
     setLocaleState(l);

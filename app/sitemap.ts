@@ -27,10 +27,25 @@ export default function sitemap(): MetadataRoute.Sitemap {
     })),
   ];
 
-  return routes.map((r) => ({
-    url: `${siteUrl}${r.path === "/" ? "" : r.path}`,
-    lastModified: now,
-    changeFrequency: r.changeFrequency,
-    priority: r.priority,
-  }));
+  // Pages whose content is fully translated get hreflang alternates.
+  const localized = new Set(["/", "/services", "/pricing", "/results", "/process"]);
+  const altLocales = ["es", "fr", "pt", "de"];
+
+  return routes.map((r) => {
+    const url = `${siteUrl}${r.path === "/" ? "" : r.path}`;
+    const entry: MetadataRoute.Sitemap[number] = {
+      url,
+      lastModified: now,
+      changeFrequency: r.changeFrequency,
+      priority: r.priority,
+    };
+    if (localized.has(r.path)) {
+      const languages: Record<string, string> = { en: url };
+      for (const l of altLocales) {
+        languages[l] = `${siteUrl}/${l}${r.path === "/" ? "" : r.path}`;
+      }
+      entry.alternates = { languages };
+    }
+    return entry;
+  });
 }
