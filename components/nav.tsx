@@ -34,6 +34,7 @@ export function Nav() {
     { href: "/build", label: "Build" },
     { href: "/services", label: t("nav.services") },
     { href: "/solutions", label: "Solutions" },
+    { href: "/connections", label: "Connectors" },
     { href: "/impact", label: "Impact" },
     { href: "/results", label: t("nav.results") },
     { href: "/process", label: t("nav.process") },
