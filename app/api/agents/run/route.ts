@@ -16,6 +16,9 @@ import {
 } from "@/lib/runtime";
 import { getServiceClient } from "@/lib/supabase-server";
 import { loadContext } from "@/lib/context";
+import { sendApprovalNotification } from "@/lib/email";
+import { firstTime, idemKey } from "@/lib/idempotency";
+import { agentName } from "@/lib/agents-catalog";
 import {
   pullOverdueInvoices,
   pullAbandonedCheckouts,
@@ -157,7 +160,7 @@ export async function POST(req: Request) {
     if (key) {
       const supabase = getServiceClient();
       if (supabase) {
-        const { data: client } = await supabase.from("clients").select("id").eq("ingest_key", key).maybeSingle();
+        const { data: client } = await supabase.from("clients").select("id, email").eq("ingest_key", key).maybeSingle();
         if (client) {
           const rows = needApproval.map((a) => ({
             client_id: client.id,
@@ -183,6 +186,12 @@ export async function POST(req: Request) {
             detail: `${body.agent ?? "inbox-triage"}: ${actions.length} decided, ${queued} queued for approval`,
           });
           trace.flag("persisted", true);
+
+          // Notify the owner there are drafts to review — throttled to at most
+          // one email per client per ~hour so the scheduler can't spam them.
+          if (queued > 0 && client.email && firstTime(idemKey("notify", client.id), 55 * 60_000)) {
+            await sendApprovalNotification(client.email, queued, agentName(body.agent ?? "inbox-triage"));
+          }
         }
       }
     }

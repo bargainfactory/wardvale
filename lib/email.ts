@@ -131,6 +131,19 @@ export async function sendWorkflowBlueprint(input: {
   });
 }
 
+/** Tell the owner they have agent drafts waiting for approval. */
+export async function sendApprovalNotification(to: string, count: number, agentLabel?: string): Promise<boolean> {
+  const site = process.env.NEXT_PUBLIC_SITE_URL ?? "https://flowforge.ai";
+  const s = count === 1 ? "" : "s";
+  const inner = `
+    <h1 style="font-size:22px;color:#f8fafc;margin:0 0 8px">You have ${count} draft${s} to review</h1>
+    <p style="color:#94a3b8;margin:0 0 16px">${
+      agentLabel ? `Your ${escapeHtml(agentLabel)} ` : "Your agents "
+    }queued ${count} action${s} for approval. Nothing is sent until you say so.</p>
+    <a href="${site}/portal" style="display:inline-block;background:${BRAND};color:#0b1220;font-weight:600;padding:12px 20px;border-radius:10px;text-decoration:none">Review in your portal →</a>`;
+  return sendEmail({ to, subject: `${count} agent draft${s} awaiting your approval`, html: shell(inner) });
+}
+
 /** Send an agent-drafted reply that a human has approved. */
 export async function sendAgentEmail(to: string, subject: string, body: string): Promise<boolean> {
   const subj = /^re:/i.test(subject) ? subject : `Re: ${subject}`;
