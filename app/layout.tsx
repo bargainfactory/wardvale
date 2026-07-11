@@ -129,7 +129,7 @@ const jsonLd = {
         {
           "@type": "Offer",
           name: "Growth",
-          price: "1500",
+          price: "2000",
           priceCurrency: "USD",
           description:
             "Up to 5 automations + custom GPT agent. Full-funnel coverage.",
@@ -137,7 +137,7 @@ const jsonLd = {
         {
           "@type": "Offer",
           name: "Scale",
-          price: "3000",
+          price: "5000",
           priceCurrency: "USD",
           description:
             "Unlimited automations, dedicated agent engineer, priority everything.",

@@ -129,7 +129,7 @@ function scriptedFallback(messages: Msg[]) {
     ],
     tools: tools.split(/[,/]|and/i).map((t) => t.trim()).filter(Boolean).slice(0, 5),
     estimatedSavings: `~$${monthly.toLocaleString()}/mo`,
-    suggestedTier: monthly < 1800 ? "starter" : monthly < 5500 ? "growth" : "scale",
+    suggestedTier: monthly < 2500 ? "starter" : monthly < 7000 ? "growth" : "scale",
     nextStep: "Book a 30-min discovery call to scope and price this build.",
     roi,
   };

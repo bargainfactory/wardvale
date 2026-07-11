@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { getOpenAI } from "@/lib/openai";
 import { rateLimit, clientIp } from "@/lib/rate-limit";
 
-const SYSTEM_PROMPT = `You are the FlowForge AI website assistant. Be concise, helpful, and friendly. You sell premium AI-powered automation (Zapier flows + custom GPT agents) to small businesses on monthly retainers ($500–$3,000/mo).
+const SYSTEM_PROMPT = `You are the FlowForge AI website assistant. Be concise, helpful, and friendly. You sell premium AI-powered automation (Zapier flows + custom GPT agents) to small businesses on monthly retainers ($500–$5,000/mo, plus custom Enterprise).
 
 Key info:
 - Services: lead capture, onboarding autopilot, inbox triage, custom agents

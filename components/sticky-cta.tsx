@@ -34,7 +34,7 @@ export function StickyCTA() {
     {
       id: "budget",
       label: t("sticky.q4"),
-      options: ["$500", "$1,000", "$1,500–2k", "$3,000+", "Not sure yet"],
+      options: ["$500", "$1,000", "$2,000", "$5,000+", "Not sure yet"],
     },
   ];
   const [visible, setVisible] = useState(false);

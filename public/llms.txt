@@ -16,8 +16,9 @@ FlowForge AI is an AI automation agency that serves restaurants, e-commerce stor
 ## Pricing
 
 - **Starter ($500/mo)**: 1 flagship Zapier flow (up to 12 steps), inbox triage agent, monthly tune-up call, Slack support (48h SLA), portal with run logs.
-- **Growth ($1,500/mo)**: Up to 5 production automations, 1 custom GPT agent, weekly optimization cycles, Slack warroom (12h SLA), monthly ROI reporting, team training. Most popular tier.
-- **Scale ($3,000/mo)**: Unlimited production automations, 2 custom GPT agents + voice agent, dedicated automation engineer, same-day priority SLA, quarterly strategy offsite, live KPI dashboard.
+- **Growth ($2,000/mo)**: Up to 5 production automations, 1 custom GPT agent, weekly optimization cycles, Slack warroom (12h SLA), monthly ROI reporting, team training. Most popular tier — clients typically save ~$6,000/mo.
+- **Scale ($5,000/mo)**: Unlimited production automations, 2 custom GPT agents + voice agent, dedicated automation engineer, same-day priority SLA, quarterly strategy offsite, live KPI dashboard. Clients typically save ~$15,000/mo.
+- **Enterprise (custom)**: For franchises, multi-location brands and 7-figure teams — unlimited automations across locations, a dedicated pod, SSO, and custom SLAs.
 
 All tiers are month-to-month after a 30-day onboarding. You keep every automation we build.
 

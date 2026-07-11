@@ -385,6 +385,16 @@ const en: Dict = {
   "cta.getAudit": "Get my free audit",
   "cta.seeResults": "See client results",
   "cta.seeHow": "See how we work",
+
+  "pricing.valueSaves": "Avg. client saves",
+  "pricing.valueReturn": "return",
+  "pricing.valuePayback": "pays for itself in",
+  "pricing.valueDays": "days",
+  "pricing.enterprise.tag": "Multi-location & chains",
+  "pricing.enterprise.name": "Enterprise",
+  "pricing.enterprise.price": "Custom",
+  "pricing.enterprise.blurb": "For franchises, multi-location brands and 7-figure teams: unlimited automations across every location, a dedicated pod, SSO and custom SLAs.",
+  "pricing.enterprise.cta": "Talk to us",
 };
 
 const es: Dict = {
@@ -747,6 +757,16 @@ const es: Dict = {
   "cta.getAudit": "Obtener mi auditoría gratis",
   "cta.seeResults": "Ver resultados de clientes",
   "cta.seeHow": "Ver cómo trabajamos",
+
+  "pricing.valueSaves": "El cliente promedio ahorra",
+  "pricing.valueReturn": "de retorno",
+  "pricing.valuePayback": "se paga en",
+  "pricing.valueDays": "días",
+  "pricing.enterprise.tag": "Multisede y cadenas",
+  "pricing.enterprise.name": "Enterprise",
+  "pricing.enterprise.price": "A medida",
+  "pricing.enterprise.blurb": "Para franquicias, marcas multisede y equipos de 7 cifras: automatizaciones ilimitadas en todas las sedes, un equipo dedicado, SSO y SLA a medida.",
+  "pricing.enterprise.cta": "Hablemos",
 };
 
 const fr: Dict = {
@@ -1109,6 +1129,16 @@ const fr: Dict = {
   "cta.getAudit": "Obtenir mon audit gratuit",
   "cta.seeResults": "Voir les résultats clients",
   "cta.seeHow": "Voir comment nous travaillons",
+
+  "pricing.valueSaves": "Le client moyen économise",
+  "pricing.valueReturn": "de retour",
+  "pricing.valuePayback": "rentabilisé en",
+  "pricing.valueDays": "jours",
+  "pricing.enterprise.tag": "Multi-sites et chaînes",
+  "pricing.enterprise.name": "Enterprise",
+  "pricing.enterprise.price": "Sur mesure",
+  "pricing.enterprise.blurb": "Pour les franchises, les marques multi-sites et les équipes à 7 chiffres : automatisations illimitées sur tous les sites, une équipe dédiée, SSO et SLA sur mesure.",
+  "pricing.enterprise.cta": "Parlons-en",
 };
 
 const pt: Dict = {
@@ -1456,6 +1486,16 @@ const pt: Dict = {
   "cta.getAudit": "Quero minha auditoria grátis",
   "cta.seeResults": "Ver resultados de clientes",
   "cta.seeHow": "Ver como trabalhamos",
+
+  "pricing.valueSaves": "O cliente médio economiza",
+  "pricing.valueReturn": "de retorno",
+  "pricing.valuePayback": "se paga em",
+  "pricing.valueDays": "dias",
+  "pricing.enterprise.tag": "Multiunidade e redes",
+  "pricing.enterprise.name": "Enterprise",
+  "pricing.enterprise.price": "Sob medida",
+  "pricing.enterprise.blurb": "Para franquias, marcas multiunidade e equipes de 7 dígitos: automações ilimitadas em todas as unidades, um time dedicado, SSO e SLAs sob medida.",
+  "pricing.enterprise.cta": "Fale conosco",
 };
 
 const de: Dict = {
@@ -1803,6 +1843,16 @@ const de: Dict = {
   "cta.getAudit": "Mein Gratis-Audit holen",
   "cta.seeResults": "Kundenergebnisse ansehen",
   "cta.seeHow": "So arbeiten wir",
+
+  "pricing.valueSaves": "Ø Kunde spart",
+  "pricing.valueReturn": "Rendite",
+  "pricing.valuePayback": "amortisiert in",
+  "pricing.valueDays": "Tagen",
+  "pricing.enterprise.tag": "Mehrere Standorte & Ketten",
+  "pricing.enterprise.name": "Enterprise",
+  "pricing.enterprise.price": "Individuell",
+  "pricing.enterprise.blurb": "Für Franchises, Multi-Standort-Marken und 7-stellige Teams: unbegrenzte Automationen über alle Standorte, ein dediziertes Team, SSO und individuelle SLAs.",
+  "pricing.enterprise.cta": "Sprechen wir",
 };
 
 export const dictionaries: Record<Locale, Dict> = { en, es, fr, pt, de };

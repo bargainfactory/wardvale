@@ -308,6 +308,9 @@ export default function Home() {
                     <span className="font-display text-4xl font-semibold tabular-nums">${tier.price.toLocaleString()}</span>
                     <span className="text-sm text-muted-foreground">{t("pricing.perMo")}</span>
                   </div>
+                  <p className="mt-1 text-xs font-medium text-cyan-electric tabular-nums">
+                    {t("pricing.valueSaves")} ~${tier.typicalSavings.toLocaleString()}/mo
+                  </p>
                   <p className="mt-2 text-sm text-muted-foreground">{t(`tier.${tier.id}.blurb`)}</p>
                   <div className="mt-4 flex items-center gap-1 text-sm text-muted-foreground group-hover:text-cyan-electric">
                     {t("pricing.viewDetails")} <ArrowRight className="h-3.5 w-3.5 transition group-hover:translate-x-1" />

@@ -86,6 +86,21 @@ export default function PricingPage() {
                   <span className="text-sm text-muted-foreground">{t("pricing.perMonth")}</span>
                 </div>
 
+                {/* Value / ROI badge */}
+                <div className="mt-4 rounded-xl border border-cyan-electric/30 bg-cyan-electric/[0.08] p-3">
+                  <p className="text-sm text-muted-foreground">
+                    {t("pricing.valueSaves")}{" "}
+                    <span className="font-display font-semibold text-cyan-electric tabular-nums">
+                      ~${tier.typicalSavings.toLocaleString()}/mo
+                    </span>
+                  </p>
+                  <p className="mt-0.5 text-xs text-muted-foreground tabular-nums">
+                    ≈ {(tier.typicalSavings / tier.price).toFixed(1)}× {t("pricing.valueReturn")} ·{" "}
+                    {t("pricing.valuePayback")} ~{Math.round((tier.price / tier.typicalSavings) * 30)}{" "}
+                    {t("pricing.valueDays")}
+                  </p>
+                </div>
+
                 <ul className="mt-6 space-y-3">
                   {tier.features.map((_, fi) => (
                     <li key={fi} className="flex gap-3 text-sm">
@@ -109,6 +124,30 @@ export default function PricingPage() {
                 </div>
               </motion.div>
             ))}
+          </div>
+
+          {/* Enterprise — custom pricing */}
+          <div className="mx-auto mt-5 max-w-5xl">
+            <div className="flex flex-col items-center justify-between gap-4 rounded-3xl gradient-border glass-strong p-7 text-center sm:flex-row sm:text-left">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-cyan-electric">
+                  {t("pricing.enterprise.tag")}
+                </p>
+                <h3 className="mt-1 font-display text-xl font-semibold">
+                  {t("pricing.enterprise.name")}{" "}
+                  <span className="text-muted-foreground">— {t("pricing.enterprise.price")}</span>
+                </h3>
+                <p className="mt-1 max-w-xl text-sm text-muted-foreground">
+                  {t("pricing.enterprise.blurb")}
+                </p>
+              </div>
+              <a href="#quote">
+                <Button variant="outline" size="lg">
+                  {t("pricing.enterprise.cta")}
+                  <ArrowRight className="h-4 w-4" />
+                </Button>
+              </a>
+            </div>
           </div>
 
           {/* Comparison table */}
@@ -233,7 +272,7 @@ function RetainerCalculator() {
   );
 
   const suggestedTier =
-    monthlyWaste < 1800 ? tiers[0] : monthlyWaste < 5500 ? tiers[1] : tiers[2];
+    monthlyWaste < 2500 ? tiers[0] : monthlyWaste < 7000 ? tiers[1] : tiers[2];
   const netGain = monthlyWaste - suggestedTier.price;
 
   return (

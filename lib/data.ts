@@ -312,6 +312,8 @@ export type Tier = {
   id: "starter" | "growth" | "scale";
   name: string;
   price: number;
+  /** Typical monthly savings a client on this tier sees — powers the ROI badge. */
+  typicalSavings: number;
   tag: string;
   blurb: string;
   features: string[];
@@ -324,6 +326,7 @@ export const tiers: Tier[] = [
     id: "starter",
     name: "Starter",
     price: 500,
+    typicalSavings: 2200,
     tag: "Solo operators",
     blurb: "1 flagship automation + inbox triage. Ship in 10 days.",
     features: [
@@ -338,7 +341,8 @@ export const tiers: Tier[] = [
   {
     id: "growth",
     name: "Growth",
-    price: 1500,
+    price: 2000,
+    typicalSavings: 6000,
     tag: "Most popular",
     blurb: "Up to 5 automations + custom GPT agent. Full-funnel coverage.",
     features: [
@@ -355,7 +359,8 @@ export const tiers: Tier[] = [
   {
     id: "scale",
     name: "Scale",
-    price: 3000,
+    price: 5000,
+    typicalSavings: 15000,
     tag: "Multi-location / 7-figure",
     blurb: "Unlimited automations, dedicated agent engineer, priority everything.",
     features: [

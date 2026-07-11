@@ -44,7 +44,7 @@ Best for solo operators and micro-businesses.
 - Slack support with 48-hour SLA
 - Client portal with run logs
 
-### Growth — $1,500/month (Most Popular)
+### Growth — $2,000/month (Most Popular)
 Best for growing businesses with multiple processes to automate.
 - Up to 5 production automations
 - 1 custom GPT agent (e.g., reviews, proposals, CS)
@@ -53,7 +53,7 @@ Best for growing businesses with multiple processes to automate.
 - Client portal + monthly ROI reporting
 - Team training session (1 hour)
 
-### Scale — $3,000/month
+### Scale — $5,000/month
 Best for multi-location businesses and 7-figure operations.
 - Unlimited production automations
 - 2 custom GPT agents + 1 voice agent (Twilio)
