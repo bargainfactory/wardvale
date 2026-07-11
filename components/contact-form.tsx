@@ -3,24 +3,22 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowRight, Calendar, Loader2, Sparkles, Zap } from "lucide-react";
 import { FormEvent, useState } from "react";
+import Script from "next/script";
 import { SectionHeader } from "@/components/services";
 import { Button } from "@/components/ui/button";
+import { useLocale } from "@/lib/locale-context";
+import { track } from "@/lib/analytics";
 
-const businessTypes = [
-  "Restaurant / Hospitality",
-  "E-commerce / DTC",
-  "Consulting / Professional services",
-  "Local services (plumber, HVAC, etc.)",
-  "Healthcare / Clinic",
-  "Real estate",
-  "Other",
-];
+const TURNSTILE_SITE_KEY = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
 
 type QuoteState = "form" | "loading" | "ideas";
 
 type Idea = { title: string; description: string; savingsEstimate: string };
 
 export function ContactForm() {
+  const { t } = useLocale();
+
+  const businessTypes = [t("biz.restaurant"), t("biz.ecom"), t("biz.consulting"), t("biz.local"), t("biz.health"), t("biz.realestate"), t("biz.other")];
   const [state, setState] = useState<QuoteState>("form");
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -30,13 +28,21 @@ export function ContactForm() {
 
   async function submit(e: FormEvent) {
     e.preventDefault();
+
+    // Read the Turnstile token from the widget's injected hidden input (if any).
+    const form = e.currentTarget as HTMLFormElement;
+    const turnstileToken =
+      (form.elements.namedItem("cf-turnstile-response") as HTMLInputElement | null)?.value ||
+      undefined;
+
     setState("loading");
+    track("quote_submitted", { businessType: biz });
 
     try {
       const res = await fetch("/api/quote", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ name, email, businessType: biz, painPoints }),
+        body: JSON.stringify({ name, email, businessType: biz, painPoints, turnstileToken }),
       });
       const data = (await res.json()) as { ideas?: Idea[] };
       setIdeas(
@@ -90,14 +96,13 @@ export function ContactForm() {
     <section id="quote" className="relative py-24 lg:py-32">
       <div className="container">
         <SectionHeader
-          eyebrow="Get your quote"
+          eyebrow={t("quote.eyebrow")}
           title={
             <>
-              Instant quote — <span className="gradient-text">AI-generated scope</span> in
-              30 seconds.
+              {t("quote.title.1")} <span className="gradient-text">{t("quote.title.2")}</span> {t("quote.title.3")}
             </>
           }
-          sub="Tell us about your business. Our AI suggests 3 high-impact automations instantly."
+          sub={t("quote.sub")}
         />
 
         <div className="relative mx-auto mt-14 max-w-3xl">
@@ -113,7 +118,7 @@ export function ContactForm() {
                   className="space-y-5"
                 >
                   <div className="grid gap-5 md:grid-cols-2">
-                    <Field label="Full name" required>
+                    <Field label={t("quote.name")} required>
                       <input
                         value={name}
                         onChange={(e) => setName(e.target.value)}
@@ -122,7 +127,7 @@ export function ContactForm() {
                         className="w-full rounded-xl border border-border bg-card/40 px-4 py-3 text-sm placeholder:text-muted-foreground focus:border-cyan-electric/50 focus:outline-none focus:ring-1 focus:ring-cyan-electric/30"
                       />
                     </Field>
-                    <Field label="Work email" required>
+                    <Field label={t("quote.email")} required>
                       <input
                         type="email"
                         value={email}
@@ -134,7 +139,7 @@ export function ContactForm() {
                     </Field>
                   </div>
 
-                  <Field label="Business type" required>
+                  <Field label={t("quote.bizType")} required>
                     <select
                       value={biz}
                       onChange={(e) => setBiz(e.target.value)}
@@ -148,24 +153,39 @@ export function ContactForm() {
                     </select>
                   </Field>
 
-                  <Field label="What eats your day?" required={false}>
+                  <Field label={t("quote.pain")} required={false}>
                     <textarea
                       value={painPoints}
                       onChange={(e) => setPainPoints(e.target.value)}
                       rows={3}
-                      placeholder="e.g. I spend 3 hours a day replying to reservation DMs and nobody answers the phone after 6pm…"
+                      placeholder={t("quote.painPlaceholder")}
                       className="w-full rounded-xl border border-border bg-card/40 px-4 py-3 text-sm placeholder:text-muted-foreground focus:border-cyan-electric/50 focus:outline-none focus:ring-1 focus:ring-cyan-electric/30"
                     />
                   </Field>
 
+                  {TURNSTILE_SITE_KEY && (
+                    <>
+                      <Script
+                        src="https://challenges.cloudflare.com/turnstile/v0/api.js"
+                        async
+                        defer
+                      />
+                      <div
+                        className="cf-turnstile"
+                        data-sitekey={TURNSTILE_SITE_KEY}
+                        data-theme="dark"
+                      />
+                    </>
+                  )}
+
                   <Button type="submit" size="lg" className="w-full md:w-auto">
                     <Sparkles className="h-4 w-4" />
-                    Generate my free audit
+                    {t("quote.submit")}
                     <ArrowRight className="h-4 w-4" />
                   </Button>
 
                   <p className="text-xs text-muted-foreground">
-                    No CC required · takes 30 seconds · AI-generated scope delivered instantly
+                    {t("quote.noCC")}
                   </p>
                 </motion.form>
               )}
@@ -180,10 +200,10 @@ export function ContactForm() {
                 >
                   <Loader2 className="h-10 w-10 animate-spin text-cyan-electric" />
                   <p className="mt-4 font-display text-lg font-medium">
-                    Analyzing your business…
+                    {t("quote.analyzing")}
                   </p>
                   <p className="mt-1 text-sm text-muted-foreground">
-                    GPT-4 is matching automations to your pain points
+                    {t("quote.analyzingSub")}
                   </p>
                 </motion.div>
               )}
@@ -198,11 +218,11 @@ export function ContactForm() {
                   <div className="flex items-center gap-2">
                     <Zap className="h-5 w-5 text-cyan-electric" />
                     <h3 className="font-display text-xl font-semibold">
-                      Here&apos;s your personalized scope, {name.split(" ")[0] || "friend"}
+                      {t("quote.yourScope")} {name.split(" ")[0] || "friend"}
                     </h3>
                   </div>
                   <p className="mt-1 text-sm text-muted-foreground">
-                    3 high-impact automations matched to{" "}
+                    {t("quote.matched")}{" "}
                     <span className="text-foreground">{biz}</span>
                   </p>
 
@@ -216,7 +236,7 @@ export function ContactForm() {
                         className="rounded-2xl border border-border bg-card/40 p-5"
                       >
                         <span className="inline-flex items-center gap-1 rounded-full bg-cyan-electric/10 px-2 py-0.5 text-[10px] font-semibold text-cyan-electric">
-                          Idea {i + 1}
+                          {t("quote.idea")} {i + 1}
                         </span>
                         <h4 className="mt-3 font-semibold">{idea.title}</h4>
                         <p className="mt-1 text-sm text-muted-foreground">
@@ -233,7 +253,7 @@ export function ContactForm() {
                     <a href={calendlyUrl} target="_blank" rel="noopener noreferrer">
                       <Button size="lg">
                         <Calendar className="h-4 w-4" />
-                        Book strategy call (pre-filled)
+                        {t("quote.bookCall")}
                       </Button>
                     </a>
                     <Button
@@ -241,7 +261,7 @@ export function ContactForm() {
                       size="lg"
                       onClick={() => setState("form")}
                     >
-                      Adjust answers
+                      {t("quote.adjust")}
                     </Button>
                   </div>
                 </motion.div>

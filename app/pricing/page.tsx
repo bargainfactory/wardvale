@@ -9,10 +9,15 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ContactForm } from "@/components/contact-form";
 import { FAQ } from "@/components/faq";
+import { GuaranteeBanner } from "@/components/guarantee";
+import { track } from "@/lib/analytics";
 import { tiers } from "@/lib/data";
 import { cn, formatCurrency } from "@/lib/utils";
+import { useLocale } from "@/lib/locale-context";
 
 export default function PricingPage() {
+  const { t } = useLocale();
+
   useEffect(() => {
     if (window.location.hash === "#quote") {
       setTimeout(() => {
@@ -33,13 +38,12 @@ export default function PricingPage() {
             animate={{ opacity: 1, y: 0 }}
             className="mx-auto max-w-3xl text-center"
           >
-            <Badge className="mb-6">Simple pricing</Badge>
+            <Badge className="mb-6">{t("pricing.eyebrow")}</Badge>
             <h1 className="font-display text-4xl font-semibold tracking-tight sm:text-5xl lg:text-[56px] lg:leading-[1.1]">
-              Monthly retainers. <span className="gradient-text">Unlimited ROI.</span>
+              {t("pricing.title.1")} <span className="gradient-text">{t("pricing.title.2")}</span>
             </h1>
             <p className="mx-auto mt-6 max-w-2xl text-lg text-muted-foreground">
-              Every tier is month-to-month after onboarding. Cancel anytime, keep every
-              automation. No setup fee, no hidden costs.
+              {t("pricing.page.sub")}
             </p>
           </motion.div>
         </div>
@@ -49,58 +53,58 @@ export default function PricingPage() {
       <section className="pb-20">
         <div className="container">
           <div className="mx-auto grid max-w-5xl gap-5 md:grid-cols-3">
-            {tiers.map((t, i) => (
+            {tiers.map((tier, i) => (
               <motion.div
-                key={t.id}
+                key={tier.id}
                 initial={{ opacity: 0, y: 24 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ duration: 0.5, delay: i * 0.08 }}
                 className={cn(
                   "relative flex flex-col rounded-3xl p-8",
-                  t.highlighted
+                  tier.highlighted
                     ? "gradient-border glass-strong shadow-glow-lg scale-[1.02]"
                     : "glass"
                 )}
               >
-                {t.highlighted && (
+                {tier.highlighted && (
                   <span className="absolute -top-3 left-1/2 inline-flex -translate-x-1/2 items-center gap-1 rounded-full bg-gradient-to-r from-cyan-electric to-indigo-400 px-3 py-1 text-[11px] font-semibold uppercase tracking-wider text-navy-900">
-                    <Sparkles className="h-3 w-3" /> Most popular
+                    <Sparkles className="h-3 w-3" /> {t("pricing.mostPopular")}
                   </span>
                 )}
 
                 <p className="text-xs font-semibold uppercase tracking-[0.2em] text-cyan-electric">
-                  {t.tag}
+                  {t(`tier.${tier.id}.tag`)}
                 </p>
-                <h3 className="mt-2 font-display text-2xl font-semibold">{t.name}</h3>
-                <p className="mt-2 text-sm text-muted-foreground">{t.blurb}</p>
+                <h3 className="mt-2 font-display text-2xl font-semibold">{t(`tier.${tier.id}.name`)}</h3>
+                <p className="mt-2 text-sm text-muted-foreground">{t(`tier.${tier.id}.blurb`)}</p>
 
                 <div className="mt-6 flex items-baseline gap-1">
                   <span className="font-display text-5xl font-semibold tabular-nums">
-                    ${t.price.toLocaleString()}
+                    ${tier.price.toLocaleString()}
                   </span>
-                  <span className="text-sm text-muted-foreground">/ month</span>
+                  <span className="text-sm text-muted-foreground">{t("pricing.perMonth")}</span>
                 </div>
 
                 <ul className="mt-6 space-y-3">
-                  {t.features.map((f) => (
-                    <li key={f} className="flex gap-3 text-sm">
+                  {tier.features.map((_, fi) => (
+                    <li key={fi} className="flex gap-3 text-sm">
                       <Check className="mt-0.5 h-4 w-4 shrink-0 text-cyan-electric" />
-                      <span>{f}</span>
+                      <span>{t(`tier.${tier.id}.f${fi + 1}`)}</span>
                     </li>
                   ))}
                 </ul>
 
                 <div className="mt-auto pt-8">
                   <Button
-                    variant={t.highlighted ? "primary" : "outline"}
+                    variant={tier.highlighted ? "primary" : "outline"}
                     className="w-full"
-                    onClick={() => startCheckout(t.id)}
+                    onClick={() => startCheckout(tier.id)}
                   >
-                    Start {t.name}
+                    {t("pricing.start")} {t(`tier.${tier.id}.name`)}
                   </Button>
                   <p className="mt-3 text-center text-[11px] text-muted-foreground">
-                    30-day onboarding · no setup fee
+                    {t("pricing.onboarding")}
                   </p>
                 </div>
               </motion.div>
@@ -112,25 +116,25 @@ export default function PricingPage() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-border text-left text-xs uppercase tracking-wider text-muted-foreground">
-                  <th className="pb-3 pr-6 font-medium">Feature</th>
-                  {tiers.map((t) => (
-                    <th key={t.id} className="pb-3 text-center font-medium">
-                      {t.name}
+                  <th className="pb-3 pr-6 font-medium">{t("compare.feature")}</th>
+                  {tiers.map((tier) => (
+                    <th key={tier.id} className="pb-3 text-center font-medium">
+                      {t(`tier.${tier.id}.name`)}
                     </th>
                   ))}
                 </tr>
               </thead>
               <tbody>
                 {[
-                  ["Production automations", "1", "Up to 5", "Unlimited"],
-                  ["Custom GPT agents", "—", "1", "2 + voice"],
-                  ["Optimization cycles", "Monthly", "Weekly", "Continuous"],
-                  ["SLA", "48h", "12h", "Same-day"],
-                  ["Dedicated engineer", "—", "—", "✓"],
-                  ["Portal + run logs", "✓", "✓", "✓"],
-                  ["ROI reporting", "—", "Monthly", "Live dashboard"],
-                  ["Team training", "—", "1 session", "Unlimited"],
-                  ["Strategy offsite", "—", "—", "Quarterly"],
+                  [t("compare.automations"), "1", "Up to 5", "Unlimited"],
+                  [t("compare.agents"), "—", "1", "2 + voice"],
+                  [t("compare.optimization"), "Monthly", "Weekly", "Continuous"],
+                  [t("compare.sla"), "48h", "12h", "Same-day"],
+                  [t("compare.engineer"), "—", "—", "✓"],
+                  [t("compare.portal"), "✓", "✓", "✓"],
+                  [t("compare.roi"), "—", "Monthly", "Live dashboard"],
+                  [t("compare.training"), "—", "1 session", "Unlimited"],
+                  [t("compare.strategy"), "—", "—", "Quarterly"],
                 ].map(([feature, ...vals]) => (
                   <tr key={feature} className="border-b border-border/50">
                     <td className="py-3 pr-6 text-muted-foreground">{feature}</td>
@@ -153,8 +157,15 @@ export default function PricingPage() {
         </div>
       </section>
 
+      {/* ROI guarantee */}
+      <section className="pb-16">
+        <div className="container">
+          <GuaranteeBanner />
+        </div>
+      </section>
+
       {/* Retainer calculator */}
-      <section className="pb-20">
+      <section id="calculator" className="scroll-mt-28 pb-20">
         <div className="container">
           <RetainerCalculator />
         </div>
@@ -171,20 +182,20 @@ export default function PricingPage() {
         <div className="container">
           <div className="mx-auto max-w-2xl rounded-3xl gradient-border glass-strong p-10 text-center">
             <h2 className="font-display text-3xl font-semibold">
-              Still deciding?
+              {t("pricing.stillDeciding")}
             </h2>
             <p className="mt-3 text-muted-foreground">
-              See the results we&apos;ve delivered for businesses like yours.
+              {t("pricing.stillSub")}
             </p>
             <div className="mt-6 flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
               <Link href="/results">
                 <Button size="lg">
-                  View case studies
+                  {t("pricing.viewCases")}
                   <ArrowRight className="h-4 w-4" />
                 </Button>
               </Link>
               <Link href="/process">
-                <Button variant="secondary" size="lg">See how we work</Button>
+                <Button variant="secondary" size="lg">{t("pricing.seeHow")}</Button>
               </Link>
             </div>
           </div>
@@ -195,6 +206,7 @@ export default function PricingPage() {
 }
 
 async function startCheckout(tierId: string) {
+  track("checkout_click", { tier: tierId });
   try {
     const res = await fetch("/api/stripe/checkout", {
       method: "POST",
@@ -210,6 +222,7 @@ async function startCheckout(tierId: string) {
 }
 
 function RetainerCalculator() {
+  const { t } = useLocale();
   const [hoursPerWeek, setHoursPerWeek] = useState(20);
   const [hourlyCost, setHourlyCost] = useState(35);
   const [tasks, setTasks] = useState(3);
@@ -229,22 +242,22 @@ function RetainerCalculator() {
         <div className="flex flex-col gap-8 lg:flex-row lg:items-center lg:justify-between">
           <div className="max-w-sm">
             <p className="text-xs font-semibold uppercase tracking-[0.2em] text-cyan-electric">
-              Retainer calculator
+              {t("calc.eyebrow")}
             </p>
             <h3 className="mt-2 font-display text-2xl font-semibold">
-              Find your payoff tier in 10 seconds.
+              {t("calc.title")}
             </h3>
           </div>
           <div className="grid flex-1 gap-4 sm:grid-cols-3">
-            <Slider label="Hours / week on repetitive work" min={2} max={80} step={1} value={hoursPerWeek} onChange={setHoursPerWeek} format={(v) => `${v} h`} />
-            <Slider label="Fully-loaded hourly cost" min={15} max={120} step={1} value={hourlyCost} onChange={setHourlyCost} format={(v) => `$${v}`} />
-            <Slider label="Processes to automate" min={1} max={10} step={1} value={tasks} onChange={setTasks} format={(v) => `${v}`} />
+            <Slider label={t("calc.hours")} min={2} max={80} step={1} value={hoursPerWeek} onChange={setHoursPerWeek} format={(v) => `${v} h`} />
+            <Slider label={t("calc.cost")} min={15} max={120} step={1} value={hourlyCost} onChange={setHourlyCost} format={(v) => `$${v}`} />
+            <Slider label={t("calc.processes")} min={1} max={10} step={1} value={tasks} onChange={setTasks} format={(v) => `${v}`} />
           </div>
         </div>
         <div className="mt-10 grid gap-4 md:grid-cols-3">
-          <Result label="Monthly waste right now" value={formatCurrency(monthlyWaste)} />
-          <Result label="Suggested tier" value={suggestedTier.name} sub={`${formatCurrency(suggestedTier.price)}/mo`} highlight />
-          <Result label="Net monthly gain" value={netGain > 0 ? `+${formatCurrency(netGain)}` : formatCurrency(netGain)} sub={`${Math.max(0, Math.round((netGain / Math.max(suggestedTier.price, 1)) * 100))}% ROI`} />
+          <Result label={t("calc.waste")} value={formatCurrency(monthlyWaste)} />
+          <Result label={t("calc.suggested")} value={t(`tier.${suggestedTier.id}.name`)} sub={`${formatCurrency(suggestedTier.price)}/mo`} highlight />
+          <Result label={t("calc.netGain")} value={netGain > 0 ? `+${formatCurrency(netGain)}` : formatCurrency(netGain)} sub={`${Math.max(0, Math.round((netGain / Math.max(suggestedTier.price, 1)) * 100))}% ROI`} />
         </div>
       </div>
     </div>

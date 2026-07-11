@@ -1,17 +1,19 @@
 import { NextResponse } from "next/server";
-import { stripe } from "@/lib/stripe";
+import type Stripe from "stripe";
+import { getStripe } from "@/lib/stripe";
+import { getServiceClient } from "@/lib/supabase-server";
 
 export async function POST(req: Request) {
   const body = await req.text();
   const sig = req.headers.get("stripe-signature") ?? "";
 
-  if (!process.env.STRIPE_WEBHOOK_SECRET) {
+  if (!process.env.STRIPE_WEBHOOK_SECRET || !process.env.STRIPE_SECRET_KEY) {
     return NextResponse.json({ received: false }, { status: 503 });
   }
 
-  let event;
+  let event: Stripe.Event;
   try {
-    event = stripe.webhooks.constructEvent(
+    event = getStripe().webhooks.constructEvent(
       body,
       sig,
       process.env.STRIPE_WEBHOOK_SECRET
@@ -20,27 +22,75 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Invalid signature" }, { status: 400 });
   }
 
-  switch (event.type) {
-    case "checkout.session.completed": {
-      const session = event.data.object;
-      // TODO: Provision client portal access via Supabase
-      // - Create user row with session.customer_email
-      // - Assign tier based on price ID
-      // - Send welcome email via SendGrid/Resend
-      console.log("New subscription:", session.id);
-      break;
+  try {
+    switch (event.type) {
+      case "checkout.session.completed": {
+        const session = event.data.object;
+        await upsertSubscriber({
+          customerId: typeof session.customer === "string" ? session.customer : null,
+          email: session.customer_details?.email ?? session.customer_email ?? null,
+          tier: session.metadata?.tier ?? null,
+          status: "active",
+          sessionId: session.id,
+        });
+        console.log("New subscription provisioned:", session.id);
+        break;
+      }
+      case "customer.subscription.deleted": {
+        const sub = event.data.object;
+        await updateStatusByCustomer(sub.customer, "canceled");
+        console.log("Subscription cancelled:", sub.id);
+        break;
+      }
+      case "invoice.payment_failed": {
+        const invoice = event.data.object;
+        await updateStatusByCustomer(invoice.customer, "past_due");
+        console.log("Payment failed:", invoice.id);
+        break;
+      }
     }
-    case "customer.subscription.deleted": {
-      // TODO: Revoke portal access, send churn survey
-      console.log("Subscription cancelled:", event.data.object.id);
-      break;
-    }
-    case "invoice.payment_failed": {
-      // TODO: Send dunning email, pause automations after 3 failures
-      console.log("Payment failed:", event.data.object.id);
-      break;
-    }
+  } catch (err) {
+    // Never 500 back to Stripe for a persistence hiccup — that triggers
+    // endless retries. Log and acknowledge; reconcile out of band.
+    console.error("Webhook side-effect failed:", err);
   }
 
   return NextResponse.json({ received: true });
+}
+
+async function upsertSubscriber(input: {
+  customerId: string | null;
+  email: string | null;
+  tier: string | null;
+  status: string;
+  sessionId: string;
+}) {
+  const supabase = getServiceClient();
+  if (!supabase) return;
+  const { error } = await supabase.from("subscribers").upsert(
+    {
+      stripe_customer_id: input.customerId,
+      email: input.email?.toLowerCase() ?? null,
+      tier: input.tier,
+      status: input.status,
+      last_session_id: input.sessionId,
+    },
+    { onConflict: "stripe_customer_id" }
+  );
+  if (error) console.error("upsertSubscriber error:", error.message);
+}
+
+async function updateStatusByCustomer(
+  customer: string | Stripe.Customer | Stripe.DeletedCustomer | null,
+  status: string
+) {
+  const supabase = getServiceClient();
+  if (!supabase) return;
+  const customerId = typeof customer === "string" ? customer : customer?.id;
+  if (!customerId) return;
+  const { error } = await supabase
+    .from("subscribers")
+    .update({ status })
+    .eq("stripe_customer_id", customerId);
+  if (error) console.error("updateStatusByCustomer error:", error.message);
 }

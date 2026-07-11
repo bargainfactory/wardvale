@@ -6,21 +6,23 @@ import { useState, useRef, FormEvent } from "react";
 import { faq } from "@/lib/data";
 import { SectionHeader } from "@/components/services";
 import { cn } from "@/lib/utils";
+import { useLocale } from "@/lib/locale-context";
 
 export function FAQ() {
+  const { t } = useLocale();
   const [open, setOpen] = useState<number | null>(0);
 
   return (
     <section id="faq" className="relative py-24 lg:py-32">
       <div className="container">
         <SectionHeader
-          eyebrow="FAQ"
+          eyebrow={t("faq.eyebrow")}
           title={
             <>
-              Questions, <span className="gradient-text">answered.</span>
+              {t("faq.title.1")} <span className="gradient-text">{t("faq.title.2")}</span>
             </>
           }
-          sub="Or ask our AI assistant anything else."
+          sub={t("faq.sub")}
         />
 
         <div className="mx-auto mt-14 grid max-w-6xl gap-8 lg:grid-cols-2">
@@ -34,7 +36,7 @@ export function FAQ() {
                   onClick={() => setOpen(open === i ? null : i)}
                   className="flex w-full items-center justify-between gap-4 px-6 py-5 text-left text-sm font-medium transition"
                 >
-                  <span>{item.q}</span>
+                  <span>{t(`faq.${i+1}.q`)}</span>
                   <ChevronDown
                     className={cn(
                       "h-4 w-4 shrink-0 text-muted-foreground transition-transform",
@@ -52,7 +54,7 @@ export function FAQ() {
                       className="overflow-hidden"
                     >
                       <p className="px-6 pb-5 text-sm text-muted-foreground">
-                        {item.a}
+                        {t(`faq.${i+1}.a`)}
                       </p>
                     </motion.div>
                   )}
@@ -71,11 +73,11 @@ export function FAQ() {
 type Message = { role: "user" | "assistant"; content: string };
 
 function Chatbot() {
+  const { t } = useLocale();
   const [messages, setMessages] = useState<Message[]>([
     {
       role: "assistant",
-      content:
-        "Hey! I'm the FlowForge AI assistant. Ask me about our services, pricing, or how automation could work for your business.",
+      content: t("chat.welcome"),
     },
   ]);
   const [input, setInput] = useState("");
@@ -116,7 +118,7 @@ function Chatbot() {
     <div className="flex h-[480px] flex-col overflow-hidden rounded-3xl border border-white/10 bg-navy-950/60 backdrop-blur-lg lg:h-auto">
       <div className="flex items-center gap-2 border-b border-white/10 px-5 py-3">
         <MessageCircle className="h-4 w-4 text-cyan-electric" />
-        <span className="text-sm font-medium">FlowForge AI Assistant</span>
+        <span className="text-sm font-medium">{t("chat.title")}</span>
         <span className="relative ml-auto flex h-2 w-2">
           <span className="absolute inline-flex h-full w-full animate-pulse-ring rounded-full bg-emerald-400" />
           <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-400" />
@@ -149,7 +151,7 @@ function Chatbot() {
         <input
           value={input}
           onChange={(e) => setInput(e.target.value)}
-          placeholder="Ask about pricing, services, integrations…"
+          placeholder={t("chat.placeholder")}
           className="flex-1 rounded-full bg-white/5 px-4 py-2.5 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-cyan-electric/50"
         />
         <button

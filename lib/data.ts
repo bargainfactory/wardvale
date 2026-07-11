@@ -10,6 +10,11 @@ import {
   LineChart,
   Inbox,
   Sparkles,
+  Phone,
+  MessageCircle,
+  TrendingUp,
+  Receipt,
+  Star,
 } from "lucide-react";
 
 export type Service = {
@@ -77,6 +82,90 @@ export const services: Service[] = [
       { label: "Log + report", tone: "pay" },
     ],
     outcomes: ["$1,200+/mo labor saved", "24/7 always-on"],
+  },
+  {
+    id: "voice-agent",
+    title: "AI Voice Receptionist",
+    description:
+      "A 24/7 AI phone agent that answers every call, qualifies the caller, and books the job or appointment straight into your calendar — no missed calls, no voicemail.",
+    icon: Phone,
+    flow: [
+      { label: "Inbound call", tone: "zap" },
+      { label: "GPT voice agent", tone: "ai" },
+      { label: "Book / route", tone: "crm" },
+      { label: "SMS confirm", tone: "zap" },
+    ],
+    outcomes: ["0 missed calls", "Books 24/7"],
+  },
+  {
+    id: "whatsapp-agent",
+    title: "WhatsApp & SMS Agent",
+    description:
+      "A conversational agent that sells, books, and supports over WhatsApp and SMS — in your customer's language. Meet mobile-first markets where they already are.",
+    icon: MessageCircle,
+    flow: [
+      { label: "WhatsApp / SMS", tone: "zap" },
+      { label: "GPT agent", tone: "ai" },
+      { label: "Book / recover", tone: "crm" },
+      { label: "Payment link", tone: "pay" },
+    ],
+    outcomes: ["Multilingual", "90%+ open rate"],
+  },
+  {
+    id: "revenue-engine",
+    title: "AI Sales Follow-up",
+    description:
+      "An always-on SDR that enriches every lead, runs personalized multi-touch follow-up, and books meetings on your calendar — so no opportunity ever goes cold.",
+    icon: TrendingUp,
+    flow: [
+      { label: "New lead", tone: "zap" },
+      { label: "Enrich + score", tone: "ai" },
+      { label: "Multi-touch nurture", tone: "ai" },
+      { label: "Meeting booked", tone: "crm" },
+    ],
+    outcomes: ["3x follow-up", "Zero leads dropped"],
+  },
+  {
+    id: "finance-ops",
+    title: "Finance & Back-Office",
+    description:
+      "Automate the paperwork that eats your week: invoice capture, AP/AR, expense categorization, dunning, and month-end prep — reconciled and ready for your bookkeeper.",
+    icon: Receipt,
+    flow: [
+      { label: "Invoice / receipt", tone: "pay" },
+      { label: "AI extract + code", tone: "ai" },
+      { label: "Sync to books", tone: "crm" },
+      { label: "Dunning + report", tone: "zap" },
+    ],
+    outcomes: ["90% less data entry", "Faster month-end"],
+  },
+  {
+    id: "reputation",
+    title: "Reviews & Reputation",
+    description:
+      "Ask every happy customer for a review at the perfect moment and auto-respond to every Google and Yelp review in your voice — turning reputation into a growth channel.",
+    icon: Star,
+    flow: [
+      { label: "Job / order done", tone: "zap" },
+      { label: "AI review request", tone: "ai" },
+      { label: "Google / Yelp", tone: "crm" },
+      { label: "Auto-reply", tone: "ai" },
+    ],
+    outcomes: ["5x review rate", "Replies in minutes"],
+  },
+  {
+    id: "automation-rescue",
+    title: "Automation Rescue Audit",
+    description:
+      "Already on Zapier or Make but held together with duct tape? We audit what you have, fix the broken flows, and bolt on the GPT layer they can't give you.",
+    icon: Wrench,
+    flow: [
+      { label: "Audit your stack", tone: "zap" },
+      { label: "Fix + harden", tone: "ai" },
+      { label: "Add GPT layer", tone: "ai" },
+      { label: "Monitor + report", tone: "crm" },
+    ],
+    outcomes: ["Fixes duct-tape", "Fast wins"],
   },
 ];
 
@@ -310,11 +399,11 @@ export const testimonials: Testimonial[] = [
 ];
 
 export const trustBadges = [
-  "Zapier Certified Expert",
-  "OpenAI API Partner",
-  "Stripe Verified",
-  "SOC 2 Ready",
-  "GDPR Compliant",
+  "Zapier & Make experts",
+  "Built on OpenAI",
+  "Stripe-secured billing",
+  "No customer PII stored",
+  "GDPR-ready",
 ];
 
 export const faq = [
@@ -336,7 +425,7 @@ export const faq = [
   },
   {
     q: "Is my data safe?",
-    a: "We run on your infrastructure (your Zapier, your OpenAI key, your DB). We never store customer PII. SOC 2 Ready, GDPR-compliant, signed DPA on request.",
+    a: "We run on your infrastructure (your Zapier, your OpenAI key, your DB). We never store customer PII. GDPR-ready, signed DPA on request.",
   },
   {
     q: "What if I already have Zapier set up?",

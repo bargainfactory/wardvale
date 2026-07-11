@@ -4,37 +4,39 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Sparkles, X, ArrowRight } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
-
-const questions = [
-  {
-    id: "biz",
-    label: "What's your business type?",
-    options: ["Restaurant", "E-commerce", "Consulting", "Local services", "Other"],
-  },
-  {
-    id: "size",
-    label: "Team size?",
-    options: ["Solo", "2–5", "6–15", "16–50", "50+"],
-  },
-  {
-    id: "pain",
-    label: "Biggest time-sink right now?",
-    options: [
-      "Email / inbox",
-      "Lead follow-up",
-      "Onboarding clients",
-      "Scheduling & reminders",
-      "Reporting & data entry",
-    ],
-  },
-  {
-    id: "budget",
-    label: "Comfortable monthly investment?",
-    options: ["$500", "$1,000", "$1,500–2k", "$3,000+", "Not sure yet"],
-  },
-];
+import { useLocale } from "@/lib/locale-context";
 
 export function StickyCTA() {
+  const { t } = useLocale();
+
+  const questions = [
+    {
+      id: "biz",
+      label: t("sticky.q1"),
+      options: ["Restaurant", "E-commerce", "Consulting", "Local services", "Other"],
+    },
+    {
+      id: "size",
+      label: t("sticky.q2"),
+      options: ["Solo", "2–5", "6–15", "16–50", "50+"],
+    },
+    {
+      id: "pain",
+      label: t("sticky.q3"),
+      options: [
+        "Email / inbox",
+        "Lead follow-up",
+        "Onboarding clients",
+        "Scheduling & reminders",
+        "Reporting & data entry",
+      ],
+    },
+    {
+      id: "budget",
+      label: t("sticky.q4"),
+      options: ["$500", "$1,000", "$1,500–2k", "$3,000+", "Not sure yet"],
+    },
+  ];
   const [visible, setVisible] = useState(false);
   const [open, setOpen] = useState(false);
   const [step, setStep] = useState(0);
@@ -86,7 +88,7 @@ export function StickyCTA() {
               onClick={() => setOpen(true)}
             >
               <Sparkles className="h-4 w-4" />
-              Free Automation Audit
+              {t("sticky.audit")}
             </Button>
           </motion.div>
         )}
@@ -103,7 +105,7 @@ export function StickyCTA() {
             <div className="flex items-center justify-between border-b border-white/10 px-5 py-3">
               <div className="flex items-center gap-2 text-sm font-medium">
                 <Sparkles className="h-4 w-4 text-cyan-electric" />
-                60-second audit
+                {t("sticky.title")}
               </div>
               <button
                 onClick={reset}
@@ -124,7 +126,7 @@ export function StickyCTA() {
                     transition={{ duration: 0.2 }}
                   >
                     <div className="mb-4 flex items-center justify-between text-xs text-muted-foreground">
-                      <span>Question {step + 1} / {questions.length}</span>
+                      <span>{t("sticky.q")} {step + 1} {t("sticky.of")} {questions.length}</span>
                       <div className="flex gap-1">
                         {questions.map((_, i) => (
                           <span
@@ -160,9 +162,9 @@ export function StickyCTA() {
                     <div className="mx-auto mb-3 grid h-12 w-12 place-items-center rounded-full bg-cyan-electric/15">
                       <Sparkles className="h-5 w-5 text-cyan-electric" />
                     </div>
-                    <p className="font-display font-semibold">Audit submitted!</p>
+                    <p className="font-display font-semibold">{t("sticky.done")}</p>
                     <p className="mt-1 text-sm text-muted-foreground">
-                      We&apos;ll email a custom ROI report within 2 hours.
+                      {t("sticky.doneSub")}
                     </p>
                     <Button
                       className="mt-5 w-full"
@@ -170,7 +172,7 @@ export function StickyCTA() {
                         window.location.assign("/pricing#quote")
                       }
                     >
-                      Get full instant quote
+                      {t("sticky.fullQuote")}
                     </Button>
                   </motion.div>
                 )}

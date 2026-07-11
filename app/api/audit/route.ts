@@ -1,22 +1,52 @@
 import { NextResponse } from "next/server";
-import { openai } from "@/lib/openai";
+import { getOpenAI } from "@/lib/openai";
+import { rateLimit, clientIp } from "@/lib/rate-limit";
+import { saveLead } from "@/lib/leads";
+import { verifyTurnstile } from "@/lib/turnstile";
+
+const FALLBACK = {
+  ok: true,
+  message: "Audit recorded. We'll email a custom ROI report within 2 hours.",
+};
 
 export async function POST(req: Request) {
+  const ip = clientIp(req);
+  const rl = await rateLimit(`audit:${ip}`, 5, 60_000);
+  if (!rl.ok) {
+    return NextResponse.json(FALLBACK, {
+      status: 429,
+      headers: { "Retry-After": String(rl.retryAfter) },
+    });
+  }
+
   try {
     const body = await req.json();
-    const { biz, size, pain, budget } = body as Record<string, string>;
+    const { biz, size, pain, budget, turnstileToken } = body as Record<string, string>;
 
-    if (!process.env.OPENAI_API_KEY) {
-      return NextResponse.json({
-        ok: true,
-        message: "Audit recorded. We'll email a custom ROI report within 2 hours.",
-      });
+    if (!(await verifyTurnstile(turnstileToken, ip))) {
+      return NextResponse.json(
+        { error: "Verification failed. Please refresh and try again." },
+        { status: 400 }
+      );
     }
 
-    const completion = await openai.chat.completions.create({
+    // Capture the audit request as a lead regardless of AI availability.
+    await saveLead({
+      businessType: biz,
+      painPoints: pain,
+      source: "audit",
+      metadata: { size, budget },
+    });
+
+    if (!process.env.OPENAI_API_KEY) {
+      return NextResponse.json(FALLBACK);
+    }
+
+    const completion = await getOpenAI().chat.completions.create({
       model: "gpt-4o-mini",
       max_tokens: 400,
       temperature: 0.6,
+      response_format: { type: "json_object" },
       messages: [
         {
           role: "system",
@@ -31,12 +61,23 @@ export async function POST(req: Request) {
     });
 
     const text = completion.choices[0]?.message?.content ?? "";
-    const json = JSON.parse(text);
+    const json = parseJson(text);
+    if (!json) return NextResponse.json(FALLBACK);
     return NextResponse.json({ ok: true, ...json });
   } catch {
-    return NextResponse.json({
-      ok: true,
-      message: "Audit recorded. We'll email a custom ROI report within 2 hours.",
-    });
+    return NextResponse.json(FALLBACK);
+  }
+}
+
+function parseJson(text: string): Record<string, unknown> | null {
+  try {
+    const cleaned = text
+      .trim()
+      .replace(/^```(?:json)?/i, "")
+      .replace(/```$/, "")
+      .trim();
+    return JSON.parse(cleaned);
+  } catch {
+    return null;
   }
 }

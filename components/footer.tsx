@@ -1,7 +1,11 @@
+"use client";
+
 import Link from "next/link";
 import { Zap } from "lucide-react";
+import { useLocale } from "@/lib/locale-context";
 
 export function Footer() {
+  const { t } = useLocale();
   return (
     <footer className="relative mt-32 border-t border-border/60 bg-background">
       <div className="container py-14">
@@ -17,39 +21,43 @@ export function Footer() {
               FlowForge <span className="gradient-text">AI</span>
             </Link>
             <p className="mt-3 max-w-sm text-sm text-muted-foreground">
-              Premium AI automation for small business. Done-for-you Zapier flows
-              and custom GPT agents, on monthly retainers from $500.
+              {t("footer.desc")}
             </p>
           </div>
 
           <div>
             <h4 className="mb-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-              Agency
+              {t("footer.agency")}
             </h4>
             <ul className="space-y-2 text-sm">
-              <li><Link href="/services" className="hover:text-cyan-electric">Services</Link></li>
-              <li><Link href="/results" className="hover:text-cyan-electric">Results</Link></li>
-              <li><Link href="/pricing" className="hover:text-cyan-electric">Pricing</Link></li>
-              <li><Link href="/portal" className="hover:text-cyan-electric">Client Portal</Link></li>
+              <li><Link href="/services" className="hover:text-cyan-electric">{t("nav.services")}</Link></li>
+              <li><Link href="/solutions" className="hover:text-cyan-electric">Solutions</Link></li>
+              <li><Link href="/results" className="hover:text-cyan-electric">{t("nav.results")}</Link></li>
+              <li><Link href="/impact" className="hover:text-cyan-electric">Live impact</Link></li>
+              <li><Link href="/pricing" className="hover:text-cyan-electric">{t("nav.pricing")}</Link></li>
+              <li><Link href="/portal" className="hover:text-cyan-electric">{t("nav.portal")}</Link></li>
             </ul>
           </div>
 
           <div>
             <h4 className="mb-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-              Resources
+              {t("footer.resources")}
             </h4>
             <ul className="space-y-2 text-sm">
-              <li><Link href="/api/roi-calculator" className="hover:text-cyan-electric">2026 ROI Calculator (PDF)</Link></li>
+              <li><Link href="/connect" className="hover:text-cyan-electric">See it on your data</Link></li>
+              <li><Link href="/build" className="hover:text-cyan-electric">Build your automation</Link></li>
+              <li><Link href="/mcp" className="hover:text-cyan-electric">MCP for AI assistants</Link></li>
+              <li><Link href="/pricing#calculator" className="hover:text-cyan-electric">{t("footer.roiCalc")}</Link></li>
               <li><Link href="/pricing#faq" className="hover:text-cyan-electric">FAQ</Link></li>
-              <li><Link href="/privacy" className="hover:text-cyan-electric">Privacy</Link></li>
-              <li><Link href="/terms" className="hover:text-cyan-electric">Terms</Link></li>
+              <li><Link href="/privacy" className="hover:text-cyan-electric">{t("footer.privacy")}</Link></li>
+              <li><Link href="/terms" className="hover:text-cyan-electric">{t("footer.terms")}</Link></li>
             </ul>
           </div>
         </div>
 
         <div className="mt-12 flex flex-col items-center justify-between gap-3 border-t border-border/60 pt-6 text-xs text-muted-foreground md:flex-row">
-          <p>© {new Date().getFullYear()} FlowForge AI. All rights reserved.</p>
-          <p>Built with Next.js 15 · Deployed on Vercel · SOC 2 Ready</p>
+          <p>© {new Date().getFullYear()} FlowForge AI. {t("footer.rights")}</p>
+          <p>Built with Next.js 15 · Deployed on Vercel · Your data stays in your accounts</p>
         </div>
       </div>
     </footer>

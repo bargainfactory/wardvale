@@ -8,20 +8,24 @@ import { ThemeToggle } from "@/components/theme-toggle";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { localeLabels, locales, type Locale } from "@/lib/i18n";
-
-const links = [
-  { href: "/services", label: "Services" },
-  { href: "/results", label: "Results" },
-  { href: "/process", label: "Process" },
-  { href: "/pricing", label: "Pricing" },
-  { href: "/portal", label: "Client Portal" },
-];
+import { useLocale } from "@/lib/locale-context";
 
 export function Nav() {
   const pathname = usePathname();
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
-  const [locale, setLocale] = useState<Locale>("en");
+  const { locale, setLocale, t } = useLocale();
+
+  const links = [
+    { href: "/build", label: "Build" },
+    { href: "/services", label: t("nav.services") },
+    { href: "/solutions", label: "Solutions" },
+    { href: "/impact", label: "Impact" },
+    { href: "/results", label: t("nav.results") },
+    { href: "/process", label: t("nav.process") },
+    { href: "/pricing", label: t("nav.pricing") },
+    { href: "/portal", label: t("nav.portal") },
+  ];
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 8);
@@ -72,11 +76,13 @@ export function Nav() {
           </div>
 
           <div className="flex items-center gap-2">
-            <LocaleSelect locale={locale} onChange={setLocale} />
+            <div className="hidden md:block">
+              <LocaleSelect locale={locale} onChange={setLocale} />
+            </div>
             <ThemeToggle />
             <Link href="/pricing#quote" className="hidden md:inline-flex">
               <Button variant="primary" size="sm">
-                Free Audit
+                {t("nav.cta")}
               </Button>
             </Link>
             <button
@@ -103,8 +109,11 @@ export function Nav() {
                   {l.label}
                 </Link>
               ))}
+              <div className="mt-3 flex items-center justify-center">
+                <LocaleSelect locale={locale} onChange={setLocale} />
+              </div>
               <Link href="/pricing#quote" onClick={() => setOpen(false)}>
-                <Button className="mt-2 w-full">Free Audit</Button>
+                <Button className="mt-3 w-full">{t("nav.cta")}</Button>
               </Link>
             </div>
           </div>
@@ -122,7 +131,7 @@ function LocaleSelect({
   onChange: (l: Locale) => void;
 }) {
   return (
-    <div className="hidden rounded-full border border-border bg-card/50 p-0.5 text-xs backdrop-blur md:flex">
+    <div className="flex rounded-full border border-border bg-card/50 p-0.5 text-xs backdrop-blur">
       {locales.map((l) => (
         <button
           key={l}

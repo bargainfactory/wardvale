@@ -1,26 +1,68 @@
 import { NextResponse } from "next/server";
-import { openai } from "@/lib/openai";
+import { getOpenAI } from "@/lib/openai";
+import { rateLimit, clientIp } from "@/lib/rate-limit";
+import { saveLead } from "@/lib/leads";
+import { verifyTurnstile } from "@/lib/turnstile";
+import { sendQuoteReport } from "@/lib/email";
+
+type Idea = { title: string; description: string; savingsEstimate: string };
 
 export async function POST(req: Request) {
+  const ip = clientIp(req);
+  const rl = await rateLimit(`quote:${ip}`, 5, 60_000);
+  if (!rl.ok) {
+    return NextResponse.json(
+      { ideas: defaultIdeas("general"), rateLimited: true },
+      { status: 429, headers: { "Retry-After": String(rl.retryAfter) } }
+    );
+  }
+
   try {
     const body = await req.json();
-    const { name, email, businessType, painPoints } = body as {
+    const { name, email, businessType, painPoints, turnstileToken } = body as {
       name: string;
       email: string;
       businessType: string;
       painPoints: string;
+      turnstileToken?: string;
     };
 
-    if (!process.env.OPENAI_API_KEY) {
-      return NextResponse.json({
-        ideas: defaultIdeas(businessType),
-      });
+    if (!(await verifyTurnstile(turnstileToken, ip))) {
+      return NextResponse.json(
+        { error: "Verification failed. Please refresh and try again." },
+        { status: 400 }
+      );
     }
 
-    const completion = await openai.chat.completions.create({
+    // Persist the lead first so it's captured even if the AI step fails.
+    await saveLead({ name, email, businessType, painPoints, source: "quote" });
+
+    const ideas = await generateIdeas({ name, email, businessType, painPoints });
+
+    // Best-effort report email (no-ops if Resend isn't configured).
+    if (email) {
+      await sendQuoteReport({ to: email, name, businessType, ideas });
+    }
+
+    return NextResponse.json({ ideas });
+  } catch {
+    return NextResponse.json({ ideas: defaultIdeas("general") });
+  }
+}
+
+async function generateIdeas(input: {
+  name: string;
+  email: string;
+  businessType: string;
+  painPoints: string;
+}): Promise<Idea[]> {
+  if (!process.env.OPENAI_API_KEY) return defaultIdeas(input.businessType);
+  try {
+    const completion = await getOpenAI().chat.completions.create({
       model: "gpt-4o-mini",
       max_tokens: 600,
       temperature: 0.7,
+      response_format: { type: "json_object" },
       messages: [
         {
           role: "system",
@@ -28,20 +70,32 @@ export async function POST(req: Request) {
         },
         {
           role: "user",
-          content: `Business: ${businessType}\nContact: ${name} (${email})\nPain points: ${painPoints || "general admin overload"}`,
+          content: `Business: ${input.businessType}\nContact: ${input.name} (${input.email})\nPain points: ${input.painPoints || "general admin overload"}`,
         },
       ],
     });
-
     const text = completion.choices[0]?.message?.content ?? "";
-    const json = JSON.parse(text);
-    return NextResponse.json(json);
+    const json = parseJson(text);
+    return json?.ideas?.length ? (json.ideas as Idea[]) : defaultIdeas(input.businessType);
   } catch {
-    return NextResponse.json({ ideas: defaultIdeas("general") });
+    return defaultIdeas(input.businessType);
   }
 }
 
-function defaultIdeas(biz: string) {
+function parseJson(text: string): { ideas?: unknown[] } | null {
+  try {
+    const cleaned = text
+      .trim()
+      .replace(/^```(?:json)?/i, "")
+      .replace(/```$/, "")
+      .trim();
+    return JSON.parse(cleaned);
+  } catch {
+    return null;
+  }
+}
+
+function defaultIdeas(biz: string): Idea[] {
   return [
     {
       title: "Inbox Triage Agent",

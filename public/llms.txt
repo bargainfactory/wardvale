@@ -42,7 +42,17 @@ Zapier, Make, HubSpot, Shopify, Stripe, Gmail/Outlook, Calendly, Notion, Airtabl
 
 ## Compliance
 
-SOC 2 Ready, GDPR Compliant. We run on your infrastructure (your Zapier, your OpenAI key, your DB). We never store customer PII. Signed DPA on request.
+GDPR-ready. We run on your infrastructure (your Zapier, your OpenAI key, your DB). We never store customer PII. Signed DPA on request. 21-day ROI guarantee: break even in 21 days or we keep optimizing free until you do.
+
+## For AI assistants (MCP)
+
+FlowForge exposes a Model Context Protocol server so assistants can scope automations directly.
+- MCP endpoint (JSON-RPC over HTTP): https://flowforge.ai/api/mcp
+- Docs: https://flowforge.ai/mcp
+- Tools: scope_automation, list_services, list_playbooks, get_pricing
+- Interactive builder (text or voice): https://flowforge.ai/build
+- See it on your own inbox: https://flowforge.ai/connect
+- Industry playbooks: https://flowforge.ai/automations
 
 ## Contact
 

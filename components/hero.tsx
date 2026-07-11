@@ -79,7 +79,7 @@ export function Hero() {
           </div>
 
           <p className="mt-4 text-xs text-muted-foreground">
-            No credit card · 14-day build guarantee · 47 agencies built this month
+            No credit card · 14-day build · 21-day ROI guarantee
           </p>
         </motion.div>
 

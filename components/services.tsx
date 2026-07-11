@@ -20,7 +20,7 @@ export function Services() {
           eyebrow="Services"
           title={
             <>
-              Four services. <span className="gradient-text">Zero busywork.</span>
+              Automation for <span className="gradient-text">every channel.</span>
             </>
           }
           sub="Pre-built playbooks we deploy in days, tuned to your stack and your voice."

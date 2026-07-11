@@ -8,8 +8,18 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { caseStudies, testimonials } from "@/lib/data";
 import { cn } from "@/lib/utils";
+import { useLocale } from "@/lib/locale-context";
+
+const caseKeys: Record<string, string> = {
+  "nona-bistro": "nona",
+  "terrafit": "terra",
+  "northline-consult": "north",
+  "pacific-plumb": "pacific",
+};
 
 export default function ResultsPage() {
+  const { t } = useLocale();
+
   return (
     <PageLayout>
       {/* Hero */}
@@ -22,13 +32,12 @@ export default function ResultsPage() {
             animate={{ opacity: 1, y: 0 }}
             className="mx-auto max-w-3xl text-center"
           >
-            <Badge className="mb-6">Case studies & results</Badge>
+            <Badge className="mb-6">{t("results.eyebrow")}</Badge>
             <h1 className="font-display text-4xl font-semibold tracking-tight sm:text-5xl lg:text-[56px] lg:leading-[1.1]">
-              Real dollars. <span className="gradient-text">Real hours back.</span>
+              {t("results.title.1")} <span className="gradient-text">{t("results.title.2")}</span>
             </h1>
             <p className="mx-auto mt-6 max-w-2xl text-lg text-muted-foreground">
-              Four verticals, four months post-launch, measured in the client&apos;s own
-              dashboards. No vanity metrics — only hard cost savings and time recovered.
+              {t("results.page.sub")}
             </p>
           </motion.div>
         </div>
@@ -39,10 +48,10 @@ export default function ResultsPage() {
         <div className="container">
           <div className="mx-auto grid max-w-4xl gap-4 sm:grid-cols-4">
             {[
-              { label: "Avg. savings / month", value: "$5,250" },
-              { label: "Avg. hours back", value: "56h" },
-              { label: "Avg. ROI", value: "6.4×" },
-              { label: "Client retention", value: "96%" },
+              { label: t("results.avgSavings"), value: "$5,250" },
+              { label: t("results.avgHours"), value: "56h" },
+              { label: t("results.avgROI"), value: "6.4×" },
+              { label: t("results.retention"), value: "96%" },
             ].map((s) => (
               <motion.div
                 key={s.label}
@@ -63,8 +72,9 @@ export default function ResultsPage() {
       <section className="pb-24">
         <div className="container">
           <div className="space-y-20">
-            {caseStudies.map((cs, i) => {
+            {caseStudies.map((cs) => {
               const Icon = cs.icon;
+              const ck = caseKeys[cs.id];
               return (
                 <motion.article
                   key={cs.id}
@@ -82,23 +92,23 @@ export default function ResultsPage() {
                             <Icon className="h-5 w-5" />
                           </div>
                           <span className="rounded-full border border-border bg-card/60 px-2.5 py-1 text-[11px] font-medium text-muted-foreground">
-                            {cs.vertical}
+                            {t(`case.${ck}.vertical`)}
                           </span>
                         </div>
                         <h2 className="mt-4 font-display text-2xl font-semibold">
-                          {cs.company}
+                          {t(`case.${ck}.company`)}
                         </h2>
-                        <p className="mt-2 text-muted-foreground">{cs.headline}</p>
+                        <p className="mt-2 text-muted-foreground">{t(`case.${ck}.headline`)}</p>
 
                         <div className="mt-6 grid grid-cols-2 gap-3">
                           <div className="rounded-2xl border border-cyan-electric/30 bg-cyan-electric/10 p-4">
-                            <p className="text-xs text-muted-foreground">Saved / mo</p>
+                            <p className="text-xs text-muted-foreground">{t("results.savedMo")}</p>
                             <p className="mt-1 font-display text-2xl font-semibold gradient-text">
                               {cs.savings}
                             </p>
                           </div>
                           <div className="rounded-2xl border border-border bg-card/40 p-4">
-                            <p className="text-xs text-muted-foreground">Hours / mo</p>
+                            <p className="text-xs text-muted-foreground">{t("results.hoursMo")}</p>
                             <p className="mt-1 font-display text-2xl font-semibold">
                               {cs.hoursPerMonth}h
                             </p>
@@ -108,7 +118,7 @@ export default function ResultsPage() {
                         <div className="mt-6">
                           <Link href="/pricing#quote">
                             <Button className="w-full">
-                              Get results like this
+                              {t("results.getResults")}
                               <ArrowRight className="h-4 w-4" />
                             </Button>
                           </Link>
@@ -118,15 +128,31 @@ export default function ResultsPage() {
 
                     {/* Before / After */}
                     <div className="space-y-4 lg:col-span-3">
-                      <BeforeAfterCard title="Before FlowForge" items={cs.before} tone="before" />
-                      <BeforeAfterCard title="After FlowForge" items={cs.after} tone="after" />
+                      <BeforeAfterCard
+                        title={t("results.before")}
+                        baselineLabel={t("results.baseline")}
+                        items={cs.before.map((item, j) => ({
+                          label: t(`case.${ck}.b${j + 1}.label`),
+                          value: item.value,
+                        }))}
+                        tone="before"
+                      />
+                      <BeforeAfterCard
+                        title={t("results.after")}
+                        baselineLabel={t("results.postLaunch")}
+                        items={cs.after.map((item, j) => ({
+                          label: t(`case.${ck}.b${j + 1}.label`),
+                          value: item.value,
+                        }))}
+                        tone="after"
+                      />
 
                       <div className="flex items-center gap-2 rounded-2xl border border-border bg-card/40 px-5 py-3 text-xs text-muted-foreground">
                         <span className="relative flex h-2 w-2">
                           <span className="absolute inline-flex h-full w-full animate-pulse-ring rounded-full bg-emerald-400" />
                           <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-400" />
                         </span>
-                        Live — metrics synced from client dashboard
+                        {t("results.liveSync")}
                       </div>
                     </div>
                   </div>
@@ -141,10 +167,10 @@ export default function ResultsPage() {
       <section className="border-y border-border/60 py-20">
         <div className="container">
           <h2 className="text-center font-display text-3xl font-semibold">
-            What clients say
+            {t("results.whatClients")}
           </h2>
           <div className="mx-auto mt-10 grid max-w-5xl gap-5 md:grid-cols-2">
-            {testimonials.map((t, i) => (
+            {testimonials.map((tm, i) => (
               <motion.blockquote
                 key={i}
                 initial={{ opacity: 0, y: 16 }}
@@ -153,14 +179,14 @@ export default function ResultsPage() {
                 transition={{ delay: i * 0.06 }}
                 className="glass rounded-3xl p-7"
               >
-                <p className="text-muted-foreground">&ldquo;{t.quote}&rdquo;</p>
+                <p className="text-muted-foreground">&ldquo;{t(`testimonial.${i + 1}.quote`)}&rdquo;</p>
                 <div className="mt-4 flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-semibold">{t.name}</p>
-                    <p className="text-xs text-muted-foreground">{t.role}, {t.company}</p>
+                    <p className="text-sm font-semibold">{tm.name}</p>
+                    <p className="text-xs text-muted-foreground">{tm.role}, {tm.company}</p>
                   </div>
                   <span className="rounded-full border border-cyan-electric/25 bg-cyan-electric/10 px-3 py-1 text-sm font-semibold text-cyan-electric tabular-nums">
-                    {t.metric}
+                    {tm.metric}
                   </span>
                 </div>
               </motion.blockquote>
@@ -174,15 +200,15 @@ export default function ResultsPage() {
         <div className="container">
           <div className="mx-auto max-w-2xl rounded-3xl gradient-border glass-strong p-10 text-center">
             <h2 className="font-display text-3xl font-semibold">
-              Ready to join them?
+              {t("results.joinThem")}
             </h2>
             <p className="mt-3 text-muted-foreground">
-              Get a free, personalized automation audit in under 60 seconds.
+              {t("results.joinSub")}
             </p>
             <div className="mt-6">
               <Link href="/pricing#quote">
                 <Button size="lg">
-                  Get my free audit
+                  {t("cta.getAudit")}
                   <ArrowRight className="h-4 w-4" />
                 </Button>
               </Link>
@@ -196,10 +222,12 @@ export default function ResultsPage() {
 
 function BeforeAfterCard({
   title,
+  baselineLabel,
   items,
   tone,
 }: {
   title: string;
+  baselineLabel: string;
   items: { label: string; value: string }[];
   tone: "before" | "after";
 }) {
@@ -222,7 +250,7 @@ function BeforeAfterCard({
               : "bg-emerald-400/10 text-emerald-300"
           )}
         >
-          {tone === "before" ? "Baseline" : "Post-launch"}
+          {baselineLabel}
         </span>
       </div>
       <dl className="mt-5 space-y-3">

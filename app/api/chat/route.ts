@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
-import { openai } from "@/lib/openai";
+import { getOpenAI } from "@/lib/openai";
+import { rateLimit, clientIp } from "@/lib/rate-limit";
 
 const SYSTEM_PROMPT = `You are the FlowForge AI website assistant. Be concise, helpful, and friendly. You sell premium AI-powered automation (Zapier flows + custom GPT agents) to small businesses on monthly retainers ($500–$3,000/mo).
 
@@ -8,12 +9,21 @@ Key info:
 - Verticals: restaurants, e-com, consulting, local services
 - 14-day build guarantee, month-to-month after 30-day onboarding
 - Stack: Zapier, Make, HubSpot, Shopify, Stripe, Gmail, Calendly, Notion, Slack, OpenAI
-- SOC 2 ready, GDPR compliant
+- Runs on your own infrastructure — we never store customer PII; GDPR-ready, DPA on request
+- 21-day ROI guarantee: break even in 21 days or we keep optimizing free until you do
 - Direct to the quote form or Calendly if they seem interested.
 
 Keep answers under 3 sentences unless asked for detail.`;
 
 export async function POST(req: Request) {
+  const rl = await rateLimit(`chat:${clientIp(req)}`, 20, 60_000);
+  if (!rl.ok) {
+    return NextResponse.json(
+      { reply: "You're sending messages a little fast — give it a moment and try again." },
+      { status: 429, headers: { "Retry-After": String(rl.retryAfter) } }
+    );
+  }
+
   try {
     const body = await req.json();
     const messages = body.messages as { role: "user" | "assistant"; content: string }[];
@@ -25,7 +35,7 @@ export async function POST(req: Request) {
       });
     }
 
-    const completion = await openai.chat.completions.create({
+    const completion = await getOpenAI().chat.completions.create({
       model: "gpt-4o-mini",
       max_tokens: 250,
       temperature: 0.7,

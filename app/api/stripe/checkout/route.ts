@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { stripe } from "@/lib/stripe";
+import { getStripe } from "@/lib/stripe";
 
 const priceMap: Record<string, string | undefined> = {
   starter: process.env.STRIPE_PRICE_STARTER,
@@ -19,13 +19,14 @@ export async function POST(req: Request) {
       );
     }
 
-    const session = await stripe.checkout.sessions.create({
+    const session = await getStripe().checkout.sessions.create({
       mode: "subscription",
       line_items: [{ price: priceId, quantity: 1 }],
       success_url: `${process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000"}/portal?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000"}/#pricing`,
       allow_promotion_codes: true,
       billing_address_collection: "required",
+      metadata: { tier },
     });
 
     return NextResponse.json({ url: session.url });

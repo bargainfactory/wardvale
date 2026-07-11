@@ -7,17 +7,14 @@ import { PageLayout } from "@/components/page-layout";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { steps } from "@/lib/data";
-
-const turnarounds = ["30 min", "48 hours", "7 days", "Day 14", "Ongoing"];
-const details = [
-  "A 30-minute video call where we map your top 3 revenue leaks. You walk away with a scoped plan, prioritized by ROI, before we write a single line of logic.",
-  "We shadow your tools for 48 hours — email, CRM, Zapier, Slack — and return a ranked list of automations with projected cost savings and hours recovered for each.",
-  "Our engineers wire up Zapier flows + custom GPT agents directly in your stack. Every automation is tested against real data from your business before going live.",
-  "Go-live in 14 days with Loom training videos, a written runbook, a dedicated Slack warroom, and a 72-hour stabilization window where we monitor everything.",
-  "Monthly retainer kicks in: new agents on demand, performance monitoring, weekly optimizations, always-on Slack support. Your automations get smarter every month.",
-];
+import { useLocale } from "@/lib/locale-context";
 
 export default function ProcessPage() {
+  const { t } = useLocale();
+
+  const turnarounds = [t("step.1.time"), t("step.2.time"), t("step.3.time"), t("step.4.time"), t("step.5.time")];
+  const details = [t("step.1.detail"), t("step.2.detail"), t("step.3.detail"), t("step.4.detail"), t("step.5.detail")];
+
   return (
     <PageLayout>
       {/* Hero */}
@@ -30,13 +27,12 @@ export default function ProcessPage() {
             animate={{ opacity: 1, y: 0 }}
             className="mx-auto max-w-3xl text-center"
           >
-            <Badge className="mb-6">Our process</Badge>
+            <Badge className="mb-6">{t("process.eyebrow")}</Badge>
             <h1 className="font-display text-4xl font-semibold tracking-tight sm:text-5xl lg:text-[56px] lg:leading-[1.1]">
-              One perfect workflow. <span className="gradient-text">Five steps.</span>
+              {t("process.title.1")} <span className="gradient-text">{t("process.title.2")}</span>
             </h1>
             <p className="mx-auto mt-6 max-w-2xl text-lg text-muted-foreground">
-              Discovery to scale in 14 days. Every client, every vertical, every time.
-              No scope creep, no ambiguity, no surprises.
+              {t("process.page.sub")}
             </p>
           </motion.div>
         </div>
@@ -74,21 +70,21 @@ export default function ProcessPage() {
                         <div className="grid h-11 w-11 place-items-center rounded-2xl border border-white/10 bg-white/5">
                           <Icon className="h-5 w-5 text-cyan-electric" />
                         </div>
-                        <h2 className="font-display text-2xl font-semibold">{s.title}</h2>
+                        <h2 className="font-display text-2xl font-semibold">{t(`step.${s.n}.title`)}</h2>
                         <div className="flex items-center gap-1.5 rounded-full border border-border bg-card/60 px-3 py-1 text-xs text-muted-foreground">
                           <Clock className="h-3 w-3" />
                           {turnarounds[i]}
                         </div>
                       </div>
 
-                      <p className="mt-4 text-muted-foreground">{s.desc}</p>
+                      <p className="mt-4 text-muted-foreground">{t(`step.${s.n}.desc`)}</p>
                       <p className="mt-3 text-sm text-muted-foreground/80">{details[i]}</p>
 
                       {i === steps.length - 1 && (
                         <div className="mt-6">
                           <Link href="/pricing">
                             <Button>
-                              See retainer tiers
+                              {t("process.seeRetainers")}
                               <ArrowRight className="h-4 w-4" />
                             </Button>
                           </Link>
@@ -108,20 +104,18 @@ export default function ProcessPage() {
         <div className="container">
           <div className="mx-auto max-w-3xl text-center">
             <h2 className="font-display text-3xl font-semibold">
-              The <span className="gradient-text">14-day guarantee</span>
+              {t("guarantee.title.1")} <span className="gradient-text">{t("guarantee.title.2")}</span>
             </h2>
             <p className="mt-4 text-muted-foreground">
-              If we don&apos;t have your first automation live and running within 14 days
-              of kickoff, you don&apos;t pay for the first month. No questions asked. We&apos;ve never
-              had to honor this — but it&apos;s there so you can sign with confidence.
+              {t("guarantee.sub")}
             </p>
           </div>
 
           <div className="mx-auto mt-10 grid max-w-4xl gap-4 sm:grid-cols-3">
             {[
-              { label: "Avg. time to first live automation", value: "11 days" },
-              { label: "On-time delivery rate", value: "100%" },
-              { label: "Clients who upgrade in month 2", value: "68%" },
+              { label: t("guarantee.stat1.label"), value: t("guarantee.stat1.value") },
+              { label: t("guarantee.stat2.label"), value: t("guarantee.stat2.value") },
+              { label: t("guarantee.stat3.label"), value: t("guarantee.stat3.value") },
             ].map((s) => (
               <div
                 key={s.label}
@@ -140,20 +134,20 @@ export default function ProcessPage() {
         <div className="container">
           <div className="mx-auto max-w-2xl rounded-3xl gradient-border glass-strong p-10 text-center">
             <h2 className="font-display text-3xl font-semibold">
-              Start with a free discovery call
+              {t("guarantee.discoveryCta")}
             </h2>
             <p className="mt-3 text-muted-foreground">
-              30 minutes, no commitment. We&apos;ll map your revenue leaks and show you what automation can do.
+              {t("guarantee.discoverySub")}
             </p>
             <div className="mt-6 flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
               <Link href="/pricing#quote">
                 <Button size="lg">
-                  Get my free audit
+                  {t("cta.getAudit")}
                   <ArrowRight className="h-4 w-4" />
                 </Button>
               </Link>
               <Link href="/pricing">
-                <Button variant="secondary" size="lg">View pricing</Button>
+                <Button variant="secondary" size="lg">{t("pricing.viewDetails")}</Button>
               </Link>
             </div>
           </div>

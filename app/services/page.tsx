@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { services } from "@/lib/data";
 import { cn } from "@/lib/utils";
+import { useLocale } from "@/lib/locale-context";
 
 const toneColor: Record<string, string> = {
   zap: "bg-cyan-electric/15 text-cyan-electric border-cyan-electric/30",
@@ -16,7 +17,22 @@ const toneColor: Record<string, string> = {
   pay: "bg-fuchsia-400/15 text-fuchsia-300 border-fuchsia-400/30",
 };
 
+const serviceKeys: Record<string, string> = {
+  "lead-capture": "lead",
+  "onboarding": "onboarding",
+  "email-triage": "inbox",
+  "custom-agents": "custom",
+};
+
 export default function ServicesPage() {
+  const { t } = useLocale();
+  // Use a translation when present, else fall back to the literal from data.ts
+  // (newer services ship English-only and rely on this fallback).
+  const tf = (key: string, fallback: string) => {
+    const v = t(key);
+    return v === key ? fallback : v;
+  };
+
   return (
     <PageLayout>
       {/* Hero */}
@@ -29,13 +45,12 @@ export default function ServicesPage() {
             animate={{ opacity: 1, y: 0 }}
             className="mx-auto max-w-3xl text-center"
           >
-            <Badge className="mb-6">4 flagship services</Badge>
+            <Badge className="mb-6">{t("services.eyebrow")}</Badge>
             <h1 className="font-display text-4xl font-semibold tracking-tight sm:text-5xl lg:text-[56px] lg:leading-[1.1]">
-              Four services. <span className="gradient-text">Zero busywork.</span>
+              {t("services.title.1")} <span className="gradient-text">{t("services.title.2")}</span>
             </h1>
             <p className="mx-auto mt-6 max-w-2xl text-lg text-muted-foreground">
-              Pre-built playbooks we deploy in days, tuned to your stack and your voice.
-              Each service ships with a live Zapier flow + GPT agent — tested on real data before launch.
+              {t("services.page.sub")}
             </p>
           </motion.div>
         </div>
@@ -47,6 +62,7 @@ export default function ServicesPage() {
           <div className="space-y-16">
             {services.map((s, i) => {
               const Icon = s.icon;
+              const sk = serviceKeys[s.id];
               return (
                 <motion.article
                   key={s.id}
@@ -65,16 +81,16 @@ export default function ServicesPage() {
                         Service {i + 1}
                       </span>
                     </div>
-                    <h2 className="mt-4 font-display text-3xl font-semibold">{s.title}</h2>
-                    <p className="mt-3 text-lg text-muted-foreground">{s.description}</p>
+                    <h2 className="mt-4 font-display text-3xl font-semibold">{tf(`service.${sk}.title`, s.title)}</h2>
+                    <p className="mt-3 text-lg text-muted-foreground">{tf(`service.${sk}.desc`, s.description)}</p>
 
                     <div className="mt-6 flex flex-wrap gap-3">
-                      {s.outcomes.map((o) => (
+                      {s.outcomes.map((o, oi) => (
                         <span
-                          key={o}
+                          key={oi}
                           className="rounded-full border border-cyan-electric/25 bg-cyan-electric/10 px-3 py-1.5 text-sm font-medium text-cyan-electric"
                         >
-                          {o}
+                          {tf(`service.${sk}.outcome${oi + 1}`, o)}
                         </span>
                       ))}
                     </div>
@@ -82,7 +98,7 @@ export default function ServicesPage() {
                     <div className="mt-8">
                       <Link href="/pricing#quote">
                         <Button>
-                          Get this automation
+                          {t("services.cta")}
                           <ArrowRight className="h-4 w-4" />
                         </Button>
                       </Link>
@@ -97,7 +113,7 @@ export default function ServicesPage() {
                           <span className="absolute inline-flex h-full w-full animate-pulse-ring rounded-full bg-emerald-400" />
                           <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-400" />
                         </span>
-                        Live flow preview
+                        {t("services.livePreview")}
                       </div>
 
                       <div className="space-y-3">
@@ -119,7 +135,7 @@ export default function ServicesPage() {
                                 toneColor[node.tone]
                               )}
                             >
-                              {node.label}
+                              {tf(`service.${sk}.flow${j + 1}`, node.label)}
                             </div>
                             {j < s.flow.length - 1 && (
                               <div className="absolute left-[15px] ml-[1px] h-3 w-px bg-cyan-electric/30" />
@@ -129,7 +145,7 @@ export default function ServicesPage() {
                       </div>
 
                       <div className="mt-6 flex items-center justify-between border-t border-white/10 pt-4 text-sm">
-                        <span className="text-muted-foreground">Avg. run time</span>
+                        <span className="text-muted-foreground">{t("services.avgRun")}</span>
                         <span className="font-display font-semibold text-cyan-electric">1.8s</span>
                       </div>
                     </div>
@@ -145,7 +161,7 @@ export default function ServicesPage() {
       <section className="border-y border-border/60 py-16">
         <div className="container text-center">
           <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
-            Integrates with your entire stack
+            {t("services.integrates")}
           </p>
           <div className="mt-6 flex flex-wrap items-center justify-center gap-x-10 gap-y-4 opacity-70">
             {["Zapier", "Make", "HubSpot", "Shopify", "Stripe", "Gmail", "Slack", "Calendly", "Notion", "Twilio", "OpenAI", "Airtable"].map(
@@ -164,20 +180,20 @@ export default function ServicesPage() {
         <div className="container">
           <div className="mx-auto max-w-2xl rounded-3xl gradient-border glass-strong p-10 text-center">
             <h2 className="font-display text-3xl font-semibold">
-              Not sure which service fits?
+              {t("services.notSure")}
             </h2>
             <p className="mt-3 text-muted-foreground">
-              Take our 60-second audit and we&apos;ll match the right automations to your business.
+              {t("services.notSure.sub")}
             </p>
             <div className="mt-6 flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
               <Link href="/pricing#quote">
                 <Button size="lg">
-                  Get my free audit
+                  {t("cta.getAudit")}
                   <ArrowRight className="h-4 w-4" />
                 </Button>
               </Link>
               <Link href="/results">
-                <Button variant="secondary" size="lg">See client results</Button>
+                <Button variant="secondary" size="lg">{t("cta.seeResults")}</Button>
               </Link>
             </div>
           </div>

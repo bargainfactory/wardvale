@@ -1,38 +1,36 @@
 import type { MetadataRoute } from "next";
+import { seoPages } from "@/lib/seo-pages";
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://flowforge.ai";
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  return [
-    {
-      url: siteUrl,
-      lastModified: new Date(),
-      changeFrequency: "weekly",
-      priority: 1,
-    },
-    {
-      url: `${siteUrl}/portal`,
-      lastModified: new Date(),
-      changeFrequency: "monthly",
+  const now = new Date();
+  const routes: { path: string; priority: number; changeFrequency: MetadataRoute.Sitemap[number]["changeFrequency"] }[] = [
+    { path: "/", priority: 1, changeFrequency: "weekly" },
+    { path: "/build", priority: 0.9, changeFrequency: "monthly" },
+    { path: "/services", priority: 0.9, changeFrequency: "monthly" },
+    { path: "/solutions", priority: 0.9, changeFrequency: "monthly" },
+    { path: "/impact", priority: 0.7, changeFrequency: "weekly" },
+    { path: "/connect", priority: 0.7, changeFrequency: "monthly" },
+    { path: "/mcp", priority: 0.6, changeFrequency: "monthly" },
+    { path: "/pricing", priority: 0.9, changeFrequency: "monthly" },
+    { path: "/results", priority: 0.8, changeFrequency: "monthly" },
+    { path: "/process", priority: 0.7, changeFrequency: "monthly" },
+    { path: "/portal", priority: 0.6, changeFrequency: "monthly" },
+    { path: "/privacy", priority: 0.3, changeFrequency: "yearly" },
+    { path: "/terms", priority: 0.3, changeFrequency: "yearly" },
+    { path: "/automations", priority: 0.7, changeFrequency: "monthly" },
+    ...seoPages.map((p) => ({
+      path: `/automations/${p.slug}`,
       priority: 0.6,
-    },
-    {
-      url: `${siteUrl}/#services`,
-      lastModified: new Date(),
-      changeFrequency: "monthly",
-      priority: 0.9,
-    },
-    {
-      url: `${siteUrl}/#pricing`,
-      lastModified: new Date(),
-      changeFrequency: "monthly",
-      priority: 0.9,
-    },
-    {
-      url: `${siteUrl}/#results`,
-      lastModified: new Date(),
-      changeFrequency: "monthly",
-      priority: 0.8,
-    },
+      changeFrequency: "monthly" as MetadataRoute.Sitemap[number]["changeFrequency"],
+    })),
   ];
+
+  return routes.map((r) => ({
+    url: `${siteUrl}${r.path === "/" ? "" : r.path}`,
+    lastModified: now,
+    changeFrequency: r.changeFrequency,
+    priority: r.priority,
+  }));
 }

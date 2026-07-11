@@ -95,7 +95,7 @@ A: Anything with an API. Native expertise in Zapier, Make, HubSpot, Shopify, Str
 A: Yes. All retainers are month-to-month after a 30-day onboarding. You keep every automation we build — it's yours, running in your own accounts.
 
 **Q: Is my data safe?**
-A: We run on your infrastructure (your Zapier, your OpenAI key, your DB). We never store customer PII. SOC 2 Ready, GDPR-compliant, signed DPA on request.
+A: We run on your infrastructure (your Zapier, your OpenAI key, your DB). We never store customer PII. GDPR-ready, signed DPA on request.
 
 **Q: What if I already have Zapier set up?**
 A: Even better. We audit what you have, fix the duct-tape, and bolt on the GPT layer that Zapier alone can't give you.
