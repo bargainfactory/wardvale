@@ -15,6 +15,7 @@ import {
   TrendingUp,
   Receipt,
   Star,
+  ThumbsUp,
 } from "lucide-react";
 
 export type Service = {
@@ -152,6 +153,20 @@ export const services: Service[] = [
       { label: "Auto-reply", tone: "ai" },
     ],
     outcomes: ["5x review rate", "Replies in minutes"],
+  },
+  {
+    id: "review-requests",
+    title: "Review Request Agent",
+    description:
+      "The agent scans your inbox and payment records for happy, completed customers, then automatically asks each one for a review — on Google, Yelp, Facebook and Trustpilot — at the perfect moment and in your voice.",
+    icon: ThumbsUp,
+    flow: [
+      { label: "Scan inbox / orders", tone: "zap" },
+      { label: "Spot happy customers", tone: "ai" },
+      { label: "Personalized ask", tone: "ai" },
+      { label: "Google / Yelp / FB", tone: "crm" },
+    ],
+    outcomes: ["5x more reviews", "Auto-timed, on-brand"],
   },
   {
     id: "automation-rescue",
