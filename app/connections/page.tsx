@@ -5,13 +5,26 @@ import { Button } from "@/components/ui/button";
 import { connectors, isConnectorConfigured, type Connector } from "@/lib/connectors";
 
 export const metadata: Metadata = {
-  title: "Connections — Link QuickBooks, Xero, Workday & More",
+  title: "Connections — Link QuickBooks, Shopify, Salesforce, Twilio & More",
   description:
-    "Connect your accounting, HR, CRM, and productivity tools (QuickBooks, Xero, Workday, HubSpot, Slack, Google, Calendly) so FlowForge agents can automate tasks end-to-end — with least-privilege scopes and human approval.",
+    "Connect your accounting, payments, HR, CRM, support, marketing, e-commerce, and productivity tools — QuickBooks, Xero, Stripe, Shopify, Salesforce, Microsoft 365, Twilio, WhatsApp, and more — so FlowForge agents automate end-to-end with least-privilege scopes and human approval.",
   alternates: { canonical: "/connections" },
 };
 
-const CATEGORY_ORDER = ["Accounting", "HR & Payroll", "CRM", "Comms", "Scheduling", "Productivity"] as const;
+const CATEGORY_ORDER = [
+  "Accounting",
+  "Payments",
+  "HR & Payroll",
+  "CRM",
+  "Comms",
+  "Support",
+  "Marketing",
+  "E-commerce",
+  "Field Service",
+  "Legal",
+  "Scheduling",
+  "Productivity",
+] as const;
 
 export default async function ConnectionsPage({
   searchParams,
@@ -36,8 +49,9 @@ export default async function ConnectionsPage({
               Connect your stack. <span className="gradient-text">Automate end to end.</span>
             </h1>
             <p className="mx-auto mt-4 max-w-xl text-lg text-muted-foreground">
-              Link your accounting, HR, CRM, and productivity tools with least-privilege access. Agents act
-              through them — and every outbound action waits for your approval.
+              Link accounting, payments, CRM, support, marketing, e-commerce, and productivity tools with
+              least-privilege access. Agents act through them — and every outbound action waits for your
+              approval.
             </p>
           </div>
 
@@ -50,7 +64,9 @@ export default async function ConnectionsPage({
             <div className="mx-auto mt-6 max-w-md rounded-2xl border border-yellow-400/30 bg-yellow-400/10 p-3 text-center text-sm text-yellow-200">
               {sp.error === "notconfigured"
                 ? `${sp.p ?? "That connector"} isn't switched on yet — it needs its OAuth app configured.`
-                : "Couldn't complete the connection. Please try again."}
+                : sp.error === "key"
+                  ? "Please paste your key to connect."
+                  : "Couldn't complete the connection. Please try again."}
             </div>
           )}
         </div>
@@ -75,6 +91,15 @@ export default async function ConnectionsPage({
             server, and any action an agent takes through a connection is queued for your approval and
             written to the audit log. Revoke access anytime from the tool&rsquo;s own settings.
           </div>
+
+          <p className="text-center text-xs text-muted-foreground">
+            Need NetSuite, Sage, Bill.com, ServiceTitan, Toast, Plaid, or ADP? Those use non-standard auth
+            (client-credentials, session, or bank-link tokens) — we wire them per engagement.{" "}
+            <a href="/pricing#quote" className="text-cyan-electric hover:underline">
+              Ask us
+            </a>
+            .
+          </p>
         </div>
       </section>
     </PageLayout>
@@ -101,7 +126,23 @@ function ConnectorCard({ connector, ready }: { connector: Connector; ready: bool
       <h3 className="mt-4 font-display text-lg font-semibold">{connector.name}</h3>
       <p className="mt-1 flex-1 text-sm text-muted-foreground">{connector.blurb}</p>
       <div className="mt-5">
-        {ready ? (
+        {connector.tokenAuth === "apikey" ? (
+          <form action={`/api/connect/${connector.id}/key`} method="post" className="space-y-2">
+            {(connector.keyFields ?? [{ name: "key", label: "API key" }]).map((f) => (
+              <input
+                key={f.name}
+                name={f.name}
+                required={f.name === "key"}
+                placeholder={f.placeholder ?? f.label}
+                aria-label={`${connector.name} ${f.label}`}
+                className="w-full rounded-lg border border-border bg-card/60 px-3 py-2 text-sm outline-none placeholder:text-muted-foreground/60 focus:border-cyan-electric"
+              />
+            ))}
+            <Button size="sm" className="w-full" type="submit">
+              Connect {connector.name} <ArrowRight className="h-3.5 w-3.5" />
+            </Button>
+          </form>
+        ) : ready ? (
           <a href={`/api/connect/${connector.id}/start`}>
             <Button size="sm" className="w-full">
               Connect {connector.name} <ArrowRight className="h-3.5 w-3.5" />

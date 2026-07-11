@@ -26,7 +26,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ provider
 
   // Verify the state cookie set at start.
   const store = await cookies();
-  let saved: { state?: string; provider?: string; email?: string } = {};
+  let saved: { state?: string; provider?: string; email?: string; verifier?: string } = {};
   try {
     saved = JSON.parse(store.get("ff_connect")?.value ?? "{}");
   } catch {
@@ -49,6 +49,8 @@ export async function GET(req: Request, { params }: { params: Promise<{ provider
       body.set("client_id", clientId);
       body.set("client_secret", clientSecret);
     }
+    // Replay the PKCE verifier stashed at start, for providers that require it.
+    if (saved.verifier) body.set("code_verifier", saved.verifier);
 
     const tokenRes = await fetch(connector.tokenUrl, { method: "POST", headers, body, cache: "no-store" });
     const token = (await tokenRes.json()) as TokenResponse;
