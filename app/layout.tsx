@@ -71,9 +71,9 @@ export const metadata: Metadata = {
       "Done-for-you Zapier flows and GPT agents. Ship in 14 days, from $500/mo.",
     creator: "@flowforgeai",
   },
-  alternates: {
-    canonical: siteUrl,
-  },
+  // No global canonical — it would force every page to canonicalize to "/".
+  // Pages without an explicit canonical self-canonicalize to their own URL
+  // (Google's default), which is correct alongside the per-page hreflang.
   verification: {
     google: process.env.GOOGLE_SITE_VERIFICATION ?? undefined,
   },

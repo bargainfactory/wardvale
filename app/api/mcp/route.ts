@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { services, tiers } from "@/lib/data";
 import { seoPages } from "@/lib/seo-pages";
 import { getOpenAI } from "@/lib/openai";
+import { rateLimit, clientIp } from "@/lib/rate-limit";
 
 /**
  * FlowForge AI — Model Context Protocol (MCP) server.
@@ -230,6 +231,15 @@ function fail(id: JsonRpcId | undefined, error: JsonRpcError): NextResponse {
 }
 
 export async function POST(req: Request): Promise<NextResponse> {
+  // Throttle per IP — tools/call can invoke OpenAI, so this caps spend/abuse.
+  const rl = await rateLimit(`mcp:${clientIp(req)}`, 30, 60_000);
+  if (!rl.ok) {
+    return NextResponse.json(
+      { jsonrpc: "2.0", id: null, error: { code: -32000, message: "Rate limit exceeded" } },
+      { status: 429, headers: { ...CORS_HEADERS, "Retry-After": String(rl.retryAfter) } }
+    );
+  }
+
   let body: JsonRpcRequest;
   try {
     body = (await req.json()) as JsonRpcRequest;

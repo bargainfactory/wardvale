@@ -42,6 +42,7 @@ export function useSpeechRecognition(lang = "en-US") {
   const streamRef = useRef<MediaStream | null>(null);
   const ctxRef = useRef<AudioContext | null>(null);
   const rafRef = useRef<number | null>(null);
+  const restartRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const teardownAudio = useCallback(() => {
     if (rafRef.current != null) cancelAnimationFrame(rafRef.current);
@@ -91,22 +92,31 @@ export function useSpeechRecognition(lang = "en-US") {
     };
 
     // Keep dictation alive through natural pauses until the user stops.
+    // Restart on a short debounce — calling start() synchronously inside onend
+    // throws on Chrome ("already started"), and a hard error would hot-loop.
     rec.onend = () => {
-      if (wantRef.current) {
+      if (restartRef.current) clearTimeout(restartRef.current);
+      if (!wantRef.current) {
+        setListening(false);
+        teardownAudio();
+        return;
+      }
+      restartRef.current = setTimeout(() => {
+        if (!wantRef.current) return;
         try {
           rec.start();
-          return;
         } catch {
-          /* fall through to stop */
+          wantRef.current = false;
+          setListening(false);
+          teardownAudio();
         }
-      }
-      setListening(false);
-      teardownAudio();
+      }, 300);
     };
 
     recRef.current = rec;
     return () => {
       wantRef.current = false;
+      if (restartRef.current) clearTimeout(restartRef.current);
       try {
         rec.abort();
       } catch {

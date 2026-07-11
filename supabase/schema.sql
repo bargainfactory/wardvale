@@ -90,7 +90,9 @@ create table if not exists public.runs (
 create index if not exists runs_client_created_idx on public.runs (client_id, created_at desc);
 
 -- Per-client, current-month rollup for fast portal KPIs.
-create or replace view public.client_month_rollup as
+-- security_invoker makes the caller's RLS apply to the underlying `runs`, so a
+-- signed-in client sees only their own row (and the anon key sees nothing).
+create or replace view public.client_month_rollup with (security_invoker = true) as
 select
   client_id,
   count(*)                                             as runs_this_month,
@@ -100,6 +102,9 @@ select
 from public.runs
 where created_at >= date_trunc('month', now())
 group by client_id;
+
+-- Belt-and-suspenders: never expose the rollup view to the public API roles.
+revoke all on public.client_month_rollup from anon, authenticated;
 
 -- RLS: leads/subscribers are server-only (no policies). Portal tables let a
 -- signed-in user read ONLY rows for the client whose email matches their JWT.

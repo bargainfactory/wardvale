@@ -10,10 +10,11 @@ const priceMap: Record<string, string | undefined> = {
 export async function POST(req: Request) {
   try {
     const { tier, variant } = (await req.json()) as { tier: string; variant?: string };
-    // Growth price A/B test: variant B uses a second Stripe price if configured.
+    // Growth price A/B test: variant B MUST use its own ($2,500) Stripe price.
+    // Never fall back to the A price — that would charge less than displayed.
     let priceId = priceMap[tier];
-    if (tier === "growth" && variant === "B" && process.env.STRIPE_PRICE_GROWTH_B) {
-      priceId = process.env.STRIPE_PRICE_GROWTH_B;
+    if (tier === "growth" && variant === "B") {
+      priceId = process.env.STRIPE_PRICE_GROWTH_B; // undefined here → 503 below, not a mischarge
     }
 
     if (!priceId || !process.env.STRIPE_SECRET_KEY) {
