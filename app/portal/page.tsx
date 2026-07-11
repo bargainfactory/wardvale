@@ -7,6 +7,15 @@ import { ensureClientProvisioned } from "@/lib/provisioning";
 const DEMO: PortalData & { deltas: { runs: string; hours: string; success: string; roi: string } } = {
   clientName: "Nona Bistro",
   onboarded: true,
+  plan: "growth",
+  agentConfigs: [
+    { key: "inbox-triage", name: "Inbox triage", enabled: true, autoSend: false, schedule: "hourly" },
+    { key: "review-request", name: "Review requests", enabled: true, autoSend: false, schedule: "daily" },
+    { key: "lead-qualification", name: "Lead follow-up", enabled: true, autoSend: false, schedule: "hourly" },
+    { key: "cart-recovery", name: "Cart recovery", enabled: false, autoSend: false, schedule: "manual" },
+    { key: "ar-followup", name: "AR follow-up", enabled: false, autoSend: false, schedule: "manual" },
+    { key: "support-triage", name: "Support triage", enabled: false, autoSend: false, schedule: "manual" },
+  ],
   kpis: { runs: "18,490", hours: "147h", success: "99.1%", roi: "$12,510" },
   deltas: { runs: "+23%", hours: "+18h", success: "+0.2%", roi: "+$2.1k" },
   automations: [
@@ -77,6 +86,8 @@ export default async function PortalPage() {
       audit={view.audit}
       approvals={view.approvals}
       onboarded={view.onboarded}
+      plan={view.plan}
+      agentConfigs={view.agentConfigs}
       isDemo={isDemo}
       authEnabled={authEnabled}
       userEmail={userEmail}

@@ -16,7 +16,8 @@ import {
 } from "@/lib/runtime";
 import { getServiceClient } from "@/lib/supabase-server";
 import { loadContext } from "@/lib/context";
-import { sendApprovalNotification } from "@/lib/email";
+import { sendApprovalNotification, sendAgentEmail } from "@/lib/email";
+import { sendSmsForClient } from "@/lib/integrations";
 import { firstTime, idemKey } from "@/lib/idempotency";
 import { agentName } from "@/lib/agents-catalog";
 import {
@@ -156,34 +157,67 @@ export async function POST(req: Request) {
     // and return the inserted rows (with real ids) so the portal can render them
     // in place without a reload.
     let queued = 0;
+    let autoSent = 0;
     let approvals: { id: string; agent: string; action: string; summary: string; createdAt: string }[] = [];
     if (key) {
       const supabase = getServiceClient();
       if (supabase) {
         const { data: client } = await supabase.from("clients").select("id, email").eq("ingest_key", key).maybeSingle();
         if (client) {
-          const rows = needApproval.map((a) => ({
-            client_id: client.id,
-            agent: a.agent,
-            action: a.action,
-            summary: a.summary,
-            payload: { draft: a.draft ?? null, source: a.source, to: a.to ?? null },
-          }));
-          if (rows.length) {
+          // If this agent is set to auto-send, its actions execute immediately;
+          // otherwise every outbound action is queued for approval (safe default).
+          let autoSend = false;
+          if (body.agent) {
+            const { data: cfg } = await supabase
+              .from("agent_config")
+              .select("auto_send")
+              .eq("client_id", client.id)
+              .eq("agent_key", body.agent)
+              .maybeSingle();
+            autoSend = Boolean(cfg?.auto_send);
+          }
+
+          const toQueue: { client_id: string; agent: string; action: string; summary: string; payload: Record<string, unknown> }[] = [];
+          for (const a of needApproval) {
+            if (autoSend && a.to && a.draft && (a.action === "email.send" || a.action === "sms.send")) {
+              const ok =
+                a.action === "sms.send"
+                  ? await sendSmsForClient(supabase, client.id, a.to, a.draft)
+                  : await sendAgentEmail(a.to, a.source, a.draft);
+              if (ok) autoSent += 1;
+              await supabase.from("agent_audit").insert({
+                client_id: client.id,
+                actor: "runtime",
+                action: ok ? "action.executed" : "action.failed",
+                detail: `${a.action} → ${a.to} (auto-send)`,
+              });
+            } else {
+              toQueue.push({
+                client_id: client.id,
+                agent: a.agent,
+                action: a.action,
+                summary: a.summary,
+                payload: { draft: a.draft ?? null, source: a.source, to: a.to ?? null },
+              });
+            }
+          }
+
+          if (toQueue.length) {
             const { data: inserted } = await supabase
               .from("approvals")
-              .insert(rows)
+              .insert(toQueue)
               .select("id, agent, action, summary");
             approvals = ((inserted as { id: string; agent: string | null; action: string; summary: string | null }[] | null) ?? []).map(
               (a) => ({ id: a.id, agent: a.agent ?? "agent", action: a.action, summary: a.summary ?? "", createdAt: "just now" })
             );
             queued = approvals.length;
           }
+
           await supabase.from("agent_audit").insert({
             client_id: client.id,
             actor: "runtime",
             action: "agent.run",
-            detail: `${body.agent ?? "inbox-triage"}: ${actions.length} decided, ${queued} queued for approval`,
+            detail: `${body.agent ?? "inbox-triage"}: ${actions.length} decided, ${queued} queued, ${autoSent} auto-sent`,
           });
           trace.flag("persisted", true);
 
@@ -197,7 +231,7 @@ export async function POST(req: Request) {
     }
 
     await trace.end();
-    return NextResponse.json({ ok: true, decided: actions.length, queued, actions, approvals });
+    return NextResponse.json({ ok: true, decided: actions.length, queued, autoSent, actions, approvals });
   } catch {
     trace.setStatus("error");
     await trace.end();

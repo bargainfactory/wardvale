@@ -33,7 +33,8 @@ import { PageLayout } from "@/components/page-layout";
 import { Button } from "@/components/ui/button";
 import { createClient } from "@/lib/supabase";
 import { useLocale } from "@/lib/locale-context";
-import type { PortalApproval, PortalAutomation, PortalAudit, PortalConnection, PortalKpis, PortalLog } from "@/lib/portal";
+import { entitlement, type Schedule } from "@/lib/agents-catalog";
+import type { PortalAgentConfig, PortalApproval, PortalAutomation, PortalAudit, PortalConnection, PortalKpis, PortalLog } from "@/lib/portal";
 
 type Props = {
   clientName: string;
@@ -45,6 +46,8 @@ type Props = {
   audit: PortalAudit[];
   approvals: PortalApproval[];
   onboarded: boolean;
+  plan: string;
+  agentConfigs: PortalAgentConfig[];
   isDemo: boolean;
   authEnabled: boolean;
   userEmail: string | null;
@@ -115,7 +118,7 @@ const RUNNERS: { id: string; label: string; sample: Record<string, unknown> }[] 
 const TABS = ["overview", "agents", "approvals", "connections", "audit"] as const;
 
 export function PortalDashboard(props: Props) {
-  const { clientName, kpis, deltas, logs, connections, onboarded, isDemo, authEnabled, userEmail } = props;
+  const { clientName, kpis, deltas, logs, connections, onboarded, plan, isDemo, authEnabled, userEmail } = props;
   const { t } = useLocale();
   const [tab, setTab] = useState<Tab>(() => {
     if (typeof window === "undefined") return "overview";
@@ -127,6 +130,33 @@ export function PortalDashboard(props: Props) {
   const [approvals, setApprovals] = useState<PortalApproval[]>(props.approvals);
   const [busy, setBusy] = useState<string | null>(null);
   const [running, setRunning] = useState<string | null>(null);
+  const [configs, setConfigs] = useState<PortalAgentConfig[]>(props.agentConfigs);
+  const ent = entitlement(plan);
+  const enabledCount = configs.filter((c) => c.enabled).length;
+
+  // Update one agent's config (enable, auto-send, schedule) — optimistic, with
+  // server-side plan entitlements. On rejection we revert and surface the reason.
+  async function updateConfig(key: string, patch: Partial<{ enabled: boolean; autoSend: boolean; schedule: Schedule }>) {
+    const prev = configs;
+    setConfigs((list) => list.map((c) => (c.key === key ? { ...c, ...patch } : c)));
+    if (isDemo) return;
+    try {
+      const res = await fetch("/api/portal/agents/config", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ agentKey: key, ...patch }),
+      });
+      if (!res.ok) {
+        setConfigs(prev);
+        const d = (await res.json().catch(() => ({}))) as { message?: string };
+        if (d.message) window.alert(d.message);
+      } else {
+        setAudit((log) => [{ time: "just now", actor: userEmail ?? "you", action: "config.updated", detail: key }, ...log]);
+      }
+    } catch {
+      setConfigs(prev);
+    }
+  }
 
   // Run one end-to-end cycle for a single agent: read → decide (guarded, traced)
   // → queue approval-gated actions. Signed-in clients run on their OWN live data
@@ -347,6 +377,56 @@ export function PortalDashboard(props: Props) {
                 ))}
               </div>
             </div>
+            {configs.length > 0 && (
+              <div className="border-b border-border px-6 py-5">
+                <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+                  <h3 className="font-display text-sm font-semibold">Configure agents</h3>
+                  <span className="text-xs text-muted-foreground">
+                    <span className="capitalize">{ent.label}</span> plan · {enabledCount}/{ent.maxAgents} active
+                  </span>
+                </div>
+                <div className="space-y-2">
+                  {configs.map((c) => {
+                    const canToggle = c.enabled || enabledCount < ent.maxAgents;
+                    return (
+                      <div key={c.key} className="flex flex-wrap items-center gap-2 rounded-xl border border-border/60 bg-card/30 px-4 py-2.5">
+                        <span className="min-w-0 flex-1 text-sm font-medium">{c.name}</span>
+                        <button
+                          onClick={() => updateConfig(c.key, { enabled: !c.enabled })}
+                          disabled={!canToggle}
+                          title={!canToggle ? `Upgrade to enable more than ${ent.maxAgents} agents` : undefined}
+                          className={`rounded-full border px-3 py-1 text-xs font-medium transition disabled:opacity-40 ${
+                            c.enabled ? "border-emerald-400/30 text-emerald-300 hover:bg-emerald-400/10" : "border-border text-muted-foreground hover:bg-white/5"
+                          }`}
+                        >
+                          {c.enabled ? "On" : "Off"}
+                        </button>
+                        <button
+                          onClick={() => updateConfig(c.key, { autoSend: !c.autoSend })}
+                          title="Auto-send executes without approval"
+                          className={`rounded-full border px-3 py-1 text-xs font-medium transition ${
+                            c.autoSend ? "border-cyan-electric/30 text-cyan-electric hover:bg-cyan-electric/10" : "border-border text-muted-foreground hover:bg-white/5"
+                          }`}
+                        >
+                          {c.autoSend ? "Auto-send" : "Approve first"}
+                        </button>
+                        <select
+                          value={c.schedule}
+                          onChange={(e) => updateConfig(c.key, { schedule: e.target.value as Schedule })}
+                          className="rounded-lg border border-border bg-card/60 px-2 py-1 text-xs outline-none focus:border-cyan-electric"
+                        >
+                          {(["manual", "daily", "hourly", "off"] as Schedule[]).map((s) => (
+                            <option key={s} value={s} disabled={!ent.schedules.includes(s)}>
+                              {s}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
             <div className="overflow-x-auto">
               {agents.length === 0 ? (
                 <p className="px-6 py-10 text-center text-sm text-muted-foreground">

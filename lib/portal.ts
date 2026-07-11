@@ -1,4 +1,5 @@
 import { createServerSupabase } from "@/lib/supabase-ssr";
+import { agentName } from "@/lib/agents-catalog";
 
 export type PortalAutomation = {
   id: string;
@@ -14,15 +15,18 @@ export type PortalKpis = { runs: string; hours: string; success: string; roi: st
 export type PortalConnection = { provider: string; status: string; scope: string };
 export type PortalAudit = { time: string; actor: string; action: string; detail: string };
 export type PortalApproval = { id: string; agent: string; action: string; summary: string; createdAt: string };
+export type PortalAgentConfig = { key: string; name: string; enabled: boolean; autoSend: boolean; schedule: string };
 export type PortalData = {
   clientName: string;
   onboarded: boolean;
+  plan: string;
   kpis: PortalKpis;
   automations: PortalAutomation[];
   logs: PortalLog[];
   connections: PortalConnection[];
   audit: PortalAudit[];
   approvals: PortalApproval[];
+  agentConfigs: PortalAgentConfig[];
 };
 
 function relTime(iso: string): string {
@@ -60,7 +64,7 @@ export async function getPortalData(email: string): Promise<PortalData | null> {
 
     const { data: client } = await supabase
       .from("clients")
-      .select("id, name, onboarded")
+      .select("id, name, onboarded, plan")
       .eq("email", email)
       .maybeSingle();
     if (!client) return null;
@@ -72,6 +76,7 @@ export async function getPortalData(email: string): Promise<PortalData | null> {
       { data: connections },
       { data: audit },
       { data: approvalsData },
+      { data: configData },
     ] = await Promise.all([
       supabase.from("automations").select("id, name, status").eq("client_id", client.id),
       supabase
@@ -95,6 +100,7 @@ export async function getPortalData(email: string): Promise<PortalData | null> {
         .eq("status", "pending")
         .order("created_at", { ascending: false })
         .limit(20),
+      supabase.from("agent_config").select("agent_key, enabled, auto_send, schedule").eq("client_id", client.id),
     ]);
 
     const runList: RunRow[] = (runs as RunRow[] | null) ?? [];
@@ -142,6 +148,10 @@ export async function getPortalData(email: string): Promise<PortalData | null> {
       (a) => ({ id: a.id, agent: a.agent ?? "agent", action: a.action, summary: a.summary ?? "", createdAt: relTime(a.created_at) })
     );
 
+    const agentConfigs: PortalAgentConfig[] = ((configData as { agent_key: string; enabled: boolean; auto_send: boolean; schedule: string }[] | null) ?? []).map(
+      (c) => ({ key: c.agent_key, name: agentName(c.agent_key), enabled: c.enabled, autoSend: c.auto_send, schedule: c.schedule })
+    );
+
     const roll = rollup as { runs_this_month?: number; hours_saved?: number; success_rate?: number } | null;
     const totalSaved = Math.round(runList.reduce((s, r) => s + (Number(r.dollars_saved) || 0), 0));
     const kpis: PortalKpis = {
@@ -151,7 +161,18 @@ export async function getPortalData(email: string): Promise<PortalData | null> {
       roi: `$${totalSaved.toLocaleString()}`,
     };
 
-    return { clientName: client.name, onboarded: Boolean((client as { onboarded?: boolean }).onboarded), kpis, automations: autos, logs, connections: conns, audit: auditRows, approvals };
+    return {
+      clientName: client.name,
+      onboarded: Boolean((client as { onboarded?: boolean }).onboarded),
+      plan: (client as { plan?: string }).plan ?? "trial",
+      kpis,
+      automations: autos,
+      logs,
+      connections: conns,
+      audit: auditRows,
+      approvals,
+      agentConfigs,
+    };
   } catch {
     return null;
   }
