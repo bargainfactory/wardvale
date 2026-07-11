@@ -257,3 +257,77 @@ create index if not exists traces_route_created_idx on public.traces (route, cre
 create index if not exists traces_status_idx on public.traces (status);
 
 alter table public.traces enable row level security;
+
+-- ── Turnkey: self-serve provisioning, business profile, agent config ─────────
+-- Clients gain a plan + lifecycle status so sign-up / Stripe can provision and
+-- suspend them without manual seeding, plus a timezone + onboarding flag.
+alter table public.clients add column if not exists plan text not null default 'trial';
+alter table public.clients add column if not exists status text not null default 'active';
+alter table public.clients add column if not exists stripe_customer_id text;
+alter table public.clients add column if not exists timezone text not null default 'America/New_York';
+alter table public.clients add column if not exists onboarded boolean not null default false;
+create index if not exists clients_stripe_customer_idx on public.clients (stripe_customer_id);
+
+-- The business's own context, injected into every agent's prompt so drafts are
+-- accurate without custom engineering. One row per client.
+create table if not exists public.business_profile (
+  client_id   uuid primary key references public.clients (id) on delete cascade,
+  industry    text,
+  hours       text,
+  services    text,
+  pricing     text,
+  faq         text,
+  tone        text not null default 'friendly and professional',
+  updated_at  timestamptz not null default now()
+);
+
+drop trigger if exists business_profile_touch on public.business_profile;
+create trigger business_profile_touch
+  before update on public.business_profile
+  for each row execute function public.touch_updated_at();
+
+-- Per-client agent enablement + behavior. The runtime and scheduler read this to
+-- decide which agents run, how often, and whether their actions auto-send or
+-- wait for approval. Written by provisioning/packs (service role) and the owner.
+create table if not exists public.agent_config (
+  id          uuid primary key default gen_random_uuid(),
+  client_id   uuid not null references public.clients (id) on delete cascade,
+  agent_key   text not null,
+  enabled     boolean not null default false,
+  auto_send   boolean not null default false,     -- false = queue for approval (safe default)
+  schedule    text not null default 'manual' check (schedule in ('manual', 'hourly', 'daily', 'off')),
+  last_run_at timestamptz,
+  created_at  timestamptz not null default now(),
+  unique (client_id, agent_key)
+);
+create index if not exists agent_config_client_idx on public.agent_config (client_id);
+create index if not exists agent_config_schedule_idx on public.agent_config (schedule) where enabled;
+
+alter table public.business_profile enable row level security;
+alter table public.agent_config enable row level security;
+
+drop policy if exists business_profile_self_read on public.business_profile;
+create policy business_profile_self_read on public.business_profile
+  for select using (
+    client_id in (select id from public.clients where email = (auth.jwt() ->> 'email'))
+  );
+drop policy if exists business_profile_self_update on public.business_profile;
+create policy business_profile_self_update on public.business_profile
+  for update using (
+    client_id in (select id from public.clients where email = (auth.jwt() ->> 'email'))
+  ) with check (
+    client_id in (select id from public.clients where email = (auth.jwt() ->> 'email'))
+  );
+
+drop policy if exists agent_config_self_read on public.agent_config;
+create policy agent_config_self_read on public.agent_config
+  for select using (
+    client_id in (select id from public.clients where email = (auth.jwt() ->> 'email'))
+  );
+drop policy if exists agent_config_self_update on public.agent_config;
+create policy agent_config_self_update on public.agent_config
+  for update using (
+    client_id in (select id from public.clients where email = (auth.jwt() ->> 'email'))
+  ) with check (
+    client_id in (select id from public.clients where email = (auth.jwt() ->> 'email'))
+  );

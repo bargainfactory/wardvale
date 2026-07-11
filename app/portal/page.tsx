@@ -1,6 +1,7 @@
 import { PortalDashboard } from "@/components/portal-dashboard";
 import { isSupabaseAuthConfigured, getPortalUserEmail } from "@/lib/supabase-ssr";
 import { getPortalData, type PortalData } from "@/lib/portal";
+import { ensureClientProvisioned } from "@/lib/provisioning";
 
 // Demo shown to visitors and any signed-in client without live data yet.
 const DEMO: PortalData & { deltas: { runs: string; hours: string; success: string; roi: string } } = {
@@ -50,7 +51,15 @@ export default async function PortalPage() {
 
   if (authEnabled) {
     userEmail = await getPortalUserEmail();
-    if (userEmail) data = await getPortalData(userEmail);
+    if (userEmail) {
+      // Turnkey: a signed-in user with no client yet is provisioned on the spot
+      // (trial), so sign-up → live portal with zero manual setup.
+      data = await getPortalData(userEmail);
+      if (!data) {
+        await ensureClientProvisioned(userEmail);
+        data = await getPortalData(userEmail);
+      }
+    }
   }
 
   const isDemo = !data;

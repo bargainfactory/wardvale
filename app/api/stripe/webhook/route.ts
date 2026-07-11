@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import type Stripe from "stripe";
 import { getStripe } from "@/lib/stripe";
 import { getServiceClient } from "@/lib/supabase-server";
+import { provisionClient } from "@/lib/provisioning";
+import { planFromTier } from "@/lib/agents-catalog";
 
 export async function POST(req: Request) {
   const body = await req.text();
@@ -26,25 +28,34 @@ export async function POST(req: Request) {
     switch (event.type) {
       case "checkout.session.completed": {
         const session = event.data.object;
-        await upsertSubscriber({
-          customerId: typeof session.customer === "string" ? session.customer : null,
-          email: session.customer_details?.email ?? session.customer_email ?? null,
-          tier: session.metadata?.tier ?? null,
-          status: "active",
-          sessionId: session.id,
-        });
+        const customerId = typeof session.customer === "string" ? session.customer : null;
+        const email = session.customer_details?.email ?? session.customer_email ?? null;
+        const tier = session.metadata?.tier ?? null;
+        await upsertSubscriber({ customerId, email, tier, status: "active", sessionId: session.id });
+        // Turnkey: a paid checkout provisions a live client (plan from the tier),
+        // active immediately, with agents + profile seeded.
+        if (email) {
+          await provisionClient({
+            email,
+            plan: planFromTier(tier),
+            status: "active",
+            stripeCustomerId: customerId,
+          });
+        }
         console.log("New subscription provisioned:", session.id);
         break;
       }
       case "customer.subscription.deleted": {
         const sub = event.data.object;
         await updateStatusByCustomer(sub.customer, "canceled");
+        await suspendClientByCustomer(sub.customer, "canceled");
         console.log("Subscription cancelled:", sub.id);
         break;
       }
       case "invoice.payment_failed": {
         const invoice = event.data.object;
         await updateStatusByCustomer(invoice.customer, "past_due");
+        await suspendClientByCustomer(invoice.customer, "past_due");
         console.log("Payment failed:", invoice.id);
         break;
       }
@@ -93,4 +104,18 @@ async function updateStatusByCustomer(
     .update({ status })
     .eq("stripe_customer_id", customerId);
   if (error) console.error("updateStatusByCustomer error:", error.message);
+}
+
+// Mirror the lifecycle onto the client so the scheduler stops running agents for
+// a canceled/past-due account until they're back in good standing.
+async function suspendClientByCustomer(
+  customer: string | Stripe.Customer | Stripe.DeletedCustomer | null,
+  status: string
+) {
+  const supabase = getServiceClient();
+  if (!supabase) return;
+  const customerId = typeof customer === "string" ? customer : customer?.id;
+  if (!customerId) return;
+  const { error } = await supabase.from("clients").update({ status }).eq("stripe_customer_id", customerId);
+  if (error) console.error("suspendClientByCustomer error:", error.message);
 }
