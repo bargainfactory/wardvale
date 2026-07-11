@@ -68,58 +68,113 @@ function providerIcon(name: string) {
   return Plug;
 }
 
-// Sample inbox for the "Run a cycle" demo — a real reply, a promo, an angry
-// customer, and a booking question, to show the agent's routing.
+// Sample datasets for the per-agent "Run a cycle" demo — each shows the agent's
+// routing on realistic input. When a client is signed in, cycles instead run on
+// their OWN live connected data (via /api/portal/agents/run) and persist.
 const SAMPLE_INBOX = [
   { from: "maria@events.com", subject: "Catering for 40 on the 22nd?", body: "Hi! Do you cater private events? We're a party of 40 on the 22nd." },
   { from: "no-reply@promos.com", subject: "🔥 50% off this weekend only", body: "Shop our biggest sale of the year. Unsubscribe anytime." },
   { from: "upset@customer.com", subject: "Terrible experience — I want a refund", body: "This was unacceptable and I want my money back now." },
   { from: "jon@acme.com", subject: "Are you open next Friday evening?", body: "Checking availability for a table next Friday." },
 ];
+const SAMPLE_INVOICES = [
+  { number: "1043", customer: "Acme LLC", email: "ap@acme.com", amount: 2400, daysOverdue: 21 },
+  { number: "1039", customer: "Globex", email: "billing@globex.com", amount: 8800, daysOverdue: 75 },
+  { number: "1051", customer: "Initech", email: "ap@initech.com", amount: 1200, daysOverdue: 0 },
+];
+const SAMPLE_CARTS = [
+  { customer: "Ana Lee", email: "ana@example.com", total: 128.5, items: "Wool scarf, Beanie", url: "https://shop.example/checkout/abc" },
+  { customer: "Bo Kim", phone: "+15551230000", total: 59, items: "Trail socks (3-pack)" },
+];
+const SAMPLE_REVIEWS = [
+  { customer: "Dana R.", email: "dana@example.com", service: "Kitchen faucet install" },
+  { customer: "Eli M.", phone: "+15559990000", service: "Drain cleaning" },
+];
+const SAMPLE_LEADS = [
+  { name: "Frank T.", email: "frank@example.com", source: "Website form", message: "Need a 3-bed rental downtown, moving next month." },
+  { name: "Grace P.", phone: "+15557778888", source: "Instagram DM", message: "Do you do same-week showings?" },
+];
+const SAMPLE_TICKETS = [
+  { from: "buyer@example.com", subject: "Where is my order #10432?", body: "It's been 8 days with no tracking update." },
+  { from: "vip@example.com", subject: "Wrong size received", body: "I ordered L but got S — need a swap before the weekend." },
+];
+
+// Each runnable agent: the id the run route dispatches on, and the sample body
+// used in the demo. "inbox-triage" carries no agent field so it hits the default.
+const RUNNERS: { id: string; label: string; sample: Record<string, unknown> }[] = [
+  { id: "inbox-triage", label: "Inbox triage", sample: { messages: SAMPLE_INBOX } },
+  { id: "ar-followup", label: "AR follow-up", sample: { agent: "ar-followup", invoices: SAMPLE_INVOICES } },
+  { id: "cart-recovery", label: "Cart recovery", sample: { agent: "cart-recovery", carts: SAMPLE_CARTS } },
+  { id: "review-request", label: "Review requests", sample: { agent: "review-request", targets: SAMPLE_REVIEWS } },
+  { id: "lead-qualification", label: "Lead follow-up", sample: { agent: "lead-qualification", leads: SAMPLE_LEADS } },
+  { id: "support-triage", label: "Support triage", sample: { agent: "support-triage", messages: SAMPLE_TICKETS } },
+];
+
+const TABS = ["overview", "agents", "approvals", "connections", "audit"] as const;
 
 export function PortalDashboard(props: Props) {
   const { clientName, kpis, deltas, logs, connections, isDemo, authEnabled, userEmail } = props;
   const { t } = useLocale();
-  const [tab, setTab] = useState<Tab>("overview");
+  const [tab, setTab] = useState<Tab>(() => {
+    if (typeof window === "undefined") return "overview";
+    const q = new URLSearchParams(window.location.search).get("tab");
+    return (TABS as readonly string[]).includes(q ?? "") ? (q as Tab) : "overview";
+  });
   const [agents, setAgents] = useState<PortalAutomation[]>(props.automations);
   const [audit, setAudit] = useState<PortalAudit[]>(props.audit);
   const [approvals, setApprovals] = useState<PortalApproval[]>(props.approvals);
   const [busy, setBusy] = useState<string | null>(null);
-  const [running, setRunning] = useState(false);
+  const [running, setRunning] = useState<string | null>(null);
 
-  // Trigger one end-to-end agent cycle: read → decide (guarded, traced) → queue
-  // approval-gated actions. Demonstrates the full secure loop live.
-  async function runCycle() {
-    setRunning(true);
+  // Run one end-to-end cycle for a single agent: read → decide (guarded, traced)
+  // → queue approval-gated actions. Signed-in clients run on their OWN live data
+  // (pulled from their connected tools, persisted). The demo runs on samples and
+  // merges the proposed actions into the local approvals view.
+  async function run(r: (typeof RUNNERS)[number]) {
+    setRunning(r.id);
     try {
-      const res = await fetch("/api/agents/run", {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ messages: SAMPLE_INBOX }),
-      });
-      const data = (await res.json()) as {
-        decided?: number;
-        actions?: { action: string; agent: string; summary: string; needsApproval: boolean }[];
-      };
-      const created = (data.actions ?? [])
-        .filter((a) => a.needsApproval)
-        .map((a, i) => ({
-          id: `run-${i}-${Math.random().toString(36).slice(2)}`,
-          agent: a.agent,
-          action: a.action,
-          summary: a.summary,
-          createdAt: "just now",
-        }));
-      setApprovals((list) => [...created, ...list]);
-      setAudit((log) => [
-        { time: "just now", actor: "runtime", action: "agent.run", detail: `Inbox triage: ${data.decided ?? 0} decided, ${created.length} queued for approval` },
-        ...log,
-      ]);
-      setTab("approvals");
+      if (!isDemo) {
+        const res = await fetch("/api/portal/agents/run", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ agent: r.id }),
+        });
+        if (res.ok) {
+          // Persisted server-side — reload so the queued approvals (with real ids)
+          // render and can be approved/rejected.
+          window.location.href = "/portal?tab=approvals";
+          return;
+        }
+      } else {
+        const res = await fetch("/api/agents/run", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify(r.sample),
+        });
+        const data = (await res.json()) as {
+          decided?: number;
+          actions?: { action: string; agent: string; summary: string; needsApproval: boolean }[];
+        };
+        const created = (data.actions ?? [])
+          .filter((a) => a.needsApproval)
+          .map((a, i) => ({
+            id: `run-${i}-${Math.random().toString(36).slice(2)}`,
+            agent: a.agent,
+            action: a.action,
+            summary: a.summary,
+            createdAt: "just now",
+          }));
+        setApprovals((list) => [...created, ...list]);
+        setAudit((log) => [
+          { time: "just now", actor: "runtime", action: "agent.run", detail: `${r.label}: ${data.decided ?? 0} decided, ${created.length} queued for approval` },
+          ...log,
+        ]);
+        setTab("approvals");
+      }
     } catch {
       /* ignore */
     }
-    setRunning(false);
+    setRunning(null);
   }
 
   async function decide(a: PortalApproval, decision: "approved" | "rejected") {
@@ -243,20 +298,28 @@ export function PortalDashboard(props: Props) {
 
         {tab === "agents" && (
           <div className="rounded-3xl border border-border bg-card/40 backdrop-blur">
-            <div className="flex items-center justify-between border-b border-border px-6 py-4">
-              <h2 className="flex items-center gap-2 font-display font-semibold">
-                <Bot className="h-4 w-4 text-cyan-electric" /> Agents
-              </h2>
-              <div className="flex items-center gap-3">
+            <div className="border-b border-border px-6 py-4">
+              <div className="flex items-center justify-between">
+                <h2 className="flex items-center gap-2 font-display font-semibold">
+                  <Bot className="h-4 w-4 text-cyan-electric" /> Agents
+                </h2>
                 <span className="hidden text-xs text-muted-foreground sm:inline">Pause any agent — the kill switch</span>
-                <button
-                  onClick={runCycle}
-                  disabled={running}
-                  className="inline-flex items-center gap-1.5 rounded-full border border-cyan-electric/30 bg-cyan-electric/10 px-3 py-1 text-xs font-semibold text-cyan-electric transition hover:bg-cyan-electric/20 disabled:opacity-50"
-                >
-                  {running ? <Loader2 className="h-3 w-3 animate-spin" /> : <Play className="h-3 w-3" />}
-                  {running ? "Running…" : "Run a cycle"}
-                </button>
+              </div>
+              <div className="mt-3 flex flex-wrap items-center gap-2">
+                <span className="mr-1 text-xs text-muted-foreground">
+                  {isDemo ? "Run a cycle (sample):" : "Run a cycle on your data:"}
+                </span>
+                {RUNNERS.map((r) => (
+                  <button
+                    key={r.id}
+                    onClick={() => run(r)}
+                    disabled={running !== null}
+                    className="inline-flex items-center gap-1.5 rounded-full border border-cyan-electric/30 bg-cyan-electric/10 px-3 py-1 text-xs font-semibold text-cyan-electric transition hover:bg-cyan-electric/20 disabled:opacity-50"
+                  >
+                    {running === r.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <Play className="h-3 w-3" />}
+                    {r.label}
+                  </button>
+                ))}
               </div>
             </div>
             <div className="overflow-x-auto">
