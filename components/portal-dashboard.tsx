@@ -135,6 +135,7 @@ export function PortalDashboard(props: Props) {
   const [running, setRunning] = useState<string | null>(null);
   const [configs, setConfigs] = useState<PortalAgentConfig[]>(props.agentConfigs);
   const [outcomes, setOutcomes] = useState<PortalOutcome[]>(props.outcomes);
+  const [editing, setEditing] = useState<{ id: string; text: string } | null>(null);
   const { roi } = props;
   const ent = entitlement(plan);
 
@@ -237,8 +238,9 @@ export function PortalDashboard(props: Props) {
     setRunning(null);
   }
 
-  async function decide(a: PortalApproval, decision: "approved" | "rejected") {
+  async function decide(a: PortalApproval, decision: "approved" | "rejected", editedDraft?: string) {
     setApprovals((list) => list.filter((x) => x.id !== a.id));
+    if (editing?.id === a.id) setEditing(null);
     setAudit((log) => [
       { time: "just now", actor: userEmail ?? "you", action: `approval.${decision}`, detail: a.summary },
       ...log,
@@ -248,7 +250,7 @@ export function PortalDashboard(props: Props) {
         await fetch("/api/portal/approvals/decide", {
           method: "POST",
           headers: { "content-type": "application/json" },
-          body: JSON.stringify({ id: a.id, decision }),
+          body: JSON.stringify({ id: a.id, decision, editedDraft }),
         });
       } catch {
         /* optimistic — already removed */
@@ -597,33 +599,56 @@ export function PortalDashboard(props: Props) {
               </p>
             ) : (
               <ul className="divide-y divide-border/50">
-                {approvals.map((a) => (
-                  <li key={a.id} className="flex flex-wrap items-center gap-3 px-6 py-4">
-                    <div className="min-w-0 flex-1">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <span className="rounded-md bg-white/5 px-2 py-0.5 font-mono text-[11px] text-cyan-electric">{a.action}</span>
-                        <span className="text-xs text-muted-foreground">
-                          {a.agent} · {a.createdAt}
-                        </span>
+                {approvals.map((a) => {
+                  const isEditing = editing?.id === a.id;
+                  return (
+                    <li key={a.id} className="px-6 py-4">
+                      <div className="flex flex-wrap items-center gap-3">
+                        <div className="min-w-0 flex-1">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <span className="rounded-md bg-white/5 px-2 py-0.5 font-mono text-[11px] text-cyan-electric">{a.action}</span>
+                            <span className="text-xs text-muted-foreground">
+                              {a.agent} · {a.createdAt}
+                            </span>
+                          </div>
+                          <p className="mt-1 text-sm">{a.summary}</p>
+                        </div>
+                        <div className="flex gap-2">
+                          {a.draft && (
+                            <button
+                              onClick={() => setEditing(isEditing ? null : { id: a.id, text: a.draft ?? "" })}
+                              className="inline-flex items-center gap-1.5 rounded-full border border-border px-3 py-1 text-xs font-medium text-muted-foreground transition hover:bg-white/5"
+                            >
+                              {isEditing ? "Close" : "Edit"}
+                            </button>
+                          )}
+                          <button
+                            onClick={() => decide(a, "approved", isEditing ? editing?.text : undefined)}
+                            className="inline-flex items-center gap-1.5 rounded-full border border-emerald-400/30 px-3 py-1 text-xs font-medium text-emerald-300 transition hover:bg-emerald-400/10"
+                          >
+                            <Check className="h-3 w-3" /> {isEditing ? "Save & approve" : "Approve"}
+                          </button>
+                          <button
+                            onClick={() => decide(a, "rejected")}
+                            className="inline-flex items-center gap-1.5 rounded-full border border-red-500/30 px-3 py-1 text-xs font-medium text-red-400 transition hover:bg-red-500/10"
+                          >
+                            <X className="h-3 w-3" /> Reject
+                          </button>
+                        </div>
                       </div>
-                      <p className="mt-1 text-sm">{a.summary}</p>
-                    </div>
-                    <div className="flex gap-2">
-                      <button
-                        onClick={() => decide(a, "approved")}
-                        className="inline-flex items-center gap-1.5 rounded-full border border-emerald-400/30 px-3 py-1 text-xs font-medium text-emerald-300 transition hover:bg-emerald-400/10"
-                      >
-                        <Check className="h-3 w-3" /> Approve
-                      </button>
-                      <button
-                        onClick={() => decide(a, "rejected")}
-                        className="inline-flex items-center gap-1.5 rounded-full border border-red-500/30 px-3 py-1 text-xs font-medium text-red-400 transition hover:bg-red-500/10"
-                      >
-                        <X className="h-3 w-3" /> Reject
-                      </button>
-                    </div>
-                  </li>
-                ))}
+                      {isEditing ? (
+                        <textarea
+                          value={editing?.text ?? ""}
+                          onChange={(e) => setEditing({ id: a.id, text: e.target.value })}
+                          rows={5}
+                          className="mt-3 w-full rounded-xl border border-border bg-card/60 px-3 py-2 text-sm outline-none focus:border-cyan-electric"
+                        />
+                      ) : (
+                        a.draft && <p className="mt-2 line-clamp-2 text-xs text-muted-foreground">{a.draft}</p>
+                      )}
+                    </li>
+                  );
+                })}
               </ul>
             )}
           </div>

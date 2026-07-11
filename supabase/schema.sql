@@ -353,6 +353,23 @@ create table if not exists public.outcomes (
 create index if not exists outcomes_client_created_idx on public.outcomes (client_id, created_at desc);
 create index if not exists outcomes_client_status_idx on public.outcomes (client_id, status);
 
+-- ── Learning loop: approved/edited drafts become per-client few-shot exemplars ─
+create table if not exists public.agent_feedback (
+  id          uuid primary key default gen_random_uuid(),
+  client_id   uuid not null references public.clients (id) on delete cascade,
+  agent_key   text not null,
+  kind        text not null check (kind in ('approved', 'edited', 'rejected')),
+  sample      text,
+  created_at  timestamptz not null default now()
+);
+create index if not exists agent_feedback_lookup_idx on public.agent_feedback (client_id, agent_key, created_at desc);
+alter table public.agent_feedback enable row level security;
+drop policy if exists agent_feedback_self_read on public.agent_feedback;
+create policy agent_feedback_self_read on public.agent_feedback
+  for select using (
+    client_id in (select id from public.clients where email = (auth.jwt() ->> 'email'))
+  );
+
 alter table public.outcomes enable row level security;
 drop policy if exists outcomes_self_read on public.outcomes;
 create policy outcomes_self_read on public.outcomes

@@ -4,6 +4,7 @@ import { getServiceClient } from "@/lib/supabase-server";
 import { sendAgentEmail } from "@/lib/email";
 import { sendSmsForClient } from "@/lib/integrations";
 import { recordOutcome } from "@/lib/outcomes";
+import { recordFeedback } from "@/lib/feedback";
 import { startTrace } from "@/lib/trace";
 
 type ApprovalRow = {
@@ -25,7 +26,11 @@ export async function POST(req: Request) {
   const email = await getPortalUserEmail();
   if (!email) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
 
-  const { id, decision } = (await req.json().catch(() => ({}))) as { id?: string; decision?: string };
+  const { id, decision, editedDraft } = (await req.json().catch(() => ({}))) as {
+    id?: string;
+    decision?: string;
+    editedDraft?: string;
+  };
   if (!id || (decision !== "approved" && decision !== "rejected")) {
     return NextResponse.json({ error: "bad_request" }, { status: 400 });
   }
@@ -48,9 +53,12 @@ export async function POST(req: Request) {
   // Execute the action on approve (email.send via Resend, sms.send via the
   // client's connected Twilio), fully traced.
   let executed: boolean | undefined;
+  // The owner may tweak the draft before approving — that edit is the strongest
+  // "good" signal for the learning loop, and is what actually gets sent.
+  const edited = typeof editedDraft === "string" && editedDraft.trim().length > 0;
   if (decision === "approved" && (approval.action === "email.send" || approval.action === "sms.send")) {
     const to = approval.payload?.to;
-    const draft = approval.payload?.draft;
+    const draft = edited ? editedDraft!.trim() : approval.payload?.draft;
     const subject = approval.payload?.source ?? "your message";
     const trace = startTrace("action.execute");
     trace.mark("approval.approved", { action: approval.action });
@@ -101,6 +109,16 @@ export async function POST(req: Request) {
       actor: email,
       action: `approval.${decision}`,
       detail: approval.summary ?? approval.action,
+    });
+
+    // Learning loop: capture the decision as a per-client style signal. An
+    // approved/edited draft teaches the agent what "good" looks like; a rejected
+    // one is a soft negative.
+    await recordFeedback(svc, {
+      clientId: approval.client_id,
+      agentKey: approval.payload?.kind ?? null,
+      kind: decision === "rejected" ? "rejected" : edited ? "edited" : "approved",
+      sample: (edited ? editedDraft!.trim() : approval.payload?.draft) ?? null,
     });
   }
 

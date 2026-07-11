@@ -16,6 +16,7 @@ import {
 } from "@/lib/runtime";
 import { getServiceClient } from "@/lib/supabase-server";
 import { loadContext } from "@/lib/context";
+import { loadExemplars } from "@/lib/feedback";
 import { sendApprovalNotification, sendAgentEmail } from "@/lib/email";
 import { sendSmsForClient } from "@/lib/integrations";
 import { recordOutcome } from "@/lib/outcomes";
@@ -70,7 +71,12 @@ export async function POST(req: Request) {
       const svc = getServiceClient();
       if (svc) {
         const { data: c } = await svc.from("clients").select("id").eq("ingest_key", key).maybeSingle();
-        if (c) context = await loadContext(c.id);
+        if (c) {
+          // Business context + the owner's own approved examples (learning loop).
+          const parts = [await loadContext(c.id)];
+          if (body.agent) parts.push(await loadExemplars(c.id, body.agent));
+          context = parts.filter(Boolean).join("\n\n") || undefined;
+        }
       }
     }
 

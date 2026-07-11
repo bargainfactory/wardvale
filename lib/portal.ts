@@ -21,7 +21,7 @@ export type PortalConnection = {
   reconnectHref?: string;
 };
 export type PortalAudit = { time: string; actor: string; action: string; detail: string };
-export type PortalApproval = { id: string; agent: string; action: string; summary: string; createdAt: string };
+export type PortalApproval = { id: string; agent: string; action: string; summary: string; createdAt: string; draft?: string };
 export type PortalAgentConfig = { key: string; name: string; enabled: boolean; autoSend: boolean; schedule: string };
 export type PortalRoi = { realized: number; pipeline: number; won: number; resolved: number; winRate: number };
 export type PortalOutcome = { id: string; agent: string; kind: string; value: number; status: string; detail: string; createdAt: string };
@@ -107,7 +107,7 @@ export async function getPortalData(email: string): Promise<PortalData | null> {
         .limit(20),
       supabase
         .from("approvals")
-        .select("id, agent, action, summary, created_at")
+        .select("id, agent, action, summary, payload, created_at")
         .eq("client_id", client.id)
         .eq("status", "pending")
         .order("created_at", { ascending: false })
@@ -174,8 +174,8 @@ export async function getPortalData(email: string): Promise<PortalData | null> {
       (a) => ({ time: timeOf(a.created_at), actor: a.actor ?? "system", action: a.action, detail: a.detail ?? "" })
     );
 
-    const approvals: PortalApproval[] = ((approvalsData as { id: string; agent: string | null; action: string; summary: string | null; created_at: string }[] | null) ?? []).map(
-      (a) => ({ id: a.id, agent: a.agent ?? "agent", action: a.action, summary: a.summary ?? "", createdAt: relTime(a.created_at) })
+    const approvals: PortalApproval[] = ((approvalsData as { id: string; agent: string | null; action: string; summary: string | null; payload: { draft?: string } | null; created_at: string }[] | null) ?? []).map(
+      (a) => ({ id: a.id, agent: a.agent ?? "agent", action: a.action, summary: a.summary ?? "", createdAt: relTime(a.created_at), draft: a.payload?.draft ?? undefined })
     );
 
     const agentConfigs: PortalAgentConfig[] = ((configData as { agent_key: string; enabled: boolean; auto_send: boolean; schedule: string }[] | null) ?? []).map(
