@@ -36,6 +36,7 @@ import { createClient } from "@/lib/supabase";
 import { useLocale } from "@/lib/locale-context";
 import { entitlement, type Schedule } from "@/lib/agents-catalog";
 import type { PortalAgentConfig, PortalApproval, PortalAutomation, PortalAudit, PortalConnection, PortalKpis, PortalLog, PortalOutcome, PortalRoi } from "@/lib/portal";
+import type { PeerBenchmarks } from "@/lib/peer-benchmarks";
 
 type Props = {
   clientName: string;
@@ -51,6 +52,7 @@ type Props = {
   agentConfigs: PortalAgentConfig[];
   roi: PortalRoi;
   outcomes: PortalOutcome[];
+  benchmarks: PeerBenchmarks | null;
   isDemo: boolean;
   authEnabled: boolean;
   userEmail: string | null;
@@ -447,6 +449,40 @@ export function PortalDashboard(props: Props) {
                 </ul>
               )}
             </div>
+
+            {props.benchmarks && (
+              <div className="mt-6 rounded-3xl border border-border bg-card/40 p-6 backdrop-blur">
+                <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
+                  <h2 className="flex items-center gap-2 font-display font-semibold">
+                    <ArrowUpRight className="h-4 w-4 text-cyan-electric" /> How you compare
+                  </h2>
+                  <span className="text-xs text-muted-foreground">
+                    {props.benchmarks.industry} · {props.benchmarks.sampleSize} anonymized peers
+                  </span>
+                </div>
+                <div className="grid gap-4 sm:grid-cols-2">
+                  {props.benchmarks.metrics.map((m) => {
+                    const fmt = (n: number) => (m.unit === "$" ? `$${n.toLocaleString()}` : `${n}%`);
+                    const ahead = m.you >= m.peers;
+                    const max = Math.max(m.you, m.peers, 1);
+                    return (
+                      <div key={m.label} className="rounded-2xl border border-border/60 bg-card/30 p-4">
+                        <div className="flex items-center justify-between text-sm">
+                          <span className="font-medium">{m.label}</span>
+                          <span className={ahead ? "text-emerald-300" : "text-yellow-300"}>
+                            {ahead ? "ahead of peers" : "room to grow"}
+                          </span>
+                        </div>
+                        <div className="mt-3 space-y-2">
+                          <Bar label="You" value={m.you} max={max} display={fmt(m.you)} accent />
+                          <Bar label="Peers" value={m.peers} max={max} display={fmt(m.peers)} />
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
           </div>
         )}
 
@@ -740,6 +776,19 @@ export function PortalDashboard(props: Props) {
         )}
       </div>
     </PageLayout>
+  );
+}
+
+function Bar({ label, value, max, display, accent }: { label: string; value: number; max: number; display: string; accent?: boolean }) {
+  const pct = Math.max(3, Math.round((value / max) * 100));
+  return (
+    <div className="flex items-center gap-2 text-xs">
+      <span className="w-10 shrink-0 text-muted-foreground">{label}</span>
+      <div className="h-2 flex-1 overflow-hidden rounded-full bg-white/5">
+        <div className={`h-full rounded-full ${accent ? "bg-cyan-electric" : "bg-muted-foreground/40"}`} style={{ width: `${pct}%` }} />
+      </div>
+      <span className="w-16 shrink-0 text-right tabular-nums">{display}</span>
+    </div>
   );
 }
 

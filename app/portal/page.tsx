@@ -2,6 +2,7 @@ import { PortalDashboard } from "@/components/portal-dashboard";
 import { isSupabaseAuthConfigured, getPortalUserEmail } from "@/lib/supabase-ssr";
 import { getPortalData, type PortalData } from "@/lib/portal";
 import { ensureClientProvisioned } from "@/lib/provisioning";
+import { loadPeerBenchmarks, type PeerBenchmarks } from "@/lib/peer-benchmarks";
 
 // Demo shown to visitors and any signed-in client without live data yet.
 const DEMO: PortalData & { deltas: { runs: string; hours: string; success: string; roi: string } } = {
@@ -61,10 +62,20 @@ const DEMO: PortalData & { deltas: { runs: string; hours: string; success: strin
   ],
 };
 
+const DEMO_BENCHMARKS: PeerBenchmarks = {
+  industry: "Restaurant / hospitality",
+  sampleSize: 24,
+  metrics: [
+    { label: "Win rate", you: 75, peers: 61, unit: "%" },
+    { label: "Realized value", you: 12510, peers: 8900, unit: "$" },
+  ],
+};
+
 export default async function PortalPage() {
   const authEnabled = isSupabaseAuthConfigured();
   let userEmail: string | null = null;
   let data: PortalData | null = null;
+  let benchmarks: PeerBenchmarks | null = null;
 
   if (authEnabled) {
     userEmail = await getPortalUserEmail();
@@ -76,6 +87,7 @@ export default async function PortalPage() {
         await ensureClientProvisioned(userEmail);
         data = await getPortalData(userEmail);
       }
+      if (data) benchmarks = await loadPeerBenchmarks(userEmail);
     }
   }
 
@@ -97,6 +109,7 @@ export default async function PortalPage() {
       agentConfigs={view.agentConfigs}
       roi={view.roi}
       outcomes={view.outcomes}
+      benchmarks={isDemo ? DEMO_BENCHMARKS : benchmarks}
       isDemo={isDemo}
       authEnabled={authEnabled}
       userEmail={userEmail}
