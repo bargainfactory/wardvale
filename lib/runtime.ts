@@ -429,6 +429,33 @@ const SMS_SYSTEM = `${SECURITY_PREAMBLE}
 You are an SMS assistant for a small business replying to inbound texts (e.g. a missed-call auto-text-back or a customer question). Write ONE concise, friendly SMS reply (max 320 chars) that answers or moves toward booking. If a message is spam or an opt-out (STOP/UNSUBSCRIBE), leave the draft empty and say so in the summary.
 Return ONLY JSON: { "items": [ { "summary": "one line", "draft": "sms text" } ] }, one per message, in order.`;
 
+// ── Voice receptionist (inbound Twilio Voice) ────────────────────────────────
+
+const VOICE_SYSTEM = `You are a warm, professional phone receptionist for a small business. Reply to the caller in ONE or TWO short SPOKEN sentences — no lists, no formatting, no emoji. Answer their question from the business context if you can; if they want to book or leave a message, confirm you'll pass it to the team. Never invent hours, prices, or policies not in the context.`;
+
+/** One spoken turn: given what the caller said, return a short reply to speak. */
+export async function runVoiceTurn(said: string, context?: string, trace?: Trace): Promise<string> {
+  const fallback = "Thanks for calling! I've noted that and someone from our team will get right back to you.";
+  if (!process.env.OPENAI_API_KEY || !said.trim()) return fallback;
+  try {
+    trace?.mark("model.start");
+    const completion = await getOpenAI().chat.completions.create({
+      model: "gpt-4o-mini",
+      max_tokens: 120,
+      temperature: 0.5,
+      messages: [
+        { role: "system", content: sys(`${SECURITY_PREAMBLE}\n\n${VOICE_SYSTEM}`, context) },
+        { role: "user", content: fenceUntrusted(said) },
+      ],
+    });
+    trace?.setTokens(completion.usage?.total_tokens ?? 0);
+    trace?.mark("model.end");
+    return (completion.choices[0]?.message?.content ?? "").trim().slice(0, 400) || fallback;
+  } catch {
+    return fallback;
+  }
+}
+
 export async function runSmsReply(messages: InboundSms[], trace?: Trace, context?: string): Promise<ProposedAction[]> {
   const clean = messages.slice(0, 10).map((m) => ({
     from: (m.from ?? "").slice(0, 40),
