@@ -5,6 +5,7 @@ import { sendAgentEmail } from "@/lib/email";
 import { sendSmsForClient } from "@/lib/integrations";
 import { recordOutcome } from "@/lib/outcomes";
 import { recordFeedback } from "@/lib/feedback";
+import { rateLimit, clientIp } from "@/lib/rate-limit";
 import { startTrace } from "@/lib/trace";
 
 type ApprovalRow = {
@@ -23,6 +24,9 @@ type ApprovalRow = {
  * trace spans; the decision + execution are recorded to the governance audit.
  */
 export async function POST(req: Request) {
+  const rl = await rateLimit(`decide:${clientIp(req)}`, 40, 60_000);
+  if (!rl.ok) return NextResponse.json({ error: "rate_limited" }, { status: 429, headers: { "Retry-After": String(rl.retryAfter) } });
+
   const email = await getPortalUserEmail();
   if (!email) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
 

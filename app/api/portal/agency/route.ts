@@ -3,12 +3,16 @@ import { getPortalUserEmail } from "@/lib/supabase-ssr";
 import { getServiceClient } from "@/lib/supabase-server";
 import { provisionClient } from "@/lib/provisioning";
 import { getAgencyFor } from "@/lib/agency";
+import { rateLimit, clientIp } from "@/lib/rate-limit";
 
 /**
  * Agency console API. "create" registers the signed-in user as an agency;
  * "add-client" provisions a fully set-up client under that agency.
  */
 export async function POST(req: Request) {
+  const rl = await rateLimit(`agency:${clientIp(req)}`, 20, 60_000);
+  if (!rl.ok) return NextResponse.json({ error: "rate_limited" }, { status: 429, headers: { "Retry-After": String(rl.retryAfter) } });
+
   const email = await getPortalUserEmail();
   if (!email) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
 

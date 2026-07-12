@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { getConnector } from "@/lib/connectors";
 import { getServiceClient } from "@/lib/supabase-server";
 import { getPortalUserEmail } from "@/lib/supabase-ssr";
+import { encryptSecret } from "@/lib/crypto";
+import { rateLimit, clientIp } from "@/lib/rate-limit";
 
 /**
  * Connect an API-key provider (Twilio, Stripe, Yelp). Unlike OAuth, there's no
@@ -13,6 +15,9 @@ import { getPortalUserEmail } from "@/lib/supabase-ssr";
 export async function POST(req: Request, { params }: { params: Promise<{ provider: string }> }) {
   const { provider } = await params;
   const origin = new URL(req.url).origin;
+
+  const rl = await rateLimit(`connectkey:${clientIp(req)}`, 10, 60_000);
+  if (!rl.ok) return NextResponse.json({ error: "rate_limited" }, { status: 429, headers: { "Retry-After": String(rl.retryAfter) } });
 
   const connector = getConnector(provider);
   if (!connector || connector.tokenAuth !== "apikey") {
@@ -44,7 +49,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ provide
           provider: connector.name,
           status: "connected",
           scope: "apikey",
-          access_token: JSON.stringify(creds),
+          access_token: encryptSecret(JSON.stringify(creds)),
           refresh_token: null,
           expires_at: null,
           external_id: creds.key,

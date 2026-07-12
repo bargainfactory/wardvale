@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { getConnector } from "@/lib/connectors";
 import { getServiceClient } from "@/lib/supabase-server";
+import { encryptSecret } from "@/lib/crypto";
 
 type TokenResponse = { access_token?: string; refresh_token?: string; expires_in?: number };
 
@@ -68,8 +69,8 @@ export async function GET(req: Request, { params }: { params: Promise<{ provider
             provider: connector.name,
             status: "connected",
             scope: connector.scope,
-            access_token: token.access_token,
-            refresh_token: token.refresh_token ?? null,
+            access_token: encryptSecret(token.access_token),
+            refresh_token: encryptSecret(token.refresh_token ?? null),
             expires_at: expiresAt,
             external_id: externalId,
           },

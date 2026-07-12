@@ -5,13 +5,19 @@ import type { NextConfig } from "next";
 //   bootstrap scripts (and we render inline JSON-LD) without a nonce.
 // - Font/style hosts cover rsms.me (Inter) and Fontshare (Satoshi).
 // - Cloudflare hosts cover the optional Turnstile CAPTCHA widget.
+// Supabase is called from the browser (auth + realtime), so its origin must be
+// allowed for fetch (https) and websockets (wss); derived from the public URL.
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
+const supabaseWss = supabaseUrl.replace(/^https:/, "wss:");
+const connectHosts = ["'self'", "https://challenges.cloudflare.com", supabaseUrl, supabaseWss].filter(Boolean).join(" ");
+
 const csp = [
   "default-src 'self'",
   "script-src 'self' 'unsafe-inline' https://challenges.cloudflare.com",
   "style-src 'self' 'unsafe-inline' https://rsms.me https://api.fontshare.com",
   "font-src 'self' data: https://rsms.me https://cdn.fontshare.com https://api.fontshare.com",
   "img-src 'self' data: https:",
-  "connect-src 'self' https://challenges.cloudflare.com",
+  `connect-src ${connectHosts}`,
   "frame-src https://challenges.cloudflare.com https://calendly.com",
   "frame-ancestors 'none'",
   "object-src 'none'",
@@ -26,7 +32,8 @@ const securityHeaders = [
   { key: "X-Frame-Options", value: "DENY" },
   { key: "X-Content-Type-Options", value: "nosniff" },
   { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
-  { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=(), browsing-topics=()" },
+  // microphone=(self) so the voice-input feature (Web Speech API) works.
+  { key: "Permissions-Policy", value: "camera=(), microphone=(self), geolocation=(), browsing-topics=()" },
   { key: "X-DNS-Prefetch-Control", value: "on" },
 ];
 

@@ -238,6 +238,34 @@ Run through this once after the first deploy.
 
 ---
 
+## 8. Security checklist
+
+Before handling real customer credentials, confirm:
+
+- [ ] **`TOKEN_ENC_KEY` is set** (`openssl rand -base64 32`). This envelope-encrypts
+      stored OAuth tokens + API keys (AES-256-GCM) so a DB dump alone can't read
+      them. Keep it stable and backed up — rotating it makes existing encrypted
+      tokens unreadable (clients would reconnect). Without it, tokens are stored
+      plaintext (dev only).
+- [ ] **Email confirmation is required** in Supabase → Auth → Providers (RLS
+      trusts the JWT email, so unverified sign-in must be off).
+- [ ] **Upstash is configured** (`UPSTASH_REDIS_REST_URL/TOKEN`) — the in-memory
+      rate limiter is per-instance and weaker across serverless functions.
+- [ ] **Ingest keys** can be rotated by each client in the portal **Trust** tab;
+      treat them as secrets.
+- [ ] **Security headers** ship from `next.config.ts` (CSP, HSTS, X-Frame-Options
+      DENY, nosniff, Referrer-Policy, Permissions-Policy). The CSP allows the
+      Supabase origin for client‑side auth/realtime — if you use another
+      browser‑facing host (analytics, widgets), add it to `connect-src`.
+- [ ] All webhooks verify signatures; cron + admin routes require their secrets;
+      sensitive portal mutations are rate‑limited and session‑gated.
+
+**Not yet in place** (don't claim these): third‑party penetration test, SOC 2 /
+ISO certification, HIPAA/BAA (so no PHI). The portal Trust tab lists only the
+controls that actually exist — keep it that way.
+
+---
+
 ## Quick "smallest live footprint"
 
 Want the fastest path to a working turnkey signup without billing or connectors?

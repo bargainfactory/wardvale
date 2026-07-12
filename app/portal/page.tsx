@@ -9,6 +9,7 @@ const DEMO: PortalData & { deltas: { runs: string; hours: string; success: strin
   clientName: "Nona Bistro",
   onboarded: true,
   plan: "growth",
+  ingestKeyLast4: "9f2c",
   agentConfigs: [
     { key: "inbox-triage", name: "Inbox triage", enabled: true, autoSend: false, schedule: "hourly" },
     { key: "review-request", name: "Review requests", enabled: true, autoSend: false, schedule: "daily" },
@@ -114,6 +115,7 @@ export default async function PortalPage() {
       outcomes={view.outcomes}
       benchmarks={isDemo ? DEMO_BENCHMARKS : benchmarks}
       policy={view.policy}
+      ingestKeyLast4={view.ingestKeyLast4}
       isDemo={isDemo}
       authEnabled={authEnabled}
       userEmail={userEmail}

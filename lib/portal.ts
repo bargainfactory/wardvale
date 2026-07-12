@@ -39,6 +39,7 @@ export type PortalData = {
   clientName: string;
   onboarded: boolean;
   plan: string;
+  ingestKeyLast4: string;
   kpis: PortalKpis;
   roi: PortalRoi;
   roiProof: PortalRoiProof;
@@ -87,10 +88,11 @@ export async function getPortalData(email: string): Promise<PortalData | null> {
 
     const { data: client } = await supabase
       .from("clients")
-      .select("id, name, onboarded, plan, created_at")
+      .select("id, name, onboarded, plan, created_at, ingest_key")
       .eq("email", email)
       .maybeSingle();
     if (!client) return null;
+    const ingestKeyLast4 = ((client as { ingest_key?: string }).ingest_key ?? "").slice(-4);
 
     const [
       { data: automations },
@@ -251,6 +253,7 @@ export async function getPortalData(email: string): Promise<PortalData | null> {
       clientName: client.name,
       onboarded: Boolean((client as { onboarded?: boolean }).onboarded),
       plan: (client as { plan?: string }).plan ?? "trial",
+      ingestKeyLast4,
       kpis,
       roi,
       roiProof,

@@ -1,6 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { getConnector } from "@/lib/connectors";
 import { getServiceClient } from "@/lib/supabase-server";
+import { encryptSecret, decryptSecret } from "@/lib/crypto";
 import type { Invoice, Cart, ReviewTarget, Lead, InboxMessage } from "@/lib/runtime";
 import type { Trace } from "@/lib/trace";
 
@@ -43,26 +44,29 @@ async function refreshAccessToken(
   }
 }
 
-/** A valid access token — refreshes + persists if the stored one is expiring. */
+/** A valid access token — refreshes + persists if the stored one is expiring.
+ *  Tokens are encrypted at rest, so we decrypt on read and re-encrypt on write. */
 async function ensureAccessToken(
   supabase: SupabaseClient,
   connectorId: string,
   conn: StoredConnection
 ): Promise<string | null> {
   const now = Date.now();
+  const accessToken = decryptSecret(conn.access_token);
+  const refreshToken = decryptSecret(conn.refresh_token);
   const exp = conn.expires_at ? new Date(conn.expires_at).getTime() : 0;
-  if (conn.access_token && exp - 60_000 > now) return conn.access_token; // still valid (60s buffer)
-  if (!conn.refresh_token) return conn.access_token;
+  if (accessToken && exp - 60_000 > now) return accessToken; // still valid (60s buffer)
+  if (!refreshToken) return accessToken;
 
-  const refreshed = await refreshAccessToken(connectorId, conn.refresh_token);
-  if (!refreshed) return conn.access_token;
+  const refreshed = await refreshAccessToken(connectorId, refreshToken);
+  if (!refreshed) return accessToken;
 
   const newExpiry = refreshed.expires_in ? new Date(now + refreshed.expires_in * 1000).toISOString() : null;
   await supabase
     .from("connections")
     .update({
-      access_token: refreshed.access_token,
-      refresh_token: refreshed.refresh_token ?? conn.refresh_token,
+      access_token: encryptSecret(refreshed.access_token),
+      refresh_token: encryptSecret(refreshed.refresh_token ?? refreshToken),
       expires_at: newExpiry,
     })
     .eq("id", conn.id);
@@ -395,9 +399,10 @@ export async function pullNewLeads(
 type TwilioCreds = { key?: string; secret?: string; from?: string }; // SID, auth token, from number
 
 function parseApiKey(access_token: string | null): TwilioCreds | null {
-  if (!access_token) return null;
+  const raw = decryptSecret(access_token);
+  if (!raw) return null;
   try {
-    return JSON.parse(access_token) as TwilioCreds;
+    return JSON.parse(raw) as TwilioCreds;
   } catch {
     return null;
   }

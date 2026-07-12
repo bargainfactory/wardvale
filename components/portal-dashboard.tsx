@@ -55,6 +55,7 @@ type Props = {
   outcomes: PortalOutcome[];
   benchmarks: PeerBenchmarks | null;
   policy: PortalPolicy;
+  ingestKeyLast4: string;
   isDemo: boolean;
   authEnabled: boolean;
   userEmail: string | null;
@@ -146,7 +147,25 @@ export function PortalDashboard(props: Props) {
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [policy, setPolicy] = useState<PortalPolicy>(props.policy);
   const [policySaved, setPolicySaved] = useState(false);
+  const [newKey, setNewKey] = useState<string | null>(null);
+  const [rotating, setRotating] = useState(false);
   const { roi } = props;
+
+  async function rotateKey() {
+    if (!window.confirm("Rotate your ingestion key? The old key stops working immediately.")) return;
+    setRotating(true);
+    try {
+      const res = await fetch("/api/portal/ingest-key/rotate", { method: "POST" });
+      const d = (await res.json().catch(() => ({}))) as { key?: string };
+      if (d.key) {
+        setNewKey(d.key);
+        setAudit((log) => [{ time: "just now", actor: userEmail ?? "you", action: "ingest_key.rotated", detail: "Rotated the ingestion API key" }, ...log]);
+      }
+    } catch {
+      /* ignore */
+    }
+    setRotating(false);
+  }
 
   async function savePolicy() {
     setPolicySaved(false);
@@ -923,6 +942,29 @@ export function PortalDashboard(props: Props) {
                 <Button size="sm" onClick={savePolicy}>Save policy</Button>
                 {policySaved && <span className="text-xs text-emerald-300">Saved</span>}
               </div>
+            </div>
+
+            <div className="rounded-3xl border border-border bg-card/40 p-6 backdrop-blur">
+              <h2 className="flex items-center gap-2 font-display font-semibold">
+                <Lock className="h-4 w-4 text-cyan-electric" /> Ingestion API key
+              </h2>
+              <p className="mt-1 text-sm text-muted-foreground">
+                The bearer secret that authenticates external agent runs. Treat it like a password — rotate it if it may have leaked.
+              </p>
+              <div className="mt-4 flex flex-wrap items-center gap-3">
+                <code className="rounded-lg border border-border bg-card/60 px-3 py-2 font-mono text-sm">
+                  ••••••••••••{props.ingestKeyLast4}
+                </code>
+                <Button size="sm" variant="outline" onClick={rotateKey} disabled={rotating}>
+                  {rotating ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <ShieldCheck className="h-3.5 w-3.5" />} Rotate key
+                </Button>
+              </div>
+              {newKey && (
+                <div className="mt-3 rounded-xl border border-emerald-400/30 bg-emerald-400/10 p-3">
+                  <p className="text-xs text-emerald-200">New key — copy it now, it won&rsquo;t be shown again:</p>
+                  <code className="mt-1 block break-all font-mono text-xs text-emerald-100">{newKey}</code>
+                </div>
+              )}
             </div>
 
             <div className="rounded-3xl border border-border bg-card/40 p-6 backdrop-blur">

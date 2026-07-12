@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getPortalUserEmail } from "@/lib/supabase-ssr";
 import { getServiceClient } from "@/lib/supabase-server";
+import { rateLimit, clientIp } from "@/lib/rate-limit";
 
 /**
  * Authenticated portal trigger: a signed-in client runs one agent cycle on their
@@ -10,6 +11,9 @@ import { getServiceClient } from "@/lib/supabase-server";
  * key never touches the browser.
  */
 export async function POST(req: Request) {
+  const rl = await rateLimit(`portalrun:${clientIp(req)}`, 20, 60_000);
+  if (!rl.ok) return NextResponse.json({ error: "rate_limited" }, { status: 429, headers: { "Retry-After": String(rl.retryAfter) } });
+
   const email = await getPortalUserEmail();
   if (!email) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
 
