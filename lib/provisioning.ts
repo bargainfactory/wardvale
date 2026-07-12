@@ -27,6 +27,7 @@ export async function provisionClient(input: {
   plan?: string;
   status?: string;
   stripeCustomerId?: string | null;
+  agencyId?: string | null;
   supabase?: SupabaseClient;
 }): Promise<{ id: string; ingest_key: string } | null> {
   const supabase = input.supabase ?? getServiceClient();
@@ -50,6 +51,7 @@ export async function provisionClient(input: {
     if (input.status) patch.status = input.status;
     if (input.stripeCustomerId) patch.stripe_customer_id = input.stripeCustomerId;
     if (input.name) patch.name = input.name;
+    if (input.agencyId) patch.agency_id = input.agencyId;
     if (Object.keys(patch).length) await supabase.from("clients").update(patch).eq("id", clientId);
   } else {
     const { data: created, error } = await supabase
@@ -61,6 +63,7 @@ export async function provisionClient(input: {
         status: input.status ?? "active",
         tier: input.plan ?? "trial",
         stripe_customer_id: input.stripeCustomerId ?? null,
+        agency_id: input.agencyId ?? null,
       })
       .select("id, ingest_key")
       .single();

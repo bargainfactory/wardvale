@@ -353,6 +353,22 @@ create table if not exists public.outcomes (
 create index if not exists outcomes_client_created_idx on public.outcomes (client_id, created_at desc);
 create index if not exists outcomes_client_status_idx on public.outcomes (client_id, status);
 
+-- ── White-label: agencies manage many clients under their own brand ──────────
+create table if not exists public.agencies (
+  id           uuid primary key default gen_random_uuid(),
+  name         text not null,
+  owner_email  text unique not null,
+  brand_color  text not null default '#22d3ee',
+  created_at   timestamptz not null default now()
+);
+alter table public.clients add column if not exists agency_id uuid references public.agencies (id) on delete set null;
+create index if not exists clients_agency_idx on public.clients (agency_id);
+
+alter table public.agencies enable row level security;
+drop policy if exists agencies_self_read on public.agencies;
+create policy agencies_self_read on public.agencies
+  for select using (owner_email = (auth.jwt() ->> 'email'));
+
 -- ── Governance: per-client execution policies ────────────────────────────────
 -- Guardrails the owner sets: an auto-send spend cap, a per-action approval
 -- threshold, and a recipient-domain allowlist. Enforced before any auto-send;

@@ -36,6 +36,7 @@ export function Footer() {
               <li><Link href="/impact" className="hover:text-cyan-electric">Live impact</Link></li>
               <li><Link href="/pricing" className="hover:text-cyan-electric">{t("nav.pricing")}</Link></li>
               <li><Link href="/portal" className="hover:text-cyan-electric">{t("nav.portal")}</Link></li>
+              <li><Link href="/portal/agency" className="hover:text-cyan-electric">For agencies</Link></li>
             </ul>
           </div>
 
