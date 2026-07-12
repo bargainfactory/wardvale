@@ -142,6 +142,7 @@ export function PortalDashboard(props: Props) {
   const [configs, setConfigs] = useState<PortalAgentConfig[]>(props.agentConfigs);
   const [outcomes, setOutcomes] = useState<PortalOutcome[]>(props.outcomes);
   const [editing, setEditing] = useState<{ id: string; text: string } | null>(null);
+  const [selected, setSelected] = useState<Set<string>>(new Set());
   const [policy, setPolicy] = useState<PortalPolicy>(props.policy);
   const [policySaved, setPolicySaved] = useState(false);
   const { roi } = props;
@@ -281,6 +282,39 @@ export function PortalDashboard(props: Props) {
         /* optimistic — already removed */
       }
     }
+  }
+
+  // Batch approvals — the human-in-the-loop step can't be a chore. Approve/reject
+  // many at once so the queue never becomes friction.
+  async function decideMany(ids: string[], decision: "approved" | "rejected") {
+    const targets = approvals.filter((a) => ids.includes(a.id));
+    if (!targets.length) return;
+    setApprovals((list) => list.filter((a) => !ids.includes(a.id)));
+    setSelected(new Set());
+    setAudit((log) => [
+      { time: "just now", actor: userEmail ?? "you", action: `approval.${decision}`, detail: `${targets.length} action${targets.length === 1 ? "" : "s"} (batch)` },
+      ...log,
+    ]);
+    if (!isDemo) {
+      await Promise.all(
+        targets.map((a) =>
+          fetch("/api/portal/approvals/decide", {
+            method: "POST",
+            headers: { "content-type": "application/json" },
+            body: JSON.stringify({ id: a.id, decision }),
+          }).catch(() => {})
+        )
+      );
+    }
+  }
+
+  function toggleSelect(id: string) {
+    setSelected((s) => {
+      const next = new Set(s);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
   }
 
   async function toggleAgent(a: PortalAutomation) {
@@ -647,11 +681,38 @@ export function PortalDashboard(props: Props) {
 
         {tab === "approvals" && (
           <div className="rounded-3xl border border-border bg-card/40 backdrop-blur">
-            <div className="flex items-center justify-between border-b border-border px-6 py-4">
+            <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border px-6 py-4">
               <h2 className="flex items-center gap-2 font-display font-semibold">
                 <ClipboardCheck className="h-4 w-4 text-cyan-electric" /> Pending approvals
               </h2>
-              <span className="text-xs text-muted-foreground">Agents draft — you approve before anything is sent</span>
+              <div className="flex items-center gap-2">
+                {selected.size > 0 ? (
+                  <>
+                    <span className="text-xs text-muted-foreground">{selected.size} selected</span>
+                    <button
+                      onClick={() => decideMany([...selected], "approved")}
+                      className="inline-flex items-center gap-1.5 rounded-full border border-emerald-400/30 px-3 py-1 text-xs font-medium text-emerald-300 transition hover:bg-emerald-400/10"
+                    >
+                      <Check className="h-3 w-3" /> Approve
+                    </button>
+                    <button
+                      onClick={() => decideMany([...selected], "rejected")}
+                      className="inline-flex items-center gap-1.5 rounded-full border border-red-500/30 px-3 py-1 text-xs font-medium text-red-400 transition hover:bg-red-500/10"
+                    >
+                      <X className="h-3 w-3" /> Reject
+                    </button>
+                  </>
+                ) : approvals.length > 0 ? (
+                  <button
+                    onClick={() => decideMany(approvals.map((a) => a.id), "approved")}
+                    className="inline-flex items-center gap-1.5 rounded-full border border-emerald-400/30 bg-emerald-400/10 px-3 py-1 text-xs font-semibold text-emerald-300 transition hover:bg-emerald-400/20"
+                  >
+                    <Check className="h-3 w-3" /> Approve all ({approvals.length})
+                  </button>
+                ) : (
+                  <span className="text-xs text-muted-foreground">Agents draft — you approve before anything is sent</span>
+                )}
+              </div>
             </div>
             {approvals.length === 0 ? (
               <p className="px-6 py-10 text-center text-sm text-muted-foreground">
@@ -664,6 +725,13 @@ export function PortalDashboard(props: Props) {
                   return (
                     <li key={a.id} className="px-6 py-4">
                       <div className="flex flex-wrap items-center gap-3">
+                        <input
+                          type="checkbox"
+                          checked={selected.has(a.id)}
+                          onChange={() => toggleSelect(a.id)}
+                          aria-label="Select approval"
+                          className="h-4 w-4 shrink-0 accent-cyan-400"
+                        />
                         <div className="min-w-0 flex-1">
                           <div className="flex flex-wrap items-center gap-2">
                             <span className="rounded-md bg-white/5 px-2 py-0.5 font-mono text-[11px] text-cyan-electric">{a.action}</span>
