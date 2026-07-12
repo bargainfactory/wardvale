@@ -20,6 +20,7 @@ const DEMO: PortalData & { deltas: { runs: string; hours: string; success: strin
   kpis: { runs: "18,490", hours: "147h", success: "99.1%", roi: "$12,510" },
   deltas: { runs: "+23%", hours: "+18h", success: "+0.2%", roi: "+$2.1k" },
   roi: { realized: 12510, pipeline: 4820, won: 143, resolved: 190, winRate: 75 },
+  roiProof: { monthlyCost: 2000, realized: 12510, multiple: 6.3, remaining: 0, met: true, daysActive: 34, guaranteeDays: 21 },
   policy: { dailySpendCap: 500, requireApprovalOver: 250, allowedDomains: "" },
   outcomes: [
     { id: "o1", agent: "AR follow-up agent", kind: "ar-followup", value: 2400, status: "pending", detail: "Reminder: Invoice 1043 · $2,400 · 21d overdue", createdAt: "12m ago" },
@@ -109,6 +110,7 @@ export default async function PortalPage() {
       plan={view.plan}
       agentConfigs={view.agentConfigs}
       roi={view.roi}
+      roiProof={view.roiProof}
       outcomes={view.outcomes}
       benchmarks={isDemo ? DEMO_BENCHMARKS : benchmarks}
       policy={view.policy}

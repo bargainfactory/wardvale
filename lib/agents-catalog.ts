@@ -56,6 +56,12 @@ export const PLANS: Record<Plan, Entitlement> = {
 export function planOf(plan: string | null | undefined): Plan {
   return plan === "starter" || plan === "growth" || plan === "scale" ? plan : "trial";
 }
+
+// Monthly retainer per plan — used to compute proven ROI multiples + break-even.
+export const PLAN_PRICE: Record<Plan, number> = { trial: 0, starter: 500, growth: 2000, scale: 5000 };
+export function planPrice(plan: string | null | undefined): number {
+  return PLAN_PRICE[planOf(plan)];
+}
 export function entitlement(plan: string | null | undefined): Entitlement {
   return PLANS[planOf(plan)];
 }

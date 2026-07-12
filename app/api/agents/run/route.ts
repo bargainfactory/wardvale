@@ -19,7 +19,7 @@ import { loadContext } from "@/lib/context";
 import { loadExemplars } from "@/lib/feedback";
 import { sendApprovalNotification, sendAgentEmail } from "@/lib/email";
 import { sendSmsForClient } from "@/lib/integrations";
-import { recordOutcome } from "@/lib/outcomes";
+import { recordOutcome, resolveOutcomes } from "@/lib/outcomes";
 import { loadPolicy, spentToday, policyBlocks } from "@/lib/policy";
 import { firstTime, idemKey } from "@/lib/idempotency";
 import { agentName } from "@/lib/agents-catalog";
@@ -93,6 +93,12 @@ export async function POST(req: Request) {
           if (pulled) {
             invoices = pulled.invoices;
             trace.flag("source", "quickbooks");
+            // Any prior reminder whose invoice is no longer overdue → it got paid.
+            const svc = getServiceClient();
+            if (svc) {
+              const won = await resolveOutcomes(svc, pulled.clientId, "ar-followup", invoices.map((v) => `Invoice ${v.number ?? ""}`));
+              if (won) trace.flag("resolved", won);
+            }
           }
         }
         trace.setInput(invoices.map((v) => v?.number ?? "").join("; "));
@@ -106,6 +112,12 @@ export async function POST(req: Request) {
           if (pulled) {
             carts = pulled.carts;
             trace.flag("source", "shopify");
+            // Any prior recovery whose cart is no longer abandoned → it converted.
+            const svc = getServiceClient();
+            if (svc) {
+              const won = await resolveOutcomes(svc, pulled.clientId, "cart-recovery", carts.map((c) => `Cart ${c.customer || c.email || ""}`));
+              if (won) trace.flag("resolved", won);
+            }
           }
         }
         trace.setInput(carts.map((c) => c?.customer ?? "").join("; "));

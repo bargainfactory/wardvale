@@ -1,5 +1,5 @@
 import { createServerSupabase } from "@/lib/supabase-ssr";
-import { agentName } from "@/lib/agents-catalog";
+import { agentName, planPrice } from "@/lib/agents-catalog";
 import { getConnectorByName } from "@/lib/connectors";
 
 export type PortalAutomation = {
@@ -24,6 +24,15 @@ export type PortalAudit = { time: string; actor: string; action: string; detail:
 export type PortalApproval = { id: string; agent: string; action: string; summary: string; createdAt: string; draft?: string };
 export type PortalAgentConfig = { key: string; name: string; enabled: boolean; autoSend: boolean; schedule: string };
 export type PortalRoi = { realized: number; pipeline: number; won: number; resolved: number; winRate: number };
+export type PortalRoiProof = {
+  monthlyCost: number;
+  realized: number;
+  multiple: number | null; // realized / monthly cost; null on the free trial
+  remaining: number; // $ left to break even this month
+  met: boolean; // broken even
+  daysActive: number;
+  guaranteeDays: number; // the break-even guarantee window (21)
+};
 export type PortalOutcome = { id: string; agent: string; kind: string; value: number; status: string; detail: string; createdAt: string };
 export type PortalPolicy = { dailySpendCap: number | null; requireApprovalOver: number | null; allowedDomains: string };
 export type PortalData = {
@@ -32,6 +41,7 @@ export type PortalData = {
   plan: string;
   kpis: PortalKpis;
   roi: PortalRoi;
+  roiProof: PortalRoiProof;
   automations: PortalAutomation[];
   logs: PortalLog[];
   connections: PortalConnection[];
@@ -77,7 +87,7 @@ export async function getPortalData(email: string): Promise<PortalData | null> {
 
     const { data: client } = await supabase
       .from("clients")
-      .select("id, name, onboarded, plan")
+      .select("id, name, onboarded, plan, created_at")
       .eq("email", email)
       .maybeSingle();
     if (!client) return null;
@@ -198,6 +208,19 @@ export async function getPortalData(email: string): Promise<PortalData | null> {
       resolved,
       winRate: resolved ? Math.round((won / resolved) * 100) : 0,
     };
+
+    const monthlyCost = planPrice((client as { plan?: string }).plan);
+    const createdAt = (client as { created_at?: string }).created_at;
+    const daysActive = createdAt ? Math.max(0, Math.floor((Date.now() - new Date(createdAt).getTime()) / 86_400_000)) : 0;
+    const roiProof: PortalRoiProof = {
+      monthlyCost,
+      realized: Math.round(realized),
+      multiple: monthlyCost > 0 ? Math.round((realized / monthlyCost) * 10) / 10 : null,
+      remaining: Math.max(0, Math.round(monthlyCost - realized)),
+      met: realized >= monthlyCost,
+      daysActive,
+      guaranteeDays: 21,
+    };
     const pol = policyData as { daily_spend_cap: number | null; require_approval_over: number | null; allowed_domains: string | null } | null;
     const policy: PortalPolicy = {
       dailySpendCap: pol?.daily_spend_cap != null ? Number(pol.daily_spend_cap) : null,
@@ -230,6 +253,7 @@ export async function getPortalData(email: string): Promise<PortalData | null> {
       plan: (client as { plan?: string }).plan ?? "trial",
       kpis,
       roi,
+      roiProof,
       automations: autos,
       logs,
       connections: conns,

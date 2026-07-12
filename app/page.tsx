@@ -29,6 +29,7 @@ import { useLocale } from "@/lib/locale-context";
 import { getVariant } from "@/lib/analytics";
 import { WorkflowBuilder } from "@/components/workflow-builder";
 import { GuaranteeBanner } from "@/components/guarantee";
+import { ProvenImpact } from "@/components/proven-impact";
 
 const resultTeasers = [
   { icon: Utensils, vertical: "Restaurant", saved: "$3,400/mo", hours: "76h" },
@@ -168,6 +169,11 @@ export default function Home() {
             </div>
           </div>
         </div>
+      </section>
+
+      {/* ─── Proven impact (real aggregates; hides until there's data) ─── */}
+      <section className="container -mt-6 pb-4">
+        <ProvenImpact />
       </section>
 
       {/* ─── Live builder (hero experience) ─── */}

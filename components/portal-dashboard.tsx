@@ -35,7 +35,7 @@ import { Button } from "@/components/ui/button";
 import { createClient } from "@/lib/supabase";
 import { useLocale } from "@/lib/locale-context";
 import { entitlement, type Schedule } from "@/lib/agents-catalog";
-import type { PortalAgentConfig, PortalApproval, PortalAutomation, PortalAudit, PortalConnection, PortalKpis, PortalLog, PortalOutcome, PortalPolicy, PortalRoi } from "@/lib/portal";
+import type { PortalAgentConfig, PortalApproval, PortalAutomation, PortalAudit, PortalConnection, PortalKpis, PortalLog, PortalOutcome, PortalPolicy, PortalRoi, PortalRoiProof } from "@/lib/portal";
 import type { PeerBenchmarks } from "@/lib/peer-benchmarks";
 
 type Props = {
@@ -51,6 +51,7 @@ type Props = {
   plan: string;
   agentConfigs: PortalAgentConfig[];
   roi: PortalRoi;
+  roiProof: PortalRoiProof;
   outcomes: PortalOutcome[];
   benchmarks: PeerBenchmarks | null;
   policy: PortalPolicy;
@@ -438,6 +439,50 @@ export function PortalDashboard(props: Props) {
 
         {tab === "roi" && (
           <div>
+            {/* Proven-value banner — the ROI story, self-proving */}
+            <div className="mb-4 overflow-hidden rounded-3xl border border-cyan-electric/25 bg-gradient-to-br from-cyan-electric/10 to-indigo-500/5 p-6">
+              <div className="flex flex-wrap items-end justify-between gap-4">
+                <div>
+                  <span className="text-xs font-semibold uppercase tracking-[0.2em] text-cyan-electric">Proven value</span>
+                  <p className="mt-1 font-display text-3xl font-semibold">
+                    ${props.roiProof.realized.toLocaleString()} made
+                    {props.roiProof.monthlyCost > 0 && (
+                      <span className="text-muted-foreground"> · you pay ${props.roiProof.monthlyCost.toLocaleString()}/mo</span>
+                    )}
+                  </p>
+                </div>
+                {props.roiProof.multiple != null && (
+                  <div className="text-right">
+                    <p className="font-display text-4xl font-semibold tabular-nums text-cyan-electric">{props.roiProof.multiple}×</p>
+                    <p className="text-[11px] text-muted-foreground">return on your retainer</p>
+                  </div>
+                )}
+              </div>
+              {/* 21-day break-even guarantee tracker */}
+              <div className="mt-5">
+                {props.roiProof.met ? (
+                  <div className="flex items-center gap-2 text-sm text-emerald-300">
+                    <CheckCircle2 className="h-4 w-4" />
+                    Broke even{props.roiProof.daysActive <= props.roiProof.guaranteeDays ? ` in ${props.roiProof.daysActive} days — within the ${props.roiProof.guaranteeDays}-day guarantee` : ""}.
+                  </div>
+                ) : (
+                  <div>
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="text-muted-foreground">Break-even guarantee · day {props.roiProof.daysActive} of {props.roiProof.guaranteeDays}</span>
+                      <span className="text-muted-foreground">${props.roiProof.remaining.toLocaleString()} to go</span>
+                    </div>
+                    <div className="mt-2 h-2 overflow-hidden rounded-full bg-white/5">
+                      <div
+                        className="h-full rounded-full bg-cyan-electric"
+                        style={{ width: `${Math.min(100, props.roiProof.monthlyCost > 0 ? Math.round((props.roiProof.realized / props.roiProof.monthlyCost) * 100) : 100)}%` }}
+                      />
+                    </div>
+                    <p className="mt-2 text-[11px] text-muted-foreground">If your agents haven&rsquo;t covered the retainer by day {props.roiProof.guaranteeDays}, we keep optimizing at no charge.</p>
+                  </div>
+                )}
+              </div>
+            </div>
+
             <div className="grid gap-4 sm:grid-cols-3">
               <div className="rounded-2xl border border-emerald-400/25 bg-emerald-400/5 p-5">
                 <span className="text-xs text-muted-foreground">Realized value (confirmed)</span>
