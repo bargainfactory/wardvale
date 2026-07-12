@@ -247,6 +247,10 @@ Before handling real customer credentials, confirm:
       them. Keep it stable and backed up — rotating it makes existing encrypted
       tokens unreadable (clients would reconnect). Without it, tokens are stored
       plaintext (dev only).
+- [ ] **Backfill existing tokens** (only if you had connections before setting
+      `TOKEN_ENC_KEY`): `npm run backfill:tokens -- --dry` to preview, then
+      `npm run backfill:tokens` to encrypt in place. Idempotent + safe to re-run;
+      already-encrypted rows are skipped.
 - [ ] **Email confirmation is required** in Supabase → Auth → Providers (RLS
       trusts the JWT email, so unverified sign-in must be off).
 - [ ] **Upstash is configured** (`UPSTASH_REDIS_REST_URL/TOKEN`) — the in-memory

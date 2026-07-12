@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
-    "eval": "node evals/run.mjs"
+    "eval": "node evals/run.mjs",
+    "backfill:tokens": "node scripts/backfill-tokens.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "^0.5.2",
