@@ -29,13 +29,19 @@ The whole schema lives in [`supabase/schema.sql`](supabase/schema.sql) and is
 not exists` / `drop policy … create policy`, so it's safe to run repeatedly.
 
 1. Supabase dashboard → **SQL Editor** → paste the full contents of
-   `supabase/schema.sql` → **Run**.
-2. Confirm the new turnkey objects exist (Table editor):
-   - `clients` has `plan`, `status`, `stripe_customer_id`, `timezone`, `onboarded`
-   - tables `business_profile` and `agent_config` exist
+   `supabase/schema.sql` → **Run**. (Re‑run it after any `git pull` — new features
+   add tables/columns and it's safe to re‑apply.)
+2. Confirm the objects exist (Table editor):
+   - `clients` has `plan`, `status`, `stripe_customer_id`, `timezone`,
+     `onboarded`, `agency_id`
+   - **Turnkey**: `business_profile`, `agent_config`
+   - **Competitive‑advantage features**: `outcomes` (ROI attribution),
+     `agent_feedback` (learning loop), `client_policy` (governance), `agencies`
+     (white‑label)
 3. RLS is enabled with self read/update policies — verify **RLS is ON** for
    `clients`, `automations`, `runs`, `connections`, `agent_audit`, `approvals`,
-   `business_profile`, `agent_config`.
+   `business_profile`, `agent_config`, `outcomes`, `agent_feedback`,
+   `client_policy`, `agencies`.
 
 > Server‑only tables (`leads`, `subscribers`, `events`, `traces`) have RLS on
 > with **no** policies by design — only the service role touches them.
@@ -71,7 +77,10 @@ set. Per‑tenant hosts also need: `SHOPIFY_SHOP`, `ZENDESK_SUBDOMAIN`,
 `GORGIAS_SUBDOMAIN`, `WORKDAY_AUTH_URL`/`WORKDAY_TOKEN_URL`. Env‑switchable:
 `QUICKBOOKS_ENV`, `DOCUSIGN_AUTH_BASE`, `GUSTO_API_BASE`. API‑key connectors
 (Twilio/Stripe/Yelp) need nothing at the platform level — clients paste their own
-keys. `TWILIO_AUTH_TOKEN` is only for validating inbound webhook signatures.
+keys. `TWILIO_AUTH_TOKEN` validates inbound SMS/Voice webhook signatures;
+`SHOPIFY_WEBHOOK_SECRET` (optional, falls back to `SHOPIFY_CLIENT_SECRET`) and
+`TWILIO_WEBHOOK_URL_BASE` (optional, behind a proxy) support the event‑driven +
+voice features in §4.
 
 ### Optional hardening / extras
 
@@ -119,14 +128,29 @@ https://yourdomain.com/api/connect/<provider>/callback
 
 - **QuickBooks**: set `QUICKBOOKS_ENV=production` for live data (default sandbox).
 - **Shopify / Zendesk / Gorgias**: also set the shop/subdomain env var.
-- **Twilio** (SMS): clients paste SID + auth token + from‑number in the portal.
-  For inbound SMS, point your Twilio number's webhook at
-  `https://yourdomain.com/api/webhooks/twilio` and set `TWILIO_AUTH_TOKEN` to
-  validate signatures.
+- **Twilio** (SMS + Voice): clients paste SID + auth token + from‑number in the
+  portal. Set `TWILIO_AUTH_TOKEN` to validate inbound webhook signatures, then in
+  the Twilio number config:
+  - **Messaging** webhook → `https://yourdomain.com/api/webhooks/twilio`
+  - **Voice** webhook → `https://yourdomain.com/api/webhooks/twilio/voice`
+    (the AI receptionist; behind a proxy, set `TWILIO_WEBHOOK_URL_BASE`).
 - **Google Business Profile** reuses `GOOGLE_CLIENT_ID/SECRET`.
 
 Non‑standard‑auth tools (NetSuite, Sage, Bill.com, ServiceTitan, Toast, Plaid,
 ADP) are intentionally not wired — the `/connections` page says so.
+
+### Event‑driven triggers (real‑time, optional)
+
+For instant reactions instead of hourly polling, register Shopify webhooks
+(Settings → Notifications → Webhooks, or via the Admin API) pointed at
+`https://yourdomain.com/api/webhooks/shopify`:
+
+- `checkouts/create` → fires the **cart‑recovery** agent immediately
+- `orders/create` → fires the **review‑request** agent immediately
+
+Requests are HMAC‑verified against `SHOPIFY_WEBHOOK_SECRET` (falls back to
+`SHOPIFY_CLIENT_SECRET`) and deduped, so Shopify retries are safe. The shop is
+matched to its client by the stored shop domain.
 
 ---
 
@@ -173,6 +197,29 @@ Run through this once after the first deploy.
       the paid plan (`clients.plan`, `status=active`).
 - [ ] **Connections**: a "Ready" connector completes OAuth and appears connected;
       an expired one shows the **Reconnect** prompt.
+
+### Competitive‑advantage features
+
+- [ ] **ROI attribution**: after approving/sending an action with money at stake
+      (AR reminder, cart recovery, lead), the portal **ROI** tab shows it in
+      pipeline; marking it **Won** moves it to realized $. Check the `outcomes`
+      table.
+- [ ] **Learning loop**: edit a draft in **Approvals** before approving → a row
+      lands in `agent_feedback`; the next run of that agent reflects the style.
+- [ ] **Governance**: in the **Trust** tab, set a daily cap / approval threshold /
+      domain allowlist and Save (writes `client_policy`). With auto‑send on, an
+      action that crosses a policy is queued instead of sent. Audit CSV downloads
+      from **Trust → Export audit log**.
+- [ ] **Batch approvals**: select multiple pending items (or "Approve all") and
+      confirm they clear.
+- [ ] **Voice receptionist**: call the Twilio number → it greets, answers, and
+      queues a call‑back in **Approvals**; the call appears in `events`.
+- [ ] **Event triggers**: trigger a Shopify test webhook (or abandon a checkout) →
+      a cart‑recovery/review approval appears within seconds, no cron wait.
+- [ ] **Agency mode**: at `/portal/agency`, create an agency and add a client →
+      it appears in the client table (and in `clients.agency_id`).
+- [ ] **Benchmarks**: once >3 clients in the same `business_profile.industry` have
+      outcomes, the ROI tab shows the anonymized **"How you compare"** panel.
 
 ---
 
