@@ -81,7 +81,7 @@ untouched means building on sand.
 
 ### Workstreams
 
-- **G1 — Test the money-path.** Deterministic unit/integration tests around
+- **G1 — Test the money-path.** ✅ **DONE** (`4ec33d0`) — vitest importing the real modules (39 tests) + ESLint flat config; `npm run check` gates typecheck + lint + test. _Original plan:_ Deterministic unit/integration tests around
   `policyBlocks`, the auto-send branch, `resolveOutcomes`, and the queue insert. Golden
   fixtures for each of the six agents. This is the single highest-floor-raising change.
 - **G2 — Action idempotency.** A stable idempotency key per proposed action
@@ -142,12 +142,12 @@ real traffic ─▶ traces (async, sampled)
 
 ### Workstreams
 
-- **G7 — Fix traces so they can carry the judge layer.** Make trace writes
+- **G7 — Fix traces so they can carry the judge layer.** ✅ **DONE** (`9f1266b`) — sampled + always-keep-interesting; `shouldPersistTrace` pure + tested. _Original plan:_ Make trace writes
   **async/fire-and-forget**, **sampled** (cheap checks on 100%, expensive CoT judges on a
   sample), and **TTL'd/partitioned** so the table doesn't become the most expensive thing
   we own. Judges run *on* traces — if traces stay synchronous and unbounded, the judge
   layer amplifies the exact cost problem in G7. **Do G7 and U1 as one build.**
-- **G8 — Version everything that shapes a decision.** Prompts, policies, and agent
+- **G8 — Version everything that shapes a decision.** ✅ **DONE** (`9f1266b`) — prompt-version registry; every `agent.run` trace records `prompt_version`. _Next:_ migrate prompt bodies into the registry; version policies/configs too. _Original plan:_ Prompts, policies, and agent
   configs become versioned data, not inline `const`s. Every trace records the version
   that produced it. Without this, a judge score is unattributable and the learning loop
   is unauditable. This is a precondition, not a nicety.
@@ -275,8 +275,8 @@ Ordered. The first three are the highest-floor-raising work in the whole roadmap
 
 1. ~~**G2 + G1 together:** idempotency key + unique DB constraint on approvals/outcomes, and
    the test proving an overlapping run cannot double-send.~~ **DONE** (`151e856`) — dedupe key
-   + unique index + claim-before-send + an 11-assertion idempotency test. (Broader G1 money-path
-   coverage still pending: needs a TS test runner, currently only a zero-dep node test.)
+   + unique index + claim-before-send + an idempotency test — now running on vitest against the
+   real modules (see G1, done).
 2. ~~**G3:** introduce `callModel()` with timeout + retry; migrate the 10 call sites behind it.~~
    **DONE** (`e9d8f65`) — `lib/model.ts` seam with per-purpose model routing, 20s timeout, bounded
    retry; all 10 sites migrated.
