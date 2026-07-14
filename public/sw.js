@@ -1,5 +1,14 @@
-// FlowForge AI service worker — stale-while-revalidate for same-origin GETs.
-const CACHE = "ff-cache-v1";
+// FlowForge AI service worker — NETWORK-FIRST for same-origin GETs, with an
+// offline cache fallback.
+//
+// Why not stale-while-revalidate: serving a cached JS chunk or HTML document
+// that no longer matches a freshly-deployed page breaks hydration (the client
+// bundle mismatches the served HTML). Network-first keeps HTML and its chunks in
+// lockstep — the cache is consulted only when the network is unavailable.
+//
+// The CACHE version bump makes `activate` purge any older (stale-while-revalidate)
+// cache so returning clients self-heal on their next navigation.
+const CACHE = "ff-cache-v2";
 
 self.addEventListener("install", () => {
   self.skipWaiting();
@@ -19,19 +28,18 @@ self.addEventListener("fetch", (event) => {
   if (req.method !== "GET") return;
 
   const url = new URL(req.url);
-  if (url.origin !== self.location.origin) return; // never cache cross-origin
+  if (url.origin !== self.location.origin) return; // never touch cross-origin
   if (url.pathname.startsWith("/api/")) return; // never cache API responses
 
   event.respondWith(
-    caches.open(CACHE).then(async (cache) => {
-      const cached = await cache.match(req);
-      const network = fetch(req)
-        .then((res) => {
-          if (res && res.ok) cache.put(req, res.clone());
-          return res;
-        })
-        .catch(() => cached);
-      return cached || network;
-    })
+    fetch(req)
+      .then((res) => {
+        if (res && res.ok) {
+          const clone = res.clone();
+          caches.open(CACHE).then((cache) => cache.put(req, clone));
+        }
+        return res;
+      })
+      .catch(() => caches.match(req)) // offline fallback only
   );
 });
