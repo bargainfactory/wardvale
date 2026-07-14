@@ -286,7 +286,10 @@ Ordered. The first three are the highest-floor-raising work in the whole roadmap
 4. ~~**G4:** move the scheduler onto a managed queue with retry + DLQ.~~
    **DONE** (`ab23c11`) — `lib/scheduler.ts` (oldest-due-first, no cap; bounded-concurrency
    pool with retry); QStash dispatch when configured, in-process fallback otherwise. 14-assertion test.
-5. **G9a:** extract the tenant-scoped data-access seam.
+5. ~~**G9a:** extract the tenant-scoped data-access seam.~~
+   **DONE** (`f35cdcb`) — `lib/tenant.ts` `clientScope()` (reads pre-filtered, writes inject
+   client_id); adopted in `policy.ts` + `outcomes.ts`. 10-assertion test. Broad migration of the
+   remaining service-role queries (the agents/run route, integrations, agency) is follow-up.
 
 ---
 
