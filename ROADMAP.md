@@ -273,10 +273,13 @@ Discipline is the plan. These are deliberately deferred:
 
 Ordered. The first three are the highest-floor-raising work in the whole roadmap.
 
-1. **G2 + G1 together:** add the idempotency key + unique DB constraint on approvals/outcomes,
-   and write the test that proves an overlapping run cannot double-send. (Idempotency without
-   a test proving it is just a hope.)
-2. **G3:** introduce `callModel()` with timeout + retry; migrate the 10 call sites behind it.
+1. ~~**G2 + G1 together:** idempotency key + unique DB constraint on approvals/outcomes, and
+   the test proving an overlapping run cannot double-send.~~ **DONE** (`151e856`) — dedupe key
+   + unique index + claim-before-send + an 11-assertion idempotency test. (Broader G1 money-path
+   coverage still pending: needs a TS test runner, currently only a zero-dep node test.)
+2. ~~**G3:** introduce `callModel()` with timeout + retry; migrate the 10 call sites behind it.~~
+   **DONE** (`e9d8f65`) — `lib/model.ts` seam with per-purpose model routing, 20s timeout, bounded
+   retry; all 10 sites migrated.
 3. **G6:** wire an error sink; add the "empty-because-error vs empty-because-idle" metric.
 4. **G4:** move the scheduler onto a managed queue with retry + DLQ.
 5. **G9a:** extract the tenant-scoped data-access seam.
