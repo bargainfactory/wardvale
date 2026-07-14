@@ -283,7 +283,9 @@ Ordered. The first three are the highest-floor-raising work in the whole roadmap
 3. ~~**G6:** wire an error sink; add the "empty-because-error vs empty-because-idle" metric.~~
    **DONE** (`ad279b0`) — `lib/report.ts` (console + optional webhook + `error_events` table);
    connector pulls now flag `source_error`, model fallbacks and the run-route 500 report.
-4. **G4:** move the scheduler onto a managed queue with retry + DLQ.
+4. ~~**G4:** move the scheduler onto a managed queue with retry + DLQ.~~
+   **DONE** (`ab23c11`) — `lib/scheduler.ts` (oldest-due-first, no cap; bounded-concurrency
+   pool with retry); QStash dispatch when configured, in-process fallback otherwise. 14-assertion test.
 5. **G9a:** extract the tenant-scoped data-access seam.
 
 ---
