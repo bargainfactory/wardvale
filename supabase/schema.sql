@@ -353,6 +353,21 @@ create table if not exists public.outcomes (
 create index if not exists outcomes_client_created_idx on public.outcomes (client_id, created_at desc);
 create index if not exists outcomes_client_status_idx on public.outcomes (client_id, status);
 
+-- ── Action idempotency (Phase 1, roadmap G2) ─────────────────────────────────
+-- A deterministic dedupe_key (see lib/dedupe.ts: client | agent-kind | action |
+-- ref | UTC-day) collapses the SAME proposed action from two overlapping runs
+-- (e.g. a cron tick racing a manual portal run) into one row — so the owner is
+-- never shown, and auto-send never fires, the same action twice. The random
+-- default gives every pre-existing/keyless row a distinct value, so the unique
+-- index builds cleanly and only intentional keys ever dedupe.
+alter table public.approvals
+  add column if not exists dedupe_key text not null default encode(gen_random_bytes(12), 'hex');
+create unique index if not exists approvals_dedupe_key_uidx on public.approvals (dedupe_key);
+
+alter table public.outcomes
+  add column if not exists dedupe_key text not null default encode(gen_random_bytes(12), 'hex');
+create unique index if not exists outcomes_dedupe_key_uidx on public.outcomes (dedupe_key);
+
 -- ── White-label: agencies manage many clients under their own brand ──────────
 create table if not exists public.agencies (
   id           uuid primary key default gen_random_uuid(),

@@ -19,9 +19,10 @@ import { loadContext } from "@/lib/context";
 import { loadExemplars } from "@/lib/feedback";
 import { sendApprovalNotification, sendAgentEmail } from "@/lib/email";
 import { sendSmsForClient } from "@/lib/integrations";
-import { recordOutcome, resolveOutcomes } from "@/lib/outcomes";
+import { resolveOutcomes } from "@/lib/outcomes";
 import { loadPolicy, spentToday, policyBlocks } from "@/lib/policy";
 import { firstTime, idemKey } from "@/lib/idempotency";
+import { dedupeKey } from "@/lib/dedupe";
 import { agentName } from "@/lib/agents-catalog";
 import {
   pullOverdueInvoices,
@@ -202,11 +203,48 @@ export async function POST(req: Request) {
           const policy = await loadPolicy(supabase, client.id);
           let spentSoFar = await spentToday(supabase, client.id);
 
-          const toQueue: { client_id: string; agent: string; action: string; summary: string; payload: Record<string, unknown> }[] = [];
+          const toQueue: { client_id: string; agent: string; action: string; summary: string; dedupe_key: string; payload: Record<string, unknown> }[] = [];
           for (const a of needApproval) {
+            // Deterministic key: the SAME action proposed by a racing run (cron
+            // tick vs manual portal run) collapses to one via the unique index.
+            const dkey = dedupeKey({ clientId: client.id, kind: body.agent ?? null, action: a.action, ref: a.source });
             const canAuto =
               autoSend && !policyBlocks(policy, a, spentSoFar) && (a.action === "email.send" || a.action === "sms.send");
             if (canAuto && a.to && a.draft) {
+              // Claim-before-send: insert the pending outcome (the send ledger)
+              // keyed by dkey. Only the run that WINS the insert may send; a
+              // concurrent run hits the unique index (no row returned) and skips,
+              // so the customer never gets two copies of the same message.
+              const { data: claim } = await supabase
+                .from("outcomes")
+                .upsert(
+                  {
+                    client_id: client.id,
+                    agent: a.agent,
+                    action: a.action,
+                    kind: body.agent ?? null,
+                    status: "pending",
+                    value: Number(a.value) || 0,
+                    detail: a.summary,
+                    ref: a.source,
+                    dedupe_key: dkey,
+                  },
+                  { onConflict: "dedupe_key", ignoreDuplicates: true }
+                )
+                .select("id")
+                .maybeSingle();
+
+              if (!claim) {
+                // Another run already claimed this exact action — suppress the send.
+                await supabase.from("agent_audit").insert({
+                  client_id: client.id,
+                  actor: "runtime",
+                  action: "action.deduped",
+                  detail: `${a.action} → ${a.to} (auto-send; duplicate suppressed)`,
+                });
+                continue;
+              }
+
               const ok =
                 a.action === "sms.send"
                   ? await sendSmsForClient(supabase, client.id, a.to, a.draft)
@@ -214,16 +252,9 @@ export async function POST(req: Request) {
               if (ok) {
                 autoSent += 1;
                 spentSoFar += Number(a.value) || 0; // count against the daily cap
-                // A sent action with money at stake becomes pending ROI pipeline.
-                await recordOutcome(supabase, {
-                  clientId: client.id,
-                  agent: a.agent,
-                  action: a.action,
-                  kind: body.agent,
-                  value: a.value,
-                  detail: a.summary,
-                  ref: a.source,
-                });
+              } else {
+                // Send failed → release the claim so a later run may retry.
+                await supabase.from("outcomes").delete().eq("id", (claim as { id: string }).id);
               }
               await supabase.from("agent_audit").insert({
                 client_id: client.id,
@@ -237,15 +268,19 @@ export async function POST(req: Request) {
                 agent: a.agent,
                 action: a.action,
                 summary: a.summary,
+                dedupe_key: dkey,
                 payload: { draft: a.draft ?? null, source: a.source, to: a.to ?? null, value: a.value ?? null, kind: body.agent ?? null },
               });
             }
           }
 
           if (toQueue.length) {
+            // Upsert with ON CONFLICT DO NOTHING: duplicate queue rows from a
+            // racing run are dropped, and .select() returns only the rows we
+            // actually inserted, so `queued` reflects genuinely new work.
             const { data: inserted } = await supabase
               .from("approvals")
-              .insert(toQueue)
+              .upsert(toQueue, { onConflict: "dedupe_key", ignoreDuplicates: true })
               .select("id, agent, action, summary");
             approvals = ((inserted as { id: string; agent: string | null; action: string; summary: string | null }[] | null) ?? []).map(
               (a) => ({ id: a.id, agent: a.agent ?? "agent", action: a.action, summary: a.summary ?? "", createdAt: "just now" })
