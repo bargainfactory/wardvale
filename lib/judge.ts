@@ -28,6 +28,29 @@ const VALID_ACTIONS = new Set(["email.send", "sms.send", "escalate", "archive", 
 const OUTBOUND = new Set(["email.send", "sms.send"]);
 const GATED = new Set(["email.send", "sms.send", "escalate"]);
 
+export type RoutingSignal = "archive" | "escalate" | "reply" | "unknown";
+
+/**
+ * Coarse routing signal from the source text — mirrors the runtime triage
+ * heuristic so the judge can flag clearly-wrong routing (a deterministic
+ * component-level trajectory check). Order matters: promo → archive wins over a
+ * trailing "?", and an urgent/refund/legal cue → escalate wins over "reply".
+ */
+export function routingSignal(text: string): RoutingSignal {
+  const s = (text ?? "").toLowerCase();
+  if (/unsubscribe|newsletter|\bsale\b|% off|promo/.test(s)) return "archive";
+  if (/urgent|asap|complaint|refund|angry|legal|lawsuit/.test(s)) return "escalate";
+  if (/\?|book|reservation|availab|quote|inquiry|question|interested|catering/.test(s)) return "reply";
+  return "unknown";
+}
+
+/** True only for clear routing contradictions (conservative — no false alarms). */
+export function routingMismatch(signal: RoutingSignal, action: string): boolean {
+  if (signal === "archive" && OUTBOUND.has(action)) return true; // don't message a promo/newsletter
+  if (signal === "escalate" && action === "archive") return true; // don't archive an urgent/refund/legal msg
+  return false;
+}
+
 /**
  * Cheap, deterministic component checks — the tier that runs on every decision.
  * These catch structural/safety regressions no LLM is needed for: valid action,
@@ -58,6 +81,9 @@ export function componentChecks(d: Decision, opts: { inputText?: string } = {}):
     // must be human-gated — never auto-acted.
     const injected = detectInjection(opts.inputText).flagged;
     add("injection-gated", !injected || d.needsApproval === true, injected ? "flagged; requires human gate" : "clean");
+    // Routing quality (component judge): flag only clear contradictions.
+    const sig = routingSignal(opts.inputText);
+    if (sig !== "unknown") add("routing-consistent", !routingMismatch(sig, d.action), `signal=${sig} action=${d.action}`);
   }
 
   const failed = checks.filter((c) => !c.pass).length;
