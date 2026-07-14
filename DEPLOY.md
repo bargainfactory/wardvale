@@ -41,6 +41,8 @@ not exists` / `drop policy … create policy`, so it's safe to run repeatedly.
      prompt version that produced it. *(migration 0003)*
    - `judgements` table — the LLM-as-judge dataset (component checks + sampled
      rubric, keyed to `prompt_version`). *(migration 0004)*
+   - `agent_feedback.approval_id` — links learning-loop drafts to their judgement
+     so exemplars can be curated by judge score. *(migration 0005)*
 
    Until this is run, those features degrade gracefully (idempotency, error
    logging, and prompt‑version attribution simply don't persist).

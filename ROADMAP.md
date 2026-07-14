@@ -161,12 +161,12 @@ real traffic ─▶ traces (async, sampled)
     periodically. A judge you don't meta-evaluate is just a second thing to distrust.
   - **Harvest datasets automatically** — the tracing system populates LangSmith/Braintrust-
     style datasets from real traffic. (Adopt the tool; don't build the store — Principle 3.)
-- **U5 — Learning loop sophistication.** Now that U1 exists:
+- **U5 — Learning loop sophistication.** ✅ **DONE** (`43b9fbb`) — `loadExemplars` curates few-shot examples by judge score (fails dropped, edited > approved), includes rejected drafts as negatives, agent-specific; `agent_feedback.approval_id` (migration 0005) joins judgements. _Now that U1 exists:_
   - Use judges to **curate** which approved exemplars are highest-value to keep in context
     (prevent context bloat — an ease-of-use *and* cost win).
   - Add **negative exemplars** (rejected drafts) *with the reason for rejection*.
   - Make exemplar selection **agent-specific / workflow-specific**, not one global pool.
-- **U4a — Attribution polish + ROI dashboards.** Make `resolveOutcomes` resolution
+- **U4a — Attribution polish + ROI dashboards.** ✅ **DONE** (`43b9fbb`) — `resolveOutcomes` grace is now per action type (carts 6h → invoices 24h → reviews 3d) with a per-tenant override hook; the customer ROI dashboard already exists (`lib/portal.ts` + `PortalDashboard`). _Original plan:_ Make `resolveOutcomes` resolution
   **configurable per action-type and per tenant** (grace periods differ for a cart vs a
   60-day invoice). Then surface the pending→won proof in a **customer-facing ROI
   dashboard** — this is the retention and upsell lever, and it costs little now that the
