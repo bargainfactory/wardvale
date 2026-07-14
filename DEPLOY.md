@@ -39,6 +39,8 @@ not exists` / `drop policy … create policy`, so it's safe to run repeatedly.
    - `error_events` table — central error/degradation sink. *(migration 0002)*
    - `traces.prompt_version` column + index — ties each traced decision to the
      prompt version that produced it. *(migration 0003)*
+   - `judgements` table — the LLM-as-judge dataset (component checks + sampled
+     rubric, keyed to `prompt_version`). *(migration 0004)*
 
    Until this is run, those features degrade gracefully (idempotency, error
    logging, and prompt‑version attribution simply don't persist).
