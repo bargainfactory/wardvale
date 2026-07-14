@@ -389,6 +389,33 @@ create index if not exists error_events_created_idx on public.error_events (crea
 create index if not exists error_events_source_idx on public.error_events (source, created_at desc);
 alter table public.error_events enable row level security;
 
+-- ── Judgements: LLM-as-judge dataset (Phase 2, roadmap U1) ───────────────────
+-- One row per judged agent decision: cheap deterministic component checks (all
+-- decisions) + a sampled LLM rubric (grounding/appropriateness/tone/safety),
+-- keyed to prompt_version so quality is attributable to the exact prompt.
+-- Server-only (service role); no public policies.
+create table if not exists public.judgements (
+  id                uuid primary key default gen_random_uuid(),
+  approval_id       uuid references public.approvals (id) on delete cascade,
+  client_id         text,
+  agent             text,
+  kind              text,
+  prompt_version    text,
+  component_passed  integer not null default 0,
+  component_failed  integer not null default 0,
+  checks            jsonb not null default '[]'::jsonb,
+  verdict           text,
+  overall           numeric,
+  scores            jsonb,
+  reasoning         text,
+  model             text,
+  created_at        timestamptz not null default now()
+);
+create index if not exists judgements_created_idx on public.judgements (created_at desc);
+create index if not exists judgements_version_idx on public.judgements (prompt_version, created_at desc);
+create unique index if not exists judgements_approval_uidx on public.judgements (approval_id);
+alter table public.judgements enable row level security;
+
 -- ── White-label: agencies manage many clients under their own brand ──────────
 create table if not exists public.agencies (
   id           uuid primary key default gen_random_uuid(),

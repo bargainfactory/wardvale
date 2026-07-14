@@ -21,6 +21,7 @@ export type ModelPurpose =
   | "audit" // internal analysis
   | "workflow" // workflow builder
   | "preview" // marketing inbox demo
+  | "judge" // LLM-as-judge rubric scoring (U1)
   | "default";
 
 /** Default model, overridable globally via OPENAI_MODEL. */
