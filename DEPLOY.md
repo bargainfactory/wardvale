@@ -30,7 +30,18 @@ not exists` / `drop policy … create policy`, so it's safe to run repeatedly.
 
 1. Supabase dashboard → **SQL Editor** → paste the full contents of
    `supabase/schema.sql` → **Run**. (Re‑run it after any `git pull` — new features
-   add tables/columns and it's safe to re‑apply.)
+   add tables/columns and it's safe to re‑apply.) Individual migrations are also in
+   `supabase/migrations/` if you apply incrementally.
+
+   **New in this release (Floor + Phase‑2 kickoff):**
+   - `approvals.dedupe_key` + unique index, `outcomes.dedupe_key` + unique index
+     — action idempotency (no double‑queue / double‑send). *(migration 0001)*
+   - `error_events` table — central error/degradation sink. *(migration 0002)*
+   - `traces.prompt_version` column + index — ties each traced decision to the
+     prompt version that produced it. *(migration 0003)*
+
+   Until this is run, those features degrade gracefully (idempotency, error
+   logging, and prompt‑version attribution simply don't persist).
 2. Confirm the objects exist (Table editor):
    - `clients` has `plan`, `status`, `stripe_customer_id`, `timezone`,
      `onboarded`, `agency_id`
