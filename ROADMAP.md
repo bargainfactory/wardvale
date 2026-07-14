@@ -280,7 +280,9 @@ Ordered. The first three are the highest-floor-raising work in the whole roadmap
 2. ~~**G3:** introduce `callModel()` with timeout + retry; migrate the 10 call sites behind it.~~
    **DONE** (`e9d8f65`) — `lib/model.ts` seam with per-purpose model routing, 20s timeout, bounded
    retry; all 10 sites migrated.
-3. **G6:** wire an error sink; add the "empty-because-error vs empty-because-idle" metric.
+3. ~~**G6:** wire an error sink; add the "empty-because-error vs empty-because-idle" metric.~~
+   **DONE** (`ad279b0`) — `lib/report.ts` (console + optional webhook + `error_events` table);
+   connector pulls now flag `source_error`, model fallbacks and the run-route 500 report.
 4. **G4:** move the scheduler onto a managed queue with retry + DLQ.
 5. **G9a:** extract the tenant-scoped data-access seam.
 
