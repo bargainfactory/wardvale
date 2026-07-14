@@ -3,6 +3,43 @@ import { detectInjection, fenceUntrusted, SECURITY_PREAMBLE } from "@/lib/guardr
 import type { Trace } from "@/lib/trace";
 import { reportWarning } from "@/lib/report";
 
+// Structured-output schemas (roadmap U1): when a lane runs on Claude these
+// enforce the JSON shape via structured outputs; OpenAI-compatible providers
+// ignore them and keep response_format. Every property is required (empty string
+// when N/A) for the widest structured-output compatibility.
+const ACTIONS_SCHEMA = {
+  type: "object",
+  additionalProperties: false,
+  required: ["actions"],
+  properties: {
+    actions: {
+      type: "array",
+      items: {
+        type: "object",
+        additionalProperties: false,
+        required: ["action", "summary", "draft"],
+        properties: { action: { type: "string" }, summary: { type: "string" }, draft: { type: "string" } },
+      },
+    },
+  },
+};
+const ITEMS_SCHEMA = {
+  type: "object",
+  additionalProperties: false,
+  required: ["items"],
+  properties: {
+    items: {
+      type: "array",
+      items: {
+        type: "object",
+        additionalProperties: false,
+        required: ["summary", "draft"],
+        properties: { summary: { type: "string" }, draft: { type: "string" } },
+      },
+    },
+  },
+};
+
 export type InboxMessage = { from?: string; subject?: string; body?: string };
 
 export type ProposedAction = {
@@ -119,6 +156,7 @@ export async function runInboxTriage(messages: InboxMessage[], trace?: Trace, co
       max_tokens: 800,
       temperature: 0.3,
       response_format: { type: "json_object" },
+      jsonSchema: ACTIONS_SCHEMA,
       messages: [
         { role: "system", content: sys(SYSTEM, context) },
         {
@@ -225,6 +263,7 @@ export async function runArFollowup(invoices: Invoice[], trace?: Trace, context?
       max_tokens: 900,
       temperature: 0.3,
       response_format: { type: "json_object" },
+      jsonSchema: ACTIONS_SCHEMA,
       messages: [
         { role: "system", content: sys(AR_SYSTEM, context) },
         {
@@ -280,6 +319,7 @@ async function draftMessages(system: string, lines: string[], trace?: Trace, max
       max_tokens: maxTokens,
       temperature: 0.4,
       response_format: { type: "json_object" },
+      jsonSchema: ITEMS_SCHEMA,
       messages: [
         { role: "system", content: system },
         { role: "user", content: fenceUntrusted(lines.map((l, i) => `#${i + 1} ${l}`).join("\n\n")) },

@@ -127,6 +127,22 @@ export function aggregate(s: Scores): { overall: number; verdict: Verdict } {
   return { overall, verdict };
 }
 
+// Structured-output schema (roadmap U1): enforces the rubric shape when the
+// judge lane runs on Claude. clampScores still coerces ranges (structured
+// outputs can't express numeric min/max), so scores stay 1–5 regardless.
+const JUDGE_SCHEMA = {
+  type: "object",
+  additionalProperties: false,
+  required: ["reasoning", "grounding", "appropriateness", "tone", "safety"],
+  properties: {
+    reasoning: { type: "string" },
+    grounding: { type: "integer" },
+    appropriateness: { type: "integer" },
+    tone: { type: "integer" },
+    safety: { type: "integer" },
+  },
+};
+
 const JUDGE_SYSTEM = `${SECURITY_PREAMBLE}
 
 You are a strict QA judge for a small-business AI agent. You are given the agent's task, the untrusted source it read, the business's known facts, and the reply it drafted. Score the DRAFT from 1 (poor) to 5 (excellent) on each:
@@ -153,6 +169,7 @@ export async function judgeDecision(
       max_tokens: 400,
       temperature: 0,
       response_format: { type: "json_object" },
+      jsonSchema: JUDGE_SCHEMA,
       messages: [
         { role: "system", content: JUDGE_SYSTEM },
         {
