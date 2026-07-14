@@ -473,6 +473,9 @@ create table if not exists public.agent_feedback (
   created_at  timestamptz not null default now()
 );
 create index if not exists agent_feedback_lookup_idx on public.agent_feedback (client_id, agent_key, created_at desc);
+-- U5: link feedback to its approval so the learning loop can join judge scores.
+alter table public.agent_feedback add column if not exists approval_id uuid references public.approvals (id) on delete set null;
+create index if not exists agent_feedback_approval_idx on public.agent_feedback (approval_id);
 alter table public.agent_feedback enable row level security;
 drop policy if exists agent_feedback_self_read on public.agent_feedback;
 create policy agent_feedback_self_read on public.agent_feedback

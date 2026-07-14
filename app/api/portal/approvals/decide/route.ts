@@ -123,6 +123,7 @@ export async function POST(req: Request) {
       agentKey: approval.payload?.kind ?? null,
       kind: decision === "rejected" ? "rejected" : edited ? "edited" : "approved",
       sample: (edited ? editedDraft!.trim() : approval.payload?.draft) ?? null,
+      approvalId: approval.id, // lets the learning loop join judge scores (U5)
     });
   }
 
