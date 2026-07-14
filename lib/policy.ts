@@ -1,4 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { clientScope } from "@/lib/tenant";
 
 // Governance guardrails the owner controls. Enforced before any auto-send — if a
 // policy would be crossed, the action is queued for human approval instead of
@@ -13,10 +14,8 @@ export type Policy = {
 const OPEN: Policy = { dailySpendCap: null, requireApprovalOver: null, allowedDomains: [] };
 
 export async function loadPolicy(supabase: SupabaseClient, clientId: string): Promise<Policy> {
-  const { data } = await supabase
-    .from("client_policy")
-    .select("daily_spend_cap, require_approval_over, allowed_domains")
-    .eq("client_id", clientId)
+  const { data } = await clientScope(supabase, clientId)
+    .select("client_policy", "daily_spend_cap, require_approval_over, allowed_domains")
     .maybeSingle();
   if (!data) return OPEN;
   return {
@@ -33,10 +32,8 @@ export async function loadPolicy(supabase: SupabaseClient, clientId: string): Pr
 export async function spentToday(supabase: SupabaseClient, clientId: string): Promise<number> {
   const since = new Date();
   since.setHours(0, 0, 0, 0);
-  const { data } = await supabase
-    .from("outcomes")
-    .select("value")
-    .eq("client_id", clientId)
+  const { data } = await clientScope(supabase, clientId)
+    .select("outcomes", "value")
     .gte("created_at", since.toISOString());
   return ((data ?? []) as { value: number }[]).reduce((s, o) => s + (Number(o.value) || 0), 0);
 }

@@ -1,4 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { clientScope } from "@/lib/tenant";
 
 // Closed-loop ROI: every executed action with dollars at stake becomes a
 // 'pending' outcome (pipeline). It resolves to 'won' (realized $) automatically
@@ -20,17 +21,16 @@ export async function resolveOutcomes(
   graceMs = 12 * 60 * 60 * 1000
 ): Promise<number> {
   const cutoff = new Date(Date.now() - graceMs).toISOString();
-  const { data } = await supabase
-    .from("outcomes")
-    .select("id, ref")
-    .eq("client_id", clientId)
+  const scope = clientScope(supabase, clientId);
+  const { data } = await scope
+    .select("outcomes", "id, ref")
     .eq("kind", kind)
     .eq("status", "pending")
     .lt("created_at", cutoff);
   const present = new Set(presentRefs.filter(Boolean));
   const won = ((data ?? []) as { id: string; ref: string | null }[]).filter((o) => o.ref && !present.has(o.ref)).map((o) => o.id);
   if (won.length) {
-    await supabase.from("outcomes").update({ status: "won", resolved_at: new Date().toISOString() }).in("id", won);
+    await scope.update("outcomes", { status: "won", resolved_at: new Date().toISOString() }).in("id", won);
   }
   return won.length;
 }
@@ -51,8 +51,8 @@ export async function recordOutcome(
   const value = Number(input.value) || 0;
   if (value <= 0) return; // only track actions with real money at stake
   try {
-    await supabase.from("outcomes").insert({
-      client_id: input.clientId,
+    await clientScope(supabase, input.clientId).insert("outcomes", {
+      // client_id injected by the scope
       approval_id: input.approvalId ?? null,
       agent: input.agent ?? null,
       action: input.action ?? null,
