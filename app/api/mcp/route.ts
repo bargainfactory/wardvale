@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { services, tiers } from "@/lib/data";
 import { seoPages } from "@/lib/seo-pages";
-import { getOpenAI } from "@/lib/openai";
+import { callModel } from "@/lib/model";
 import { rateLimit, clientIp } from "@/lib/rate-limit";
 
 /**
@@ -165,8 +165,8 @@ async function scopeAutomation(
   }
 
   try {
-    const completion = await getOpenAI().chat.completions.create({
-      model: "gpt-4o-mini",
+    const completion = await callModel({
+      purpose: "chat",
       max_tokens: 400,
       temperature: 0.6,
       messages: [

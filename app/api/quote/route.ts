@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getOpenAI } from "@/lib/openai";
+import { callModel } from "@/lib/model";
 import { rateLimit, clientIp } from "@/lib/rate-limit";
 import { saveLead } from "@/lib/leads";
 import { verifyTurnstile } from "@/lib/turnstile";
@@ -58,8 +58,8 @@ async function generateIdeas(input: {
 }): Promise<Idea[]> {
   if (!process.env.OPENAI_API_KEY) return defaultIdeas(input.businessType);
   try {
-    const completion = await getOpenAI().chat.completions.create({
-      model: "gpt-4o-mini",
+    const completion = await callModel({
+      purpose: "quote",
       max_tokens: 600,
       temperature: 0.7,
       response_format: { type: "json_object" },

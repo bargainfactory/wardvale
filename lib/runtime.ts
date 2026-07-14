@@ -1,4 +1,4 @@
-import { getOpenAI } from "@/lib/openai";
+import { callModel } from "@/lib/model";
 import { detectInjection, fenceUntrusted, SECURITY_PREAMBLE } from "@/lib/guardrails";
 import type { Trace } from "@/lib/trace";
 
@@ -113,8 +113,8 @@ export async function runInboxTriage(messages: InboxMessage[], trace?: Trace, co
 
   try {
     trace?.mark("model.start");
-    const completion = await getOpenAI().chat.completions.create({
-      model: "gpt-4o-mini",
+    const completion = await callModel({
+      purpose: "triage",
       max_tokens: 800,
       temperature: 0.3,
       response_format: { type: "json_object" },
@@ -218,8 +218,8 @@ export async function runArFollowup(invoices: Invoice[], trace?: Trace, context?
   }
   try {
     trace?.mark("model.start");
-    const completion = await getOpenAI().chat.completions.create({
-      model: "gpt-4o-mini",
+    const completion = await callModel({
+      purpose: "draft",
       max_tokens: 900,
       temperature: 0.3,
       response_format: { type: "json_object" },
@@ -272,8 +272,8 @@ async function draftMessages(system: string, lines: string[], trace?: Trace, max
   }
   try {
     trace?.mark("model.start");
-    const completion = await getOpenAI().chat.completions.create({
-      model: "gpt-4o-mini",
+    const completion = await callModel({
+      purpose: "draft",
       max_tokens: maxTokens,
       temperature: 0.4,
       response_format: { type: "json_object" },
@@ -439,8 +439,8 @@ export async function runVoiceTurn(said: string, context?: string, trace?: Trace
   if (!process.env.OPENAI_API_KEY || !said.trim()) return fallback;
   try {
     trace?.mark("model.start");
-    const completion = await getOpenAI().chat.completions.create({
-      model: "gpt-4o-mini",
+    const completion = await callModel({
+      purpose: "voice",
       max_tokens: 120,
       temperature: 0.5,
       messages: [

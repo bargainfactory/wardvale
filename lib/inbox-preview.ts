@@ -1,4 +1,4 @@
-import { getOpenAI } from "@/lib/openai";
+import { callModel } from "@/lib/model";
 
 export type InboxPreview = {
   total: number;
@@ -33,8 +33,8 @@ export async function buildInboxPreview(items: { subject: string; from: string }
   if (!items.length) return heuristic(items);
   if (!process.env.OPENAI_API_KEY) return heuristic(items);
   try {
-    const completion = await getOpenAI().chat.completions.create({
-      model: "gpt-4o-mini",
+    const completion = await callModel({
+      purpose: "preview",
       max_tokens: 500,
       temperature: 0.3,
       response_format: { type: "json_object" },

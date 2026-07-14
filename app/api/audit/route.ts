@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getOpenAI } from "@/lib/openai";
+import { callModel } from "@/lib/model";
 import { rateLimit, clientIp } from "@/lib/rate-limit";
 import { saveLead } from "@/lib/leads";
 import { verifyTurnstile } from "@/lib/turnstile";
@@ -42,8 +42,8 @@ export async function POST(req: Request) {
       return NextResponse.json(FALLBACK);
     }
 
-    const completion = await getOpenAI().chat.completions.create({
-      model: "gpt-4o-mini",
+    const completion = await callModel({
+      purpose: "audit",
       max_tokens: 400,
       temperature: 0.6,
       response_format: { type: "json_object" },

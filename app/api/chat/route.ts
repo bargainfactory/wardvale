@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getOpenAI } from "@/lib/openai";
+import { callModel } from "@/lib/model";
 import { rateLimit, clientIp } from "@/lib/rate-limit";
 import { detectInjection, SECURITY_PREAMBLE } from "@/lib/guardrails";
 import { overBudget, recordTokens, DAILY_TOKEN_CAP } from "@/lib/usage";
@@ -66,8 +66,8 @@ export async function POST(req: Request) {
     }
 
     trace.mark("model.start");
-    const completion = await getOpenAI().chat.completions.create({
-      model: "gpt-4o-mini",
+    const completion = await callModel({
+      purpose: "chat",
       max_tokens: 250,
       temperature: 0.7,
       messages: [{ role: "system", content: SYSTEM_PROMPT }, ...messages.slice(-8)],

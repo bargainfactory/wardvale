@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getOpenAI } from "@/lib/openai";
+import { callModel } from "@/lib/model";
 import { rateLimit, clientIp } from "@/lib/rate-limit";
 import { saveLead } from "@/lib/leads";
 import { sendWorkflowBlueprint, type Blueprint } from "@/lib/email";
@@ -124,8 +124,8 @@ export async function POST(req: Request) {
 
     if (attachment) trace.flag("attachment", attachment.kind ?? "unknown");
     trace.mark("model.start");
-    const completion = await getOpenAI().chat.completions.create({
-      model: "gpt-4o-mini",
+    const completion = await callModel({
+      purpose: "workflow",
       max_tokens: 700,
       temperature: 0.6,
       response_format: { type: "json_object" },
