@@ -255,6 +255,9 @@ create table if not exists public.traces (
 
 create index if not exists traces_route_created_idx on public.traces (route, created_at desc);
 create index if not exists traces_status_idx on public.traces (status);
+-- G8: which prompt version produced this trace (join key for the judge layer).
+alter table public.traces add column if not exists prompt_version text;
+create index if not exists traces_prompt_version_idx on public.traces (prompt_version);
 
 alter table public.traces enable row level security;
 

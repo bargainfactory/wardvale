@@ -24,6 +24,7 @@ import { loadPolicy, spentToday, policyBlocks } from "@/lib/policy";
 import { firstTime, idemKey } from "@/lib/idempotency";
 import { dedupeKey } from "@/lib/dedupe";
 import { reportError } from "@/lib/report";
+import { promptVersion } from "@/lib/prompts";
 import { agentName } from "@/lib/agents-catalog";
 import {
   pullOverdueInvoices,
@@ -171,6 +172,7 @@ export async function POST(req: Request) {
         actions = await runInboxTriage(messages, trace, context);
       }
     }
+    trace.setPrompt(promptVersion(body.agent));
     const needApproval = actions.filter((a) => a.needsApproval);
     trace.mark("decided", { total: actions.length, queued: needApproval.length });
     trace.setOutput(JSON.stringify(actions).slice(0, 4000));
