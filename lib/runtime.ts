@@ -1,6 +1,7 @@
 import { callModel } from "@/lib/model";
 import { detectInjection, fenceUntrusted, SECURITY_PREAMBLE } from "@/lib/guardrails";
 import type { Trace } from "@/lib/trace";
+import { reportWarning } from "@/lib/report";
 
 export type InboxMessage = { from?: string; subject?: string; body?: string };
 
@@ -137,7 +138,8 @@ export async function runInboxTriage(messages: InboxMessage[], trace?: Trace, co
     };
     const actions = parsed.actions ?? [];
     return clean.map((m, i) => toProposed(m, actions[i]));
-  } catch {
+  } catch (err) {
+    reportWarning("inbox-triage model call failed; using heuristic", { source: "agent.inbox-triage", detail: { err: String(err) } });
     trace?.flag("mode", "heuristic-fallback");
     return clean.map((m) => heuristic(m));
   }
@@ -241,7 +243,8 @@ export async function runArFollowup(invoices: Invoice[], trace?: Trace, context?
     };
     const actions = parsed.actions ?? [];
     return clean.map((v, i) => arToProposed(v, actions[i]));
-  } catch {
+  } catch (err) {
+    reportWarning("ar-followup model call failed; using heuristic", { source: "agent.ar-followup", detail: { err: String(err) } });
     trace?.flag("mode", "heuristic-fallback");
     return clean.map((v) => arHeuristic(v));
   }
@@ -287,7 +290,8 @@ async function draftMessages(system: string, lines: string[], trace?: Trace, max
     trace?.setTokens(tokens);
     const parsed = JSON.parse(completion.choices[0]?.message?.content ?? "{}") as { items?: Draft[] };
     return parsed.items ?? [];
-  } catch {
+  } catch (err) {
+    reportWarning("drafting model call failed; using template fallback", { source: "agent.draft", detail: { err: String(err) } });
     trace?.flag("mode", "heuristic-fallback");
     return [];
   }
@@ -451,7 +455,8 @@ export async function runVoiceTurn(said: string, context?: string, trace?: Trace
     trace?.setTokens(completion.usage?.total_tokens ?? 0);
     trace?.mark("model.end");
     return (completion.choices[0]?.message?.content ?? "").trim().slice(0, 400) || fallback;
-  } catch {
+  } catch (err) {
+    reportWarning("voice model call failed; using fallback line", { source: "agent.voice", detail: { err: String(err) } });
     return fallback;
   }
 }

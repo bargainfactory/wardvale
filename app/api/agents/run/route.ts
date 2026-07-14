@@ -23,6 +23,7 @@ import { resolveOutcomes } from "@/lib/outcomes";
 import { loadPolicy, spentToday, policyBlocks } from "@/lib/policy";
 import { firstTime, idemKey } from "@/lib/idempotency";
 import { dedupeKey } from "@/lib/dedupe";
+import { reportError } from "@/lib/report";
 import { agentName } from "@/lib/agents-catalog";
 import {
   pullOverdueInvoices,
@@ -307,7 +308,8 @@ export async function POST(req: Request) {
 
     await trace.end();
     return NextResponse.json({ ok: true, decided: actions.length, queued, autoSent, actions, approvals });
-  } catch {
+  } catch (err) {
+    reportError(err, { source: "agent.run" });
     trace.setStatus("error");
     await trace.end();
     return NextResponse.json({ error: "run_failed" }, { status: 500 });

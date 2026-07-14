@@ -4,6 +4,7 @@ import { getServiceClient } from "@/lib/supabase-server";
 import { encryptSecret, decryptSecret } from "@/lib/crypto";
 import type { Invoice, Cart, ReviewTarget, Lead, InboxMessage } from "@/lib/runtime";
 import type { Trace } from "@/lib/trace";
+import { reportWarning } from "@/lib/report";
 
 type StoredConnection = {
   id: string;
@@ -85,7 +86,7 @@ type QBInvoice = {
 };
 
 /** Query overdue invoices (Balance > 0, past due date) from QuickBooks. */
-async function fetchQuickBooksOverdueInvoices(accessToken: string, realmId: string): Promise<Invoice[]> {
+async function fetchQuickBooksOverdueInvoices(accessToken: string, realmId: string): Promise<Invoice[] | null> {
   const base =
     process.env.QUICKBOOKS_ENV === "production"
       ? "https://quickbooks.api.intuit.com"
@@ -95,7 +96,7 @@ async function fetchQuickBooksOverdueInvoices(accessToken: string, realmId: stri
     headers: { authorization: `Bearer ${accessToken}`, accept: "application/json" },
     cache: "no-store",
   });
-  if (!res.ok) return [];
+  if (!res.ok) return null;
   const data = (await res.json()) as { QueryResponse?: { Invoice?: QBInvoice[] } };
   const rows = data?.QueryResponse?.Invoice ?? [];
   const today = Date.now();
@@ -141,6 +142,11 @@ export async function pullOverdueInvoices(
 
   trace?.mark("tool.quickbooks.fetch.start");
   const invoices = await fetchQuickBooksOverdueInvoices(token, conn.external_id);
+  if (invoices === null) {
+    reportWarning("QuickBooks invoice pull failed", { source: "pull.quickbooks", clientId: client.id });
+    trace?.flag("source_error", "quickbooks");
+    return { clientId: client.id, invoices: [] };
+  }
   trace?.mark("tool.quickbooks.fetch.end", { invoices: invoices.length });
   return { clientId: client.id, invoices };
 }
@@ -267,7 +273,12 @@ export async function pullAbandonedCheckouts(
   if (!token) return { clientId: c.id, carts: [] };
   trace?.mark("tool.shopify.checkouts.start");
   const data = await shopifyGet<{ checkouts?: ShopifyCheckout[] }>(shop, token, "checkouts.json?limit=50");
-  const carts: Cart[] = (data?.checkouts ?? []).map((k) => ({
+  if (data === null) {
+    reportWarning("Shopify checkouts pull failed", { source: "pull.shopify", clientId: c.id });
+    trace?.flag("source_error", "shopify");
+    return { clientId: c.id, carts: [] };
+  }
+  const carts: Cart[] = (data.checkouts ?? []).map((k) => ({
     customer: fullName(k.customer) || k.email || "",
     email: k.email ?? "",
     phone: k.phone ?? k.customer?.phone ?? "",
@@ -297,7 +308,12 @@ export async function pullRecentOrders(
     token,
     "orders.json?status=any&financial_status=paid&limit=25"
   );
-  const targets: ReviewTarget[] = (data?.orders ?? []).map((o) => ({
+  if (data === null) {
+    reportWarning("Shopify orders pull failed", { source: "pull.shopify", clientId: c.id });
+    trace?.flag("source_error", "shopify");
+    return { clientId: c.id, targets: [] };
+  }
+  const targets: ReviewTarget[] = (data.orders ?? []).map((o) => ({
     customer: fullName(o.customer) || o.email || "",
     email: o.email ?? "",
     phone: o.phone ?? o.customer?.phone ?? "",
@@ -334,7 +350,11 @@ export async function pullOpenTickets(
       headers: { authorization: `Bearer ${token}`, accept: "application/json" },
       cache: "no-store",
     });
-    if (!res.ok) return { clientId: c.id, messages: [] };
+    if (!res.ok) {
+      reportWarning(`Zendesk tickets pull failed (${res.status})`, { source: "pull.zendesk", clientId: c.id });
+      trace?.flag("source_error", "zendesk");
+      return { clientId: c.id, messages: [] };
+    }
     const data = (await res.json()) as { tickets?: ZendeskTicket[] };
     const messages: InboxMessage[] = (data.tickets ?? []).slice(0, 20).map((t) => ({
       from: t.via?.source?.from?.address ?? `ticket #${t.id ?? "?"}`,
@@ -343,7 +363,9 @@ export async function pullOpenTickets(
     }));
     trace?.mark("tool.zendesk.tickets.end", { messages: messages.length });
     return { clientId: c.id, messages };
-  } catch {
+  } catch (err) {
+    reportWarning("Zendesk tickets pull threw", { source: "pull.zendesk", clientId: c.id, detail: { err: String(err) } });
+    trace?.flag("source_error", "zendesk");
     return { clientId: c.id, messages: [] };
   }
 }
@@ -378,7 +400,11 @@ export async function pullNewLeads(
       "https://api.hubapi.com/crm/v3/objects/contacts?limit=25&properties=firstname,lastname,email,phone,hs_lead_status,message&sort=-createdate",
       { headers: { authorization: `Bearer ${token}`, accept: "application/json" }, cache: "no-store" }
     );
-    if (!res.ok) return { clientId: c.id, leads: [] };
+    if (!res.ok) {
+      reportWarning(`HubSpot contacts pull failed (${res.status})`, { source: "pull.hubspot", clientId: c.id });
+      trace?.flag("source_error", "hubspot");
+      return { clientId: c.id, leads: [] };
+    }
     const data = (await res.json()) as { results?: HubSpotContact[] };
     const leads: Lead[] = (data.results ?? []).map((r) => ({
       name: [r.properties?.firstname, r.properties?.lastname].filter(Boolean).join(" "),
@@ -389,7 +415,9 @@ export async function pullNewLeads(
     }));
     trace?.mark("tool.hubspot.contacts.end", { leads: leads.length });
     return { clientId: c.id, leads };
-  } catch {
+  } catch (err) {
+    reportWarning("HubSpot contacts pull threw", { source: "pull.hubspot", clientId: c.id, detail: { err: String(err) } });
+    trace?.flag("source_error", "hubspot");
     return { clientId: c.id, leads: [] };
   }
 }
