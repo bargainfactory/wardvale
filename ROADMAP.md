@@ -151,7 +151,7 @@ real traffic ─▶ traces (async, sampled)
   configs become versioned data, not inline `const`s. Every trace records the version
   that produced it. Without this, a judge score is unattributable and the learning loop
   is unauditable. This is a precondition, not a nicety.
-- **U1 — LLM-as-judge evaluation layer.** ✅ **CORE SHIPPED** (`c3ee79e`) — deterministic component checks (100%) + a sampled CoT rubric (grounding/appropriateness/tone/safety, safety+grounding gating), harvested off the hot path by `/api/cron/judge` into the `judgements` table keyed to `prompt_version`. _Still to come: trajectory-level judges over full Sense→Decide→Act spans, judge-the-judges meta-eval set, and auto-built LangSmith-style datasets._ _Original plan:_ On the flywheel, tiered for cost:
+- **U1 — LLM-as-judge evaluation layer.** ✅ **CORE SHIPPED** (`c3ee79e`) — deterministic component checks (100%) + a sampled CoT rubric (grounding/appropriateness/tone/safety, safety+grounding gating), harvested off the hot path by `/api/cron/judge` into the `judgements` table keyed to `prompt_version`. _Hardened (`555a1b2`): a routing/component judge (deterministic, wired into the cron) + a judge-the-judges meta-eval (`lib/judge-meta.ts`) + an in-process flywheel e2e test. Still to come: full span-level trajectory judges (needs an approval↔trace link) and auto-built LangSmith-style dataset export._ _Original plan:_ On the flywheel, tiered for cost:
   - **Trajectory judges** — score the full Sense → Decide → Act cycle, not just the final draft.
   - **Component judges** — routing/label correctness, guardrail effectiveness, tool-use
     correctness, context-grounding quality (did it invent hours/prices?).
