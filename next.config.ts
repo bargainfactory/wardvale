@@ -9,11 +9,30 @@ import type { NextConfig } from "next";
 // allowed for fetch (https) and websockets (wss); derived from the public URL.
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
 const supabaseWss = supabaseUrl.replace(/^https:/, "wss:");
-const connectHosts = ["'self'", "https://challenges.cloudflare.com", supabaseUrl, supabaseWss].filter(Boolean).join(" ");
+
+// In development, Next's React Fast Refresh + webpack runtime evaluate code via
+// eval(), and HMR runs over a websocket. Those need 'unsafe-eval' and a ws:
+// connect source — WITHOUT them the CSP blocks the entire client bundle, so the
+// app never hydrates (blank client pages, dead buttons). Production builds don't
+// use eval, so we keep the prod policy strict and only relax it in dev.
+const isDev = process.env.NODE_ENV !== "production";
+
+const scriptSrc = ["'self'", "'unsafe-inline'", "https://challenges.cloudflare.com"];
+if (isDev) scriptSrc.push("'unsafe-eval'");
+
+const connectHosts = [
+  "'self'",
+  "https://challenges.cloudflare.com",
+  supabaseUrl,
+  supabaseWss,
+  ...(isDev ? ["ws:", "wss:"] : []),
+]
+  .filter(Boolean)
+  .join(" ");
 
 const csp = [
   "default-src 'self'",
-  "script-src 'self' 'unsafe-inline' https://challenges.cloudflare.com",
+  `script-src ${scriptSrc.join(" ")}`,
   "style-src 'self' 'unsafe-inline' https://rsms.me https://api.fontshare.com",
   "font-src 'self' data: https://rsms.me https://cdn.fontshare.com https://api.fontshare.com",
   "img-src 'self' data: https:",
