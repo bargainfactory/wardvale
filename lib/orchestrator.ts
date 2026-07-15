@@ -1,3 +1,5 @@
+import { dedupeKey } from "@/lib/dedupe";
+
 // ── New-Lead Concierge orchestration (roadmap Phase 3 · U2/U3, slice 1) ──────
 // A lightweight supervisor that routes a new lead across specialized sub-agents:
 // qualify → branch on intent (hot/warm/cold) → draft outreach + schedule a
@@ -126,4 +128,48 @@ export async function runConcierge(lead: Lead, deps: ConciergeDeps = defaultDeps
     state = r.status === "fulfilled" ? mergeSteps(state, r.value, "branch") : { ...state, version: state.version + 1, log: [...state.log, "branch-failed"] };
   }
   return state;
+}
+
+// ── Persistence: concierge steps → approval-queue rows (slice 2) ─────────────
+// Map each step onto the nearest registered agent lane so approved drafts feed
+// the right agent's learning-loop exemplars; steps with no lane keep their own.
+export const LEARN_KIND: Record<string, string> = {
+  outreach: "lead-qualification",
+  nurture: "lead-qualification",
+  review: "review-request",
+  ar: "ar-followup",
+};
+
+export type ApprovalRow = {
+  agent: string;
+  action: string;
+  summary: string;
+  dedupe_key: string;
+  payload: { draft: string | null; source: string; to: string | null; value: null; kind: string; run_id: string };
+};
+
+/**
+ * Map merged concierge steps to approval-queue rows, reusing dedupeKey and the
+ * run route's payload shape so the existing decide / judge / learning-loop
+ * machinery works on orchestrated steps unchanged. Pure + testable.
+ */
+export function stepsToApprovals(clientId: string, lead: Lead, steps: Step[], runId: string): ApprovalRow[] {
+  const ref = lead.email || lead.phone || "";
+  return steps.map((s) => {
+    const kind = LEARN_KIND[s.kind] ?? s.kind;
+    return {
+      agent: s.agent,
+      action: s.action,
+      summary: s.summary,
+      dedupe_key: dedupeKey({ clientId, kind, action: s.action, ref: ref || s.summary }),
+      payload: {
+        draft: s.draft ?? null,
+        source: lead.source || ref || s.summary,
+        to: lead.email || lead.phone || null,
+        value: null,
+        kind,
+        run_id: runId,
+      },
+    };
+  });
 }
