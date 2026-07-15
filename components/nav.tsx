@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Menu, X, Zap } from "lucide-react";
 import { ThemeToggle } from "@/components/theme-toggle";
@@ -12,7 +12,6 @@ import { useLocale } from "@/lib/locale-context";
 
 export function Nav() {
   const pathname = usePathname();
-  const router = useRouter();
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
   const { locale, setLocale, t } = useLocale();
@@ -24,10 +23,16 @@ export function Nav() {
     return parts.join("/") || "/";
   })();
 
-  // Switch language: update rendered locale + navigate to the localized URL.
+  // Switch language. The locales are served via middleware *rewrites*
+  // (/es/services → /services with an x-locale header), and every locale URL
+  // rewrites to the same underlying route — so App Router client navigation
+  // (router.push) dedupes them and the server never re-renders in the new
+  // language. A full-document navigation is reliable: middleware runs, the
+  // cookie is set, and the page is server-rendered in the target locale.
   const changeLocale = (l: Locale) => {
-    setLocale(l);
-    router.push(l === "en" ? normalizedPath : `/${l}${normalizedPath === "/" ? "" : normalizedPath}`);
+    setLocale(l); // persist cookie + localStorage so the reloaded page agrees
+    const target = l === "en" ? normalizedPath : `/${l}${normalizedPath === "/" ? "" : normalizedPath}`;
+    window.location.assign(target);
   };
 
   const links = [
