@@ -147,7 +147,7 @@ real traffic ─▶ traces (async, sampled)
   sample), and **TTL'd/partitioned** so the table doesn't become the most expensive thing
   we own. Judges run *on* traces — if traces stay synchronous and unbounded, the judge
   layer amplifies the exact cost problem in G7. **Do G7 and U1 as one build.**
-- **G8 — Version everything that shapes a decision.** ✅ **DONE** (`9f1266b`) — prompt-version registry; every `agent.run` trace records `prompt_version`. _Next:_ migrate prompt bodies into the registry; version policies/configs too. _Original plan:_ Prompts, policies, and agent
+- **G8 — Version everything that shapes a decision.** ✅ **DONE** (`9f1266b`) — prompt-version registry; every `agent.run` trace records `prompt_version`. Prompt **bodies** now live in the registry too (`lib/prompts.ts`), moved verbatim (git-diff-verified, zero drift) out of runtime.ts. _Remaining:_ versioning policies/configs (per-tenant DB, larger). _Original plan:_ Prompts, policies, and agent
   configs become versioned data, not inline `const`s. Every trace records the version
   that produced it. Without this, a judge score is unattributable and the learning loop
   is unauditable. This is a precondition, not a nicety.

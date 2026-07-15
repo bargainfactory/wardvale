@@ -1,5 +1,6 @@
 import { callModel } from "@/lib/model";
 import { detectInjection, fenceUntrusted, SECURITY_PREAMBLE } from "@/lib/guardrails";
+import { SYSTEM, AR_SYSTEM, CART_SYSTEM, REVIEW_SYSTEM, LEAD_SYSTEM, SMS_SYSTEM, VOICE_SYSTEM } from "@/lib/prompts";
 import type { Trace } from "@/lib/trace";
 import { reportWarning } from "@/lib/report";
 
@@ -63,15 +64,6 @@ function sys(base: string, context?: string): string {
 }
 
 const AGENT = "Inbox triage agent";
-
-const SYSTEM = `${SECURITY_PREAMBLE}
-
-You are an inbox-triage agent for a small business. For EACH email, decide exactly ONE action:
-- "email.send": a reply is warranted — write a short, friendly draft reply in the business's voice.
-- "triage.label": needs the owner but no auto-reply — summarize why in one line.
-- "archive": promotional/newsletter/no action needed.
-- "escalate": urgent, sensitive, legal, or an angry customer — flag for a human now.
-Return ONLY JSON: { "actions": [ { "action": "...", "summary": "one line", "draft": "reply text — only for email.send" } ] }, one entry per email, in order.`;
 
 /** Normalize an LLM-suggested action label to our enum. */
 function normalize(x?: string): ProposedAction["action"] {
@@ -189,13 +181,6 @@ export type Invoice = { number?: string; customer?: string; email?: string; amou
 type CleanInvoice = { number: string; customer: string; email: string; amount: number; daysOverdue: number };
 
 const AR_AGENT = "AR follow-up agent";
-const AR_SYSTEM = `${SECURITY_PREAMBLE}
-
-You are an accounts-receivable follow-up agent for a small business. For EACH overdue invoice, decide exactly ONE action:
-- "email.send": send a polite payment reminder — write a short, professional draft in the business's voice referencing the invoice number, amount, and how overdue it is.
-- "escalate": very overdue (60+ days) or a large balance — flag for a human call.
-- "triage.label": not yet due or ambiguous — no action.
-Return ONLY JSON: { "actions": [ { "action": "...", "summary": "one line", "draft": "reminder text — only for email.send" } ] }, one per invoice, in order.`;
 
 function arSummary(v: CleanInvoice, action: ProposedAction["action"]): string {
   if (action === "email.send") return `Reminder: Invoice ${v.number} · $${v.amount.toLocaleString()} · ${v.daysOverdue}d overdue`;
@@ -342,10 +327,6 @@ async function draftMessages(system: string, lines: string[], trace?: Trace, max
 export type Cart = { customer?: string; email?: string; phone?: string; total?: number; url?: string; items?: string };
 
 const CART_AGENT = "Cart recovery agent";
-const CART_SYSTEM = `${SECURITY_PREAMBLE}
-
-You are an abandoned-cart recovery agent for an e-commerce store. For EACH cart, write a short, friendly recovery message (2-3 sentences) in the store's voice that nudges the shopper to finish checkout — reference what they left and the checkout link if given. Do not invent discounts.
-Return ONLY JSON: { "items": [ { "summary": "one line", "draft": "message text" } ] }, one per cart, in order.`;
 
 export async function runCartRecovery(carts: Cart[], trace?: Trace, context?: string): Promise<ProposedAction[]> {
   const clean = carts.slice(0, 20).map((c) => ({
@@ -385,10 +366,6 @@ export async function runCartRecovery(carts: Cart[], trace?: Trace, context?: st
 export type ReviewTarget = { customer?: string; email?: string; phone?: string; service?: string };
 
 const REVIEW_AGENT = "Review request agent";
-const REVIEW_SYSTEM = `${SECURITY_PREAMBLE}
-
-You are a review-request agent for a small business. For EACH recently completed order/job, write a short, warm message asking the happy customer to leave a review (Google/Yelp). Personalize with their name and what they bought or booked, include a clear ask, and do not offer incentives.
-Return ONLY JSON: { "items": [ { "summary": "one line", "draft": "message text" } ] }, one per customer, in order.`;
 
 export async function runReviewRequest(targets: ReviewTarget[], trace?: Trace, context?: string): Promise<ProposedAction[]> {
   const clean = targets.slice(0, 20).map((t) => ({
@@ -426,10 +403,6 @@ export async function runReviewRequest(targets: ReviewTarget[], trace?: Trace, c
 export type Lead = { name?: string; email?: string; phone?: string; source?: string; message?: string };
 
 const LEAD_AGENT = "Lead qualification agent";
-const LEAD_SYSTEM = `${SECURITY_PREAMBLE}
-
-You are a lead-qualification + first-response agent for a small business. For EACH new lead, classify intent (hot/warm/cold) in the summary, then write a fast, friendly first-touch reply that asks one or two qualifying questions and offers a next step (call or booking). Keep it short.
-Return ONLY JSON: { "items": [ { "summary": "hot|warm|cold — one line", "draft": "reply text" } ] }, one per lead, in order.`;
 
 export async function runLeadQualification(leads: Lead[], trace?: Trace, context?: string): Promise<ProposedAction[]> {
   const clean = leads.slice(0, 20).map((l) => ({
@@ -468,14 +441,9 @@ export async function runLeadQualification(leads: Lead[], trace?: Trace, context
 export type InboundSms = { from?: string; to?: string; body?: string };
 
 const SMS_AGENT = "SMS reply agent";
-const SMS_SYSTEM = `${SECURITY_PREAMBLE}
-
-You are an SMS assistant for a small business replying to inbound texts (e.g. a missed-call auto-text-back or a customer question). Write ONE concise, friendly SMS reply (max 320 chars) that answers or moves toward booking. If a message is spam or an opt-out (STOP/UNSUBSCRIBE), leave the draft empty and say so in the summary.
-Return ONLY JSON: { "items": [ { "summary": "one line", "draft": "sms text" } ] }, one per message, in order.`;
 
 // ── Voice receptionist (inbound Twilio Voice) ────────────────────────────────
 
-const VOICE_SYSTEM = `You are a warm, professional phone receptionist for a small business. Reply to the caller in ONE or TWO short SPOKEN sentences — no lists, no formatting, no emoji. Answer their question from the business context if you can; if they want to book or leave a message, confirm you'll pass it to the team. Never invent hours, prices, or policies not in the context.`;
 
 /** One spoken turn: given what the caller said, return a short reply to speak. */
 export async function runVoiceTurn(said: string, context?: string, trace?: Trace): Promise<string> {
