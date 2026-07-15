@@ -23,6 +23,7 @@ export type Lead = {
   source?: string;
   message?: string;
   hasOrder?: boolean; // references an existing order/invoice → order side-quest
+  orderStatus?: "paid" | "overdue"; // slice 3: routes the side-quest (review vs AR)
 };
 
 export type Step = {
@@ -30,6 +31,7 @@ export type Step = {
   action: string; // email.send | sms.send | schedule | triage.label
   summary: string;
   draft?: string;
+  dueInDays?: number; // slice 3: cadence offset for scheduled touches
   needsApproval: boolean;
   agent: string;
 };
@@ -109,13 +111,22 @@ export async function runConcierge(lead: Lead, deps: ConciergeDeps = defaultDeps
   const branches: Promise<Step[]>[] = [];
 
   if (q.intent === "hot" || q.intent === "warm") {
-    const kind: Step["kind"] = q.intent === "hot" ? "outreach" : "nurture";
-    const follow = q.intent === "hot" ? "Same-day follow-up" : "3-day follow-up";
+    const isHot = q.intent === "hot";
+    const kind: Step["kind"] = isHot ? "outreach" : "nurture";
     branches.push(
-      Promise.resolve(deps.draftOutreach(lead, q.intent)).then((o): Step[] => [
-        { kind, action: lead.email ? "email.send" : "sms.send", summary: o.summary, draft: o.draft, needsApproval: true, agent: "concierge:outreach" },
-        { kind: "follow-up", action: "schedule", summary: follow, needsApproval: true, agent: "concierge:scheduler" },
-      ])
+      Promise.resolve(deps.draftOutreach(lead, q.intent)).then((o): Step[] => {
+        const steps: Step[] = [
+          { kind, action: lead.email ? "email.send" : "sms.send", summary: o.summary, draft: o.draft, needsApproval: true, agent: "concierge:outreach" },
+        ];
+        if (isHot) {
+          steps.push({ kind: "follow-up", action: "schedule", summary: "Same-day follow-up", dueInDays: 0, needsApproval: true, agent: "concierge:scheduler" });
+        } else {
+          // Warm nurture cadence: a light multi-touch sequence.
+          steps.push({ kind: "follow-up", action: "schedule", summary: "3-day nurture follow-up", dueInDays: 3, needsApproval: true, agent: "concierge:scheduler" });
+          steps.push({ kind: "follow-up", action: "schedule", summary: "7-day check-in", dueInDays: 7, needsApproval: true, agent: "concierge:scheduler" });
+        }
+        return steps;
+      })
     );
   } else if (q.intent === "cold") {
     branches.push(Promise.resolve<Step[]>([{ kind: "label", action: "triage.label", summary: `Cold: ${q.reason}`, needsApproval: true, agent: "concierge:triage" }]));
@@ -128,6 +139,37 @@ export async function runConcierge(lead: Lead, deps: ConciergeDeps = defaultDeps
     state = r.status === "fulfilled" ? mergeSteps(state, r.value, "branch") : { ...state, version: state.version + 1, log: [...state.log, "branch-failed"] };
   }
   return state;
+}
+
+/**
+ * Route the order side-quest by order state (slice 3): an overdue invoice → AR
+ * follow-up; otherwise a review request. Pure; the route injects it as the
+ * `orderSideQuest` node.
+ */
+export function defaultOrderSideQuest(lead: Lead): Step[] {
+  const name = lead.name || "the customer";
+  if (lead.orderStatus === "overdue") {
+    return [
+      {
+        kind: "ar",
+        action: "email.send",
+        summary: `Payment reminder for ${name}'s overdue invoice`,
+        draft: `Hi ${name} — a quick reminder that your recent invoice is now past due. Let us know if you have any questions; happy to help sort it out.`,
+        needsApproval: true,
+        agent: "concierge:ar",
+      },
+    ];
+  }
+  return [
+    {
+      kind: "review",
+      action: "email.send",
+      summary: `Ask ${name} for a review of their recent order`,
+      draft: `Hi ${name} — hope you're loving your recent order! Would you mind leaving a quick review? It really helps.`,
+      needsApproval: true,
+      agent: "concierge:review",
+    },
+  ];
 }
 
 // ── Persistence: concierge steps → approval-queue rows (slice 2) ─────────────

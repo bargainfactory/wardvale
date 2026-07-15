@@ -4,6 +4,7 @@ import {
   mergeSteps,
   classifyIntent,
   runConcierge,
+  defaultOrderSideQuest,
   stepsToApprovals,
   LEARN_KIND,
   type Intent,
@@ -61,6 +62,13 @@ describe("runConcierge (supervisor)", () => {
     expect(kinds(s)).toEqual(["label"]);
   });
 
+  it("warm lead → nurture + a multi-touch cadence (slice 3)", async () => {
+    const s = await runConcierge({ email: "a@b.com" }, fake("warm"));
+    expect(kinds(s)).toEqual(["nurture", "follow-up", "follow-up"]);
+    const cadence = s.steps.filter((x) => x.kind === "follow-up").map((x) => x.dueInDays);
+    expect(cadence).toEqual([3, 7]);
+  });
+
   it("runs the order side-quest in parallel and merges it", async () => {
     const deps: ConciergeDeps = {
       ...fake("hot"),
@@ -81,6 +89,18 @@ describe("runConcierge (supervisor)", () => {
     const s = await runConcierge({ email: "a@b.com", hasOrder: true }, deps);
     expect(kinds(s)).toContain("outreach"); // outreach branch still merged
     expect(s.log).toContain("branch-failed");
+  });
+});
+
+describe("defaultOrderSideQuest (slice 3 — review vs AR by order state)", () => {
+  it("routes an overdue invoice to an AR follow-up", () => {
+    const steps = defaultOrderSideQuest({ name: "Sam", orderStatus: "overdue" });
+    expect(steps[0].kind).toBe("ar");
+    expect(steps[0].action).toBe("email.send");
+  });
+  it("routes a paid/unspecified order to a review request", () => {
+    expect(defaultOrderSideQuest({ name: "Sam", orderStatus: "paid" })[0].kind).toBe("review");
+    expect(defaultOrderSideQuest({ name: "Sam" })[0].kind).toBe("review");
   });
 });
 

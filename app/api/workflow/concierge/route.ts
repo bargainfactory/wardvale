@@ -5,8 +5,9 @@ import { reportError } from "@/lib/report";
 import { getServiceClient } from "@/lib/supabase-server";
 import { clientScope } from "@/lib/tenant";
 import { loadContext } from "@/lib/context";
+import { sendApprovalNotification } from "@/lib/email";
 import { runLeadQualification } from "@/lib/runtime";
-import { runConcierge, defaultDeps, classifyIntent, stepsToApprovals, type ConciergeDeps, type Lead, type Step } from "@/lib/orchestrator";
+import { runConcierge, defaultDeps, classifyIntent, defaultOrderSideQuest, stepsToApprovals, type ConciergeDeps, type Lead, type Step } from "@/lib/orchestrator";
 
 /**
  * New-Lead Concierge workflow (Phase 3 · slices 1-2). A supervisor routes a lead
@@ -36,24 +37,17 @@ export async function POST(req: Request) {
     const supabase = getServiceClient();
     const ingestKey = req.headers.get("authorization")?.replace(/^Bearer\s+/i, "").trim() || body.ingest_key;
     let clientId: string | null = null;
+    let clientEmail: string | null = null;
     if (supabase && ingestKey) {
-      const { data: client } = await supabase.from("clients").select("id").eq("ingest_key", ingestKey).maybeSingle();
-      clientId = (client as { id: string } | null)?.id ?? null;
+      const { data: client } = await supabase.from("clients").select("id, email").eq("ingest_key", ingestKey).maybeSingle();
+      const c = client as { id: string; email: string | null } | null;
+      clientId = c?.id ?? null;
+      clientEmail = c?.email ?? null;
     }
     const context = clientId ? await loadContext(clientId) : "";
 
-    // Parallel side-quest sub-agent: if the lead references an existing order, ask
-    // for a review. (A fuller build would route review vs AR by order state.)
-    const orderSideQuest = async (l: Lead): Promise<Step[]> => [
-      {
-        kind: "review",
-        action: "email.send",
-        summary: `Ask ${l.name || "the customer"} for a review of their recent order`,
-        draft: `Hi ${l.name || "there"} — hope you're loving your recent order! Would you mind leaving a quick review? It really helps.`,
-        needsApproval: true,
-        agent: "concierge:review",
-      },
-    ];
+    // Parallel side-quest sub-agent: routes review vs AR by order state (slice 3).
+    const orderSideQuest = async (l: Lead): Promise<Step[]> => defaultOrderSideQuest(l);
 
     // Wire the real LLM lead-qualification sub-agent when configured; one cached
     // call serves both the qualify and draft nodes. Falls back to heuristics.
@@ -91,6 +85,7 @@ export async function POST(req: Request) {
         .upsert("approvals", rows, { onConflict: "dedupe_key", ignoreDuplicates: true })
         .select("id");
       persisted = (inserted as { id: string }[] | null)?.length ?? 0;
+      if (persisted && clientEmail) await sendApprovalNotification(clientEmail, persisted, "New-Lead Concierge");
     }
 
     trace.mark("orchestrated", { steps: state.steps.length, version: state.version, persisted });
