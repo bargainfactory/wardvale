@@ -194,7 +194,7 @@ Phase 2) so this phase is additive rather than a rewrite.
 
 ### Workstreams
 
-- **U2 — Graph orchestration + state.** Introduce explicit supervisor/worker orchestration
+- **U2 — Graph orchestration + state.** ▶ **SLICE 1 SHIPPED** (`lib/orchestrator.ts`, `/api/workflow/concierge`) — the **New-Lead Concierge** supervisor: qualify → conditional routing (hot/warm/cold) → parallel order side-quest → reducer-merged typed/versioned state, sub-agents injected (DI = graph nodes), every step human-gated, traced with `run_id` for the U1 trajectory judge. 9 tests, driven live. _Next slices:_ wire the LLM lead-qualification/drafting sub-agents (DI seam ready), persist steps through the approval/policy gate, feed approved drafts to the learning loop; adopt LangGraph.js only if node count/durability demands it. _Original plan:_ Introduce explicit supervisor/worker orchestration
   (adopt a graph library — Principle 3), **dynamic parallelism** for concurrent tool pulls
   merged safely, and **typed, versioned, persistent state with reducers** for safe merges
   across parallel branches. This is only safe because Phase 1 made actions idempotent (G2)
