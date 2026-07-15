@@ -12,6 +12,8 @@ import { loadContext } from "@/lib/context";
 // and writes one judgement per decision (keyed to prompt_version). A unique index
 // on approval_id makes re-runs idempotent. Authenticated with CRON_SECRET.
 
+export const maxDuration = 60; // runtime-tier function config (G5)
+
 const MAX_PER_RUN = Number(process.env.JUDGE_MAX_PER_RUN) || 100;
 const CONCURRENCY = Number(process.env.JUDGE_CONCURRENCY) || 4;
 const WINDOW_MS = 24 * 60 * 60_000;

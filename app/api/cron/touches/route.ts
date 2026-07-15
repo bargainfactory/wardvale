@@ -9,6 +9,8 @@ import { dueTouches, touchToApproval, type TouchRow } from "@/lib/orchestrator";
  * touches whose fire_at has arrived into the approval queue (idempotent), then
  * marks them fired. Authenticated with CRON_SECRET; safe/no-op without Supabase.
  */
+export const maxDuration = 60; // runtime-tier function config (G5)
+
 const MAX_PER_RUN = Number(process.env.TOUCHES_MAX_PER_RUN) || 200;
 
 export async function POST(req: Request) {

@@ -210,7 +210,7 @@ Phase 2) so this phase is additive rather than a rewrite.
   built on the G9 data-access seam). Then *wire MCP to the actual agents* so a customer's
   own Claude can trigger their FlowForge agents and read their approval queue,
   authenticated — closing the gap where today's MCP endpoint exposes only marketing data.
-- **G5 — Split the runtime tier.** Move the agent runtime, cron, and webhooks off the
+- **G5 — Split the runtime tier.** ◑ **PARTIAL (code side done; full split is ops).** On Vercel each API route already runs as its own independently-scaling serverless function, so agent/cron bursts don't share instances with page rendering; G4's QStash further offloads scheduled work off the request path. Added explicit `maxDuration` to the batch crons (run-agents/judge/touches) so the runtime tier is tuned independently. A *fully separate deployment* (own Vercel project / worker service) is an infrastructure decision — not a code change I can provision or verify here. _Original plan:_ Move the agent runtime, cron, and webhooks off the
   web/marketing deployment so agent bursts can't degrade page loads, and each tier scales
   independently.
 

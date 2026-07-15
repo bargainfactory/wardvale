@@ -23,6 +23,10 @@ import {
 // SCHEDULER_MAX_INLINE is processed oldest-first next tick and is logged, not
 // swallowed). Set CRON_SECRET and send it as a Bearer token or ?key=.
 
+// Runtime-tier function config (roadmap G5): batch-processing crons get a longer
+// limit and scale as their own serverless function, independent of page loads.
+export const maxDuration = 60;
+
 const CONCURRENCY = Number(process.env.SCHEDULER_CONCURRENCY) || 6;
 const MAX_INLINE = Number(process.env.SCHEDULER_MAX_INLINE) || 100;
 
