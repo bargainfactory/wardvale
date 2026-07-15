@@ -4,6 +4,7 @@ import {
   mergeSteps,
   classifyIntent,
   runConcierge,
+  dynamicSubAgents,
   defaultOrderSideQuest,
   stepsToApprovals,
   LEARN_KIND,
@@ -89,6 +90,32 @@ describe("runConcierge (supervisor)", () => {
     const s = await runConcierge({ email: "a@b.com", hasOrder: true }, deps);
     expect(kinds(s)).toContain("outreach"); // outreach branch still merged
     expect(s.log).toContain("branch-failed");
+  });
+});
+
+describe("dynamicSubAgents (U3 — content-triggered delegation)", () => {
+  it("spawns the escalation specialist on a refund/complaint", () => {
+    const steps = dynamicSubAgents({ message: "I want a refund, this is unacceptable" });
+    expect(steps.map((s) => s.action)).toContain("escalate");
+  });
+  it("spawns the scheduling specialist on a reschedule request", () => {
+    const steps = dynamicSubAgents({ message: "can I reschedule my appointment?" });
+    expect(steps.some((s) => s.agent === "concierge:scheduling")).toBe(true);
+  });
+  it("spawns nothing for a neutral message", () => {
+    expect(dynamicSubAgents({ message: "thanks, sounds good" })).toHaveLength(0);
+  });
+});
+
+describe("runConcierge composes dynamic specialists with the base flow (U3)", () => {
+  const fake: ConciergeDeps = {
+    qualify: async () => ({ intent: "hot", reason: "t" }),
+    draftOutreach: async () => ({ summary: "o", draft: "d" }),
+  };
+  it("a hot lead that also complains → outreach AND escalation", async () => {
+    const s = await runConcierge({ email: "a@b.com", message: "I need a quote but your service was terrible" }, fake);
+    expect(kinds(s)).toContain("outreach"); // base intent branch
+    expect(s.steps.some((x) => x.action === "escalate")).toBe(true); // dynamic specialist
   });
 });
 

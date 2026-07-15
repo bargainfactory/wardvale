@@ -97,6 +97,35 @@ export const defaultDeps: ConciergeDeps = {
   }),
 };
 
+// ── Dynamic sub-agent delegation (roadmap U3) ────────────────────────────────
+// Content-triggered specialists the supervisor can spawn INTO a run beyond the
+// fixed intent branches — matched dynamically against the lead's message. New
+// specialists are added to the registry, not the supervisor.
+export type SubAgent = { name: string; triggers: RegExp; run: (lead: Lead) => Step[] };
+
+export const SUB_AGENTS: SubAgent[] = [
+  {
+    name: "escalation",
+    triggers: /refund|cancel|complaint|angry|lawyer|legal|terrible|unacceptable/i,
+    run: (l) => [
+      { kind: "label", action: "escalate", summary: `Escalate: ${l.name || "lead"} raised a sensitive issue`, needsApproval: true, agent: "concierge:escalation" },
+    ],
+  },
+  {
+    name: "scheduling",
+    triggers: /reschedul|appointment|change my booking|move my|different time/i,
+    run: (l) => [
+      { kind: "follow-up", action: "schedule", summary: `Booking change requested by ${l.name || "lead"}`, needsApproval: true, agent: "concierge:scheduling" },
+    ],
+  },
+];
+
+/** Select + run the sub-agents whose triggers match the lead (dynamic delegation). */
+export function dynamicSubAgents(lead: Lead, registry: SubAgent[] = SUB_AGENTS): Step[] {
+  const text = `${lead.message ?? ""}`;
+  return registry.filter((a) => a.triggers.test(text)).flatMap((a) => a.run(lead));
+}
+
 /**
  * Supervisor. Qualifies, routes on intent, fans out the order side-quest in
  * parallel, and reduces every branch into one typed state. A branch that throws
@@ -133,6 +162,10 @@ export async function runConcierge(lead: Lead, deps: ConciergeDeps = defaultDeps
   }
 
   if (lead.hasOrder && deps.orderSideQuest) branches.push(Promise.resolve(deps.orderSideQuest(lead)));
+
+  // Dynamic delegation (U3): spawn any content-triggered specialists.
+  const dynamic = dynamicSubAgents(lead);
+  if (dynamic.length) branches.push(Promise.resolve(dynamic));
 
   const settled = await Promise.allSettled(branches);
   for (const r of settled) {

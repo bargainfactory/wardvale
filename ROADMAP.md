@@ -199,7 +199,7 @@ Phase 2) so this phase is additive rather than a rewrite.
   merged safely, and **typed, versioned, persistent state with reducers** for safe merges
   across parallel branches. This is only safe because Phase 1 made actions idempotent (G2)
   and observable (G6).
-- **U3 — Dynamic sub-agent delegation.** A supervisor that spawns/delegates to specialized
+- **U3 — Dynamic sub-agent delegation.** ✅ **SHIPPED** — `dynamicSubAgents` + a content-triggered `SUB_AGENTS` registry: the concierge supervisor spawns specialists (escalation, scheduling) into a run based on the lead's message, composed in parallel with the base intent branches, each gated. New specialists are added to the registry, not the supervisor. 4 tests. _Original plan:_ A supervisor that spawns/delegates to specialized
   sub-agents within one workflow — pairing with the policy layer (every delegated action
   still passes governance), the MCP server (sub-agents can call external tools), and the
   learning loop (approved sub-agent behaviors become new exemplars). Safe only because U1
