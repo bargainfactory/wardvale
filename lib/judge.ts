@@ -90,6 +90,25 @@ export function componentChecks(d: Decision, opts: { inputText?: string } = {}):
   return { checks, passed: checks.length - failed, failed };
 }
 
+export type TraceSpan = { name: string; ms?: number; data?: Record<string, unknown> };
+
+/**
+ * Trajectory-level checks (roadmap U1) over the trace spans of the FULL
+ * Sense → Decide → Act cycle — not just the final draft. Deterministic; run in
+ * the judge cron when a decision's trace is linked (via run_id). Confirms the
+ * agent read/processed before deciding, that the model ran or cleanly fell back
+ * (not a silent no-op), and that the run completed without error.
+ */
+export function trajectoryChecks(spans: TraceSpan[], flags: Record<string, unknown>, status: string): Check[] {
+  const names = spans.map((s) => s.name || "");
+  const has = (prefix: string) => names.some((n) => n.startsWith(prefix));
+  return [
+    { name: "read-before-decide", pass: has("tool.") || has("model.") || has("guard"), detail: `${spans.length} spans` },
+    { name: "model-or-clean-fallback", pass: has("model.") || flags.mode === "heuristic-fallback", detail: String(flags.mode ?? "") },
+    { name: "trace-completed", pass: status !== "error", detail: status },
+  ];
+}
+
 // ── LLM rubric tier ──────────────────────────────────────────────────────────
 
 export type Scores = { grounding: number; appropriateness: number; tone: number; safety: number };

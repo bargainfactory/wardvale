@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { getServiceClient } from "@/lib/supabase-server";
 import { reportError } from "@/lib/report";
 import { runPool } from "@/lib/scheduler";
-import { componentChecks, judgeDecision, shouldJudge, type Decision } from "@/lib/judge";
+import { componentChecks, trajectoryChecks, judgeDecision, shouldJudge, type Decision, type TraceSpan } from "@/lib/judge";
 import { promptVersion } from "@/lib/prompts";
 import { loadContext } from "@/lib/context";
 
@@ -35,7 +35,7 @@ type ApprovalRow = {
   agent: string | null;
   action: string;
   summary: string | null;
-  payload: { draft?: string; source?: string; to?: string; kind?: string } | null;
+  payload: { draft?: string; source?: string; to?: string; kind?: string; run_id?: string } | null;
 };
 
 async function handle(req: Request) {
@@ -89,6 +89,29 @@ async function handle(req: Request) {
           needsApproval: true, // it's in the approval queue
         };
         const comp = componentChecks(decision, { inputText: payload.source });
+        let checks = comp.checks;
+        let passed = comp.passed;
+        let failed = comp.failed;
+        if (payload.run_id) {
+          // Trajectory judge (U1): pull the linked trace and score the full cycle.
+          const { data: tr } = await supabase
+            .from("traces")
+            .select("spans, flags, status")
+            .eq("flags->>run_id", payload.run_id)
+            .limit(1)
+            .maybeSingle();
+          if (tr) {
+            const traj = trajectoryChecks(
+              (tr.spans as TraceSpan[]) ?? [],
+              (tr.flags as Record<string, unknown>) ?? {},
+              String(tr.status ?? "ok")
+            );
+            checks = [...checks, ...traj];
+            const tf = traj.filter((c) => !c.pass).length;
+            passed += traj.length - tf;
+            failed += tf;
+          }
+        }
 
         let verdict: string | null = null;
         let overall: number | null = null;
@@ -120,9 +143,9 @@ async function handle(req: Request) {
             agent: a.agent,
             kind: payload.kind ?? null,
             prompt_version: promptVersion(payload.kind),
-            component_passed: comp.passed,
-            component_failed: comp.failed,
-            checks: comp.checks,
+            component_passed: passed,
+            component_failed: failed,
+            checks,
             verdict,
             overall,
             scores,

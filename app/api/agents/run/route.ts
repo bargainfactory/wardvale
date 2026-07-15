@@ -50,7 +50,9 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "rate_limited" }, { status: 429, headers: { "Retry-After": String(rl.retryAfter) } });
   }
 
+  const runId = globalThis.crypto.randomUUID();
   const trace = startTrace("agent.run");
+  trace.flag("run_id", runId); // links this decision's trace to its queued approvals (U1 trajectory judge)
   try {
     const body = (await req.json().catch(() => ({}))) as {
       agent?: string;
@@ -272,7 +274,7 @@ export async function POST(req: Request) {
                 action: a.action,
                 summary: a.summary,
                 dedupe_key: dkey,
-                payload: { draft: a.draft ?? null, source: a.source, to: a.to ?? null, value: a.value ?? null, kind: body.agent ?? null },
+                payload: { draft: a.draft ?? null, source: a.source, to: a.to ?? null, value: a.value ?? null, kind: body.agent ?? null, run_id: runId },
               });
             }
           }
