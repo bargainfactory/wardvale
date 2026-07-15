@@ -107,7 +107,7 @@ export function ContactForm() {
 
         <div className="relative mx-auto mt-14 max-w-3xl">
           <div className="gradient-border glass-strong overflow-hidden rounded-3xl p-8 md:p-10">
-            <AnimatePresence mode="wait">
+            <AnimatePresence mode="wait" initial={false}>
               {state === "form" && (
                 <motion.form
                   key="form"

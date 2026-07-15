@@ -1,6 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
+import { useMounted } from "@/lib/use-mounted";
 import { ArrowRight } from "lucide-react";
 import Link from "next/link";
 import { PageLayout } from "@/components/page-layout";
@@ -19,6 +20,7 @@ const caseKeys: Record<string, string> = {
 
 export default function ResultsPage() {
   const { t } = useLocale();
+  const mounted = useMounted();
 
   return (
     <PageLayout>
@@ -28,7 +30,7 @@ export default function ResultsPage() {
         <div className="pointer-events-none absolute inset-0 bg-mesh-dark" />
         <div className="container relative">
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
+            initial={mounted ? { opacity: 0, y: 20 } : false}
             animate={{ opacity: 1, y: 0 }}
             className="mx-auto max-w-3xl text-center"
           >
@@ -55,7 +57,7 @@ export default function ResultsPage() {
             ].map((s) => (
               <motion.div
                 key={s.label}
-                initial={{ opacity: 0, y: 16 }}
+                initial={mounted ? { opacity: 0, y: 16 } : false}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 className="rounded-2xl border border-border bg-card/40 p-5 text-center backdrop-blur"
@@ -78,7 +80,7 @@ export default function ResultsPage() {
               return (
                 <motion.article
                   key={cs.id}
-                  initial={{ opacity: 0, y: 32 }}
+                  initial={mounted ? { opacity: 0, y: 32 } : false}
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true, margin: "-60px" }}
                   transition={{ duration: 0.5 }}
@@ -173,7 +175,7 @@ export default function ResultsPage() {
             {testimonials.map((tm, i) => (
               <motion.blockquote
                 key={i}
-                initial={{ opacity: 0, y: 16 }}
+                initial={mounted ? { opacity: 0, y: 16 } : false}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: i * 0.06 }}

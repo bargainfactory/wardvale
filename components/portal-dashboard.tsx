@@ -3,6 +3,7 @@
 import { motion } from "framer-motion";
 import Link from "next/link";
 import { useState } from "react";
+import { useMounted } from "@/lib/use-mounted";
 import {
   Activity,
   ArrowUpRight,
@@ -149,6 +150,7 @@ export function PortalDashboard(props: Props) {
   const [policySaved, setPolicySaved] = useState(false);
   const [newKey, setNewKey] = useState<string | null>(null);
   const [rotating, setRotating] = useState(false);
+  const mounted = useMounted();
   const { roi } = props;
 
   async function rotateKey() {
@@ -392,7 +394,7 @@ export function PortalDashboard(props: Props) {
           )}
         </div>
 
-        <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="mb-6">
+        <motion.div initial={mounted ? { opacity: 0, y: 16 } : false} animate={{ opacity: 1, y: 0 }} className="mb-6">
           <p className="text-xs font-semibold uppercase tracking-[0.2em] text-cyan-electric">
             Agent Control Plane · {clientName}
           </p>
@@ -1081,9 +1083,10 @@ function KPI({
   value: string;
   delta?: string;
 }) {
+  const mounted = useMounted();
   return (
     <motion.div
-      initial={{ opacity: 0, y: 12 }}
+      initial={mounted ? { opacity: 0, y: 12 } : false}
       animate={{ opacity: 1, y: 0 }}
       className="rounded-2xl border border-border bg-card/40 p-5 backdrop-blur"
     >

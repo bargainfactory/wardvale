@@ -220,7 +220,7 @@ export function WorkflowBuilder() {
         )}
 
         <div className="p-6 md:p-8">
-          <AnimatePresence mode="wait">
+          <AnimatePresence mode="wait" initial={false}>
             {/* Intro */}
             {phase === "intro" && (
               <motion.div key="intro" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="py-6 text-center">

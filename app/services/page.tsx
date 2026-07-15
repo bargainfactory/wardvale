@@ -1,6 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
+import { useMounted } from "@/lib/use-mounted";
 import { ArrowRight } from "lucide-react";
 import Link from "next/link";
 import { PageLayout } from "@/components/page-layout";
@@ -26,6 +27,7 @@ const serviceKeys: Record<string, string> = {
 
 export default function ServicesPage() {
   const { t } = useLocale();
+  const mounted = useMounted();
   // Use a translation when present, else fall back to the literal from data.ts
   // (newer services ship English-only and rely on this fallback).
   const tf = (key: string, fallback: string) => {
@@ -41,7 +43,7 @@ export default function ServicesPage() {
         <div className="pointer-events-none absolute inset-0 bg-mesh-dark" />
         <div className="container relative">
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
+            initial={mounted ? { opacity: 0, y: 20 } : false}
             animate={{ opacity: 1, y: 0 }}
             className="mx-auto max-w-3xl text-center"
           >
@@ -66,7 +68,7 @@ export default function ServicesPage() {
               return (
                 <motion.article
                   key={s.id}
-                  initial={{ opacity: 0, y: 32 }}
+                  initial={mounted ? { opacity: 0, y: 32 } : false}
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true, margin: "-60px" }}
                   transition={{ duration: 0.5 }}

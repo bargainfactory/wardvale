@@ -1,6 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
+import { useMounted } from "@/lib/use-mounted";
 import Link from "next/link";
 import {
   ArrowRight,
@@ -40,6 +41,7 @@ const resultTeasers = [
 
 export default function Home() {
   const { t } = useLocale();
+  const mounted = useMounted();
 
   // Keep the Growth teaser price consistent with the /pricing A/B test.
   const [growthVariant, setGrowthVariant] = useState<"A" | "B">("A");
@@ -69,7 +71,7 @@ export default function Home() {
         <div className="pointer-events-none absolute inset-0 bg-grid-glow dark:bg-mesh-dark" />
 
         <div className="container relative">
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }} className="mx-auto max-w-3xl text-center">
+          <motion.div initial={mounted ? { opacity: 0, y: 20 } : false} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }} className="mx-auto max-w-3xl text-center">
             <Badge className="mb-6"><Sparkles className="h-3 w-3" />{t("hero.badge")}</Badge>
             <h1 className="font-display text-4xl font-semibold tracking-tight sm:text-5xl lg:text-[64px] lg:leading-[1.05]">
               {t("hero.title.1")}{" "}
@@ -100,7 +102,7 @@ export default function Home() {
           </motion.div>
 
           {/* Animated workflow demo */}
-          <motion.div initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8, delay: 0.2 }} className="relative mx-auto mt-16 max-w-5xl">
+          <motion.div initial={mounted ? { opacity: 0, y: 40 } : false} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8, delay: 0.2 }} className="relative mx-auto mt-16 max-w-5xl">
             <div className="gradient-border relative overflow-hidden rounded-3xl glass-strong shadow-glow">
               <div className="flex items-center justify-between border-b border-white/10 px-6 py-3">
                 <div className="flex items-center gap-2">
@@ -209,7 +211,7 @@ export default function Home() {
             {serviceCards.map((s, i) => {
               const Icon = s.icon;
               return (
-                <motion.div key={i} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.06 }}>
+                <motion.div key={i} initial={mounted ? { opacity: 0, y: 20 } : false} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.06 }}>
                   <Link href="/services" className="group block rounded-3xl glass p-6 transition hover:-translate-y-1 hover:shadow-glow">
                     <div className="grid h-12 w-12 place-items-center rounded-2xl bg-gradient-to-br from-cyan-electric/25 to-indigo-500/15 text-cyan-electric">
                       <Icon className="h-5 w-5" />
@@ -240,7 +242,7 @@ export default function Home() {
             {resultTeasers.map((r, i) => {
               const Icon = r.icon;
               return (
-                <motion.div key={i} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.06 }}>
+                <motion.div key={i} initial={mounted ? { opacity: 0, y: 20 } : false} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.06 }}>
                   <Link href="/results" className="group block rounded-3xl glass p-6 transition hover:-translate-y-1 hover:shadow-glow">
                     <div className="flex items-center gap-3">
                       <Icon className="h-5 w-5 text-cyan-electric" />
@@ -281,7 +283,7 @@ export default function Home() {
               {[1, 2, 3, 4, 5].map((step, i) => (
                 <motion.div
                   key={step}
-                  initial={{ opacity: 0, x: 20 }}
+                  initial={mounted ? { opacity: 0, x: 20 } : false}
                   whileInView={{ opacity: 1, x: 0 }}
                   viewport={{ once: true }}
                   transition={{ delay: i * 0.06 }}
@@ -314,7 +316,7 @@ export default function Home() {
           </div>
           <div className="mx-auto mt-12 grid max-w-4xl gap-4 md:grid-cols-3">
             {tiers.map((tier, i) => (
-              <motion.div key={tier.id} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.06 }}>
+              <motion.div key={tier.id} initial={mounted ? { opacity: 0, y: 20 } : false} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.06 }}>
                 <Link href="/pricing" className={`group block rounded-3xl p-7 transition hover:-translate-y-1 ${tier.highlighted ? "gradient-border glass-strong shadow-glow" : "glass"}`}>
                   <p className="text-xs font-semibold uppercase tracking-[0.2em] text-cyan-electric">{t(`tier.${tier.id}.tag`)}</p>
                   <h3 className="mt-1 font-display text-xl font-semibold">{t(`tier.${tier.id}.name`)}</h3>
@@ -347,7 +349,7 @@ export default function Home() {
           </div>
           <div className="mx-auto mt-12 grid max-w-5xl gap-5 md:grid-cols-2">
             {testimonials.map((tm, i) => (
-              <motion.blockquote key={i} initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.06 }} className="glass rounded-3xl p-7">
+              <motion.blockquote key={i} initial={mounted ? { opacity: 0, y: 16 } : false} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.06 }} className="glass rounded-3xl p-7">
                 <div className="flex gap-1">
                   {Array.from({ length: 5 }).map((_, j) => (
                     <Star key={j} className="h-3.5 w-3.5 fill-yellow-400 text-yellow-400" />

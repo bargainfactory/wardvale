@@ -1,6 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
+import { useMounted } from "@/lib/use-mounted";
 import { ArrowRight, Clock } from "lucide-react";
 import Link from "next/link";
 import { PageLayout } from "@/components/page-layout";
@@ -11,6 +12,7 @@ import { useLocale } from "@/lib/locale-context";
 
 export default function ProcessPage() {
   const { t } = useLocale();
+  const mounted = useMounted();
 
   const turnarounds = [t("step.1.time"), t("step.2.time"), t("step.3.time"), t("step.4.time"), t("step.5.time")];
   const details = [t("step.1.detail"), t("step.2.detail"), t("step.3.detail"), t("step.4.detail"), t("step.5.detail")];
@@ -23,7 +25,7 @@ export default function ProcessPage() {
         <div className="pointer-events-none absolute inset-0 bg-mesh-dark" />
         <div className="container relative">
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
+            initial={mounted ? { opacity: 0, y: 20 } : false}
             animate={{ opacity: 1, y: 0 }}
             className="mx-auto max-w-3xl text-center"
           >
@@ -51,7 +53,7 @@ export default function ProcessPage() {
                 return (
                   <motion.div
                     key={s.n}
-                    initial={{ opacity: 0, y: 28 }}
+                    initial={mounted ? { opacity: 0, y: 28 } : false}
                     whileInView={{ opacity: 1, y: 0 }}
                     viewport={{ once: true, margin: "-40px" }}
                     transition={{ duration: 0.5, delay: i * 0.05 }}

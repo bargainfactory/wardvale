@@ -1,6 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
+import { useMounted } from "@/lib/use-mounted";
 import { Check, Sparkles, ArrowRight } from "lucide-react";
 import { useMemo, useState, useEffect } from "react";
 import Link from "next/link";
@@ -23,6 +24,7 @@ import { useLocale } from "@/lib/locale-context";
 
 export default function PricingPage() {
   const { t } = useLocale();
+  const mounted = useMounted();
 
   // Sticky per-visitor variant; server + first client render use "A" (no
   // hydration mismatch), then we resolve the real variant after mount.
@@ -51,7 +53,7 @@ export default function PricingPage() {
         <div className="pointer-events-none absolute inset-0 bg-mesh-dark" />
         <div className="container relative">
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
+            initial={mounted ? { opacity: 0, y: 20 } : false}
             animate={{ opacity: 1, y: 0 }}
             className="mx-auto max-w-3xl text-center"
           >
@@ -73,7 +75,7 @@ export default function PricingPage() {
             {tiers.map((tier, i) => (
               <motion.div
                 key={tier.id}
-                initial={{ opacity: 0, y: 24 }}
+                initial={mounted ? { opacity: 0, y: 24 } : false}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ duration: 0.5, delay: i * 0.08 }}
