@@ -204,7 +204,7 @@ Phase 2) so this phase is additive rather than a rewrite.
   still passes governance), the MCP server (sub-agents can call external tools), and the
   learning loop (approved sub-agent behaviors become new exemplars). Safe only because U1
   now lets us prove a delegated trajectory met quality bars.
-- **U6 + G10 — MCP as a real platform surface.** Tool **schema validation, versioning, and
+- **U6 + G10 — MCP as a real platform surface.** ✅ **SHIPPED** — tool-input **schema validation** (`lib/mcp.ts`, rejects malformed calls), per-call **tracing for cost attribution** (on top of the existing per-IP rate limit), a **version** bump, and a **policy-aware, platform-wired** `run_concierge` tool: only an authenticated client (valid ingest key) can trigger the concierge orchestration — G10 wiring MCP to the real agents. 5 tests, demoed live. _Original plan:_ Tool **schema validation, versioning, and
   capability discovery**; **rate-limiting + cost attribution per external caller**; and
   **policy-aware exposure** (some tools only for certain callers or under human gate —
   built on the G9 data-access seam). Then *wire MCP to the actual agents* so a customer's

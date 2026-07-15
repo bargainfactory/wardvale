@@ -3,6 +3,10 @@ import { services, tiers } from "@/lib/data";
 import { seoPages } from "@/lib/seo-pages";
 import { callModel } from "@/lib/model";
 import { rateLimit, clientIp } from "@/lib/rate-limit";
+import { validateArgs } from "@/lib/mcp";
+import { startTrace } from "@/lib/trace";
+import { getServiceClient } from "@/lib/supabase-server";
+import { runConcierge, defaultDeps, type Lead } from "@/lib/orchestrator";
 
 /**
  * FlowForge AI — Model Context Protocol (MCP) server.
@@ -111,6 +115,23 @@ const TOOLS: ToolDefinition[] = [
       additionalProperties: false,
     },
   },
+  {
+    name: "run_concierge",
+    description:
+      "Run FlowForge's New-Lead Concierge on a lead: qualify, route across sub-agents, and return the proposed (human-gated) actions. Gated — requires a valid client api_key.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        api_key: { type: "string", description: "Your FlowForge client ingest key (required)." },
+        name: { type: "string", description: "The lead's name." },
+        email: { type: "string", description: "The lead's email." },
+        message: { type: "string", description: "What the lead said / their inquiry." },
+        order_status: { type: "string", description: "'paid' or 'overdue' if they reference an existing order." },
+      },
+      required: ["api_key"],
+      additionalProperties: false,
+    },
+  },
 ];
 
 function listServices(): ToolContent {
@@ -189,6 +210,34 @@ async function scopeAutomation(
   }
 }
 
+/**
+ * Policy-aware, platform-wired tool (roadmap U6/G10): only an authenticated
+ * client (valid ingest key) can trigger the concierge orchestration.
+ */
+async function runConciergeTool(args: Record<string, JsonValue> | undefined): Promise<ToolContent | JsonRpcError> {
+  const apiKey = typeof args?.api_key === "string" ? args.api_key : "";
+  if (!apiKey) return { code: -32602, message: "authentication required: provide your client api_key" };
+
+  const supabase = getServiceClient();
+  if (!supabase) {
+    return text("The FlowForge platform backend isn't configured here, so gated actions can't run. (The public marketing tools remain available.)");
+  }
+  const { data: client } = await supabase.from("clients").select("id").eq("ingest_key", apiKey).maybeSingle();
+  if (!client) return { code: -32001, message: "invalid api_key" };
+
+  const status = args?.order_status;
+  const lead: Lead = {
+    name: typeof args?.name === "string" ? args.name : undefined,
+    email: typeof args?.email === "string" ? args.email : undefined,
+    message: typeof args?.message === "string" ? args.message : undefined,
+    orderStatus: status === "overdue" ? "overdue" : status === "paid" ? "paid" : undefined,
+    hasOrder: status === "overdue" || status === "paid" || undefined,
+  };
+  const state = await runConcierge(lead, defaultDeps);
+  const lines = state.steps.map((s) => `• [${s.kind}] ${s.action} — ${s.summary}${s.draft ? `\n    "${s.draft}"` : ""}`);
+  return text(`Concierge run (intent: ${state.intent}) — ${state.steps.length} proposed, human-gated action(s):\n${lines.join("\n")}`);
+}
+
 async function callTool(
   name: string,
   args: Record<string, JsonValue> | undefined
@@ -202,6 +251,8 @@ async function callTool(
       return getPricing();
     case "scope_automation":
       return scopeAutomation(args);
+    case "run_concierge":
+      return runConciergeTool(args);
     default:
       return { code: -32602, message: `Unknown tool: ${name}` };
   }
@@ -254,7 +305,7 @@ export async function POST(req: Request): Promise<NextResponse> {
       return ok(id, {
         protocolVersion: PROTOCOL_VERSION,
         capabilities: { tools: {} },
-        serverInfo: { name: "flowforge-ai", version: "1.0.0" },
+        serverInfo: { name: "flowforge-ai", version: "1.1.0" },
       });
 
     case "notifications/initialized":
@@ -272,10 +323,20 @@ export async function POST(req: Request): Promise<NextResponse> {
         params?.arguments && typeof params.arguments === "object" && !Array.isArray(params.arguments)
           ? (params.arguments as Record<string, JsonValue>)
           : undefined;
-      const result = await callTool(name, args);
-      if (isJsonRpcError(result)) {
-        return fail(id, result);
+      const def = TOOLS.find((d) => d.name === name);
+      const invalid = def ? validateArgs(def.inputSchema, args) : null;
+      // Trace each call for per-caller cost attribution (sampled by G7).
+      const trace = startTrace(`mcp.${name || "unknown"}`);
+      trace.flag("caller", clientIp(req));
+      if (invalid) {
+        trace.setStatus("invalid_args");
+        await trace.end();
+        return fail(id, { code: -32602, message: invalid });
       }
+      const result = await callTool(name, args);
+      trace.setStatus(isJsonRpcError(result) ? "tool_error" : "ok");
+      await trace.end();
+      if (isJsonRpcError(result)) return fail(id, result);
       return ok(id, result);
     }
 
