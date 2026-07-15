@@ -416,6 +416,28 @@ create index if not exists judgements_version_idx on public.judgements (prompt_v
 create unique index if not exists judgements_approval_uidx on public.judgements (approval_id);
 alter table public.judgements enable row level security;
 
+-- ── Scheduled touches: durable concierge cadence (Phase 3 · U2 slice 4) ───────
+-- Future follow-up/check-in steps land here with a fire_at; /api/cron/touches
+-- promotes each into the approval queue when due. Server-only; no public policy.
+create table if not exists public.scheduled_touches (
+  id           uuid primary key default gen_random_uuid(),
+  client_id    text,
+  run_id       text,
+  kind         text,
+  agent        text,
+  summary      text,
+  draft        text,
+  recipient    text,
+  learn_kind   text,
+  dedupe_key   text,
+  fire_at      timestamptz not null,
+  status       text not null default 'pending' check (status in ('pending', 'fired', 'cancelled')),
+  created_at   timestamptz not null default now()
+);
+create index if not exists scheduled_touches_due_idx on public.scheduled_touches (status, fire_at);
+create unique index if not exists scheduled_touches_dedupe_uidx on public.scheduled_touches (dedupe_key);
+alter table public.scheduled_touches enable row level security;
+
 -- ── White-label: agencies manage many clients under their own brand ──────────
 create table if not exists public.agencies (
   id           uuid primary key default gen_random_uuid(),

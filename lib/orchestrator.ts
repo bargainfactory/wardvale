@@ -215,3 +215,62 @@ export function stepsToApprovals(clientId: string, lead: Lead, steps: Step[], ru
     };
   });
 }
+
+// ── Durable cadence scheduling (slice 4) ─────────────────────────────────────
+/** A step that fires now (dueInDays 0/absent) vs. one scheduled for later. */
+export const isImmediate = (s: Step) => s.dueInDays == null || s.dueInDays <= 0;
+
+export type TouchRow = {
+  client_id: string;
+  run_id: string;
+  kind: string;
+  agent: string;
+  summary: string;
+  draft: string | null;
+  recipient: string | null;
+  learn_kind: string;
+  dedupe_key: string;
+  fire_at: string;
+};
+
+/**
+ * Map future (dueInDays > 0) steps to scheduled_touches rows with a `fire_at`,
+ * so a cron promotes them into the approval queue when they come due. Pure —
+ * `now` (epoch ms) is injected for deterministic tests.
+ */
+export function stepsToTouches(clientId: string, lead: Lead, steps: Step[], runId: string, now: number): TouchRow[] {
+  const ref = lead.email || lead.phone || "";
+  return steps
+    .filter((s) => !isImmediate(s))
+    .map((s) => {
+      const learn = LEARN_KIND[s.kind] ?? s.kind;
+      return {
+        client_id: clientId,
+        run_id: runId,
+        kind: s.kind,
+        agent: s.agent,
+        summary: s.summary,
+        draft: s.draft ?? null,
+        recipient: lead.email || lead.phone || null,
+        learn_kind: learn,
+        dedupe_key: dedupeKey({ clientId, kind: learn, action: s.action, ref: `${ref}|${s.summary}|d${s.dueInDays}` }),
+        fire_at: new Date(now + (s.dueInDays ?? 0) * 86_400_000).toISOString(),
+      };
+    });
+}
+
+/** Pending touches whose fire_at has arrived (pure; the cron also filters in SQL). */
+export function dueTouches<T extends { fire_at: string; status?: string }>(rows: T[], nowIso: string): T[] {
+  return rows.filter((r) => (r.status ?? "pending") === "pending" && r.fire_at <= nowIso);
+}
+
+/** Promote a fired touch into an approval-queue row (the owner acts on the reminder). */
+export function touchToApproval(t: TouchRow): ApprovalRow {
+  return {
+    agent: t.agent,
+    action: t.draft ? "email.send" : "triage.label",
+    summary: t.summary,
+    dedupe_key: dedupeKey({ clientId: t.client_id, kind: t.learn_kind, action: "touch.fired", ref: t.dedupe_key }),
+    payload: { draft: t.draft, source: t.summary, to: t.recipient, value: null, kind: t.learn_kind, run_id: t.run_id },
+  };
+}

@@ -7,7 +7,7 @@ import { clientScope } from "@/lib/tenant";
 import { loadContext } from "@/lib/context";
 import { sendApprovalNotification } from "@/lib/email";
 import { runLeadQualification } from "@/lib/runtime";
-import { runConcierge, defaultDeps, classifyIntent, defaultOrderSideQuest, stepsToApprovals, type ConciergeDeps, type Lead, type Step } from "@/lib/orchestrator";
+import { runConcierge, defaultDeps, classifyIntent, defaultOrderSideQuest, stepsToApprovals, stepsToTouches, isImmediate, type ConciergeDeps, type Lead, type Step } from "@/lib/orchestrator";
 
 /**
  * New-Lead Concierge workflow (Phase 3 · slices 1-2). A supervisor routes a lead
@@ -79,12 +79,25 @@ export async function POST(req: Request) {
 
     // Persist to the approval queue (idempotent) when we have a client.
     let persisted = 0;
+    let scheduled = 0;
     if (clientId && supabase && state.steps.length) {
-      const rows = stepsToApprovals(clientId, lead, state.steps, runId);
-      const { data: inserted } = await clientScope(supabase, clientId)
-        .upsert("approvals", rows, { onConflict: "dedupe_key", ignoreDuplicates: true })
-        .select("id");
-      persisted = (inserted as { id: string }[] | null)?.length ?? 0;
+      // Immediate steps → approval queue now; future touches → scheduled_touches
+      // (fired later by /api/cron/touches). Both idempotent.
+      const rows = stepsToApprovals(clientId, lead, state.steps.filter(isImmediate), runId);
+      if (rows.length) {
+        const { data: inserted } = await clientScope(supabase, clientId)
+          .upsert("approvals", rows, { onConflict: "dedupe_key", ignoreDuplicates: true })
+          .select("id");
+        persisted = (inserted as { id: string }[] | null)?.length ?? 0;
+      }
+      const touches = stepsToTouches(clientId, lead, state.steps, runId, Date.now());
+      if (touches.length) {
+        const { data: st } = await supabase
+          .from("scheduled_touches")
+          .upsert(touches, { onConflict: "dedupe_key", ignoreDuplicates: true })
+          .select("id");
+        scheduled = (st as { id: string }[] | null)?.length ?? 0;
+      }
       if (persisted && clientEmail) await sendApprovalNotification(clientEmail, persisted, "New-Lead Concierge");
     }
 
@@ -100,6 +113,7 @@ export async function POST(req: Request) {
       version: state.version,
       steps: state.steps,
       persisted,
+      scheduled,
       log: state.log,
     });
   } catch (err) {
