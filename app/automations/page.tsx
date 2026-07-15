@@ -4,15 +4,19 @@ import { ArrowRight, ArrowUpRight } from "lucide-react";
 import { PageLayout } from "@/components/page-layout";
 import { Button } from "@/components/ui/button";
 import { seoPages } from "@/lib/seo-pages";
+import { getT } from "@/lib/i18n-server";
 
-export const metadata: Metadata = {
-  title: "Automation Playbooks by Industry",
-  description:
-    "Proven AI automation playbooks for restaurants, ecommerce, home services, law firms, and more. Pick your industry, see the workflow, and build it free with FlowForge.",
-  alternates: { canonical: "/automations" },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const { t } = await getT();
+  return {
+    title: t("msc.automationsMetaTitle"),
+    description: t("msc.automationsMetaDescription"),
+    alternates: { canonical: "/automations" },
+  };
+}
 
-export default function AutomationsIndexPage() {
+export default async function AutomationsIndexPage() {
+  const { t } = await getT();
   return (
     <PageLayout>
       {/* Hero */}
@@ -22,14 +26,14 @@ export default function AutomationsIndexPage() {
         <div className="container relative">
           <div className="mx-auto max-w-3xl text-center">
             <p className="text-xs font-semibold uppercase tracking-[0.2em] text-cyan-electric">
-              Playbook library
+              {t("msc.automationsEyebrow")}
             </p>
             <h1 className="mt-4 font-display text-4xl font-semibold tracking-tight sm:text-5xl lg:text-[56px] lg:leading-[1.1]">
-              Automation playbooks, <span className="gradient-text">by industry</span>
+              {t("msc.automationsH1a")}{" "}
+              <span className="gradient-text">{t("msc.automationsH1b")}</span>
             </h1>
             <p className="mx-auto mt-6 max-w-2xl text-lg text-muted-foreground">
-              Battle-tested AI workflows for real small businesses. Find the one that
-              fits your shop, see exactly how it runs, and build it free in minutes.
+              {t("msc.automationsIntro")}
             </p>
           </div>
         </div>
@@ -47,27 +51,27 @@ export default function AutomationsIndexPage() {
               >
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-semibold uppercase tracking-[0.2em] text-cyan-electric">
-                    {page.vertical}
+                    {t(page.vertical)}
                   </span>
                   <ArrowUpRight className="h-4 w-4 text-muted-foreground transition-colors group-hover:text-cyan-electric" />
                 </div>
                 <h2 className="mt-3 font-display text-xl font-semibold leading-snug">
-                  {page.workflow}
+                  {t(page.workflow)}
                 </h2>
                 <p className="mt-3 flex-1 text-sm leading-relaxed text-muted-foreground">
-                  {page.solution.split(". ")[0]}.
+                  {t(page.solution).split(". ")[0]}.
                 </p>
                 <div className="mt-6 flex items-center justify-between border-t border-border/60 pt-4">
                   <div>
                     <p className="text-[11px] uppercase tracking-wider text-muted-foreground">
-                      Est. savings
+                      {t("msc.automationsEstSavings")}
                     </p>
                     <p className="font-display text-lg font-semibold tabular-nums gradient-text">
-                      {page.savings}
+                      {t(page.savings)}
                     </p>
                   </div>
                   <span className="text-sm font-medium text-cyan-electric">
-                    Read the playbook →
+                    {t("msc.automationsReadPlaybook")} →
                   </span>
                 </div>
               </Link>
@@ -81,22 +85,21 @@ export default function AutomationsIndexPage() {
         <div className="container">
           <div className="mx-auto max-w-2xl rounded-3xl gradient-border glass-strong p-10 text-center">
             <h2 className="font-display text-3xl font-semibold">
-              Don&apos;t see your exact workflow?
+              {t("msc.automationsCtaTitle")}
             </h2>
             <p className="mt-3 text-muted-foreground">
-              Our interactive builder maps any automation for your business, in your
-              stack. Describe what you want and watch it come together, free.
+              {t("msc.automationsCtaBody")}
             </p>
             <div className="mt-6 flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
               <Link href="/build">
                 <Button size="lg">
-                  Build your automation free
+                  {t("msc.buildAutomationFree")}
                   <ArrowRight className="h-4 w-4" />
                 </Button>
               </Link>
               <Link href="/pricing">
                 <Button variant="secondary" size="lg">
-                  See pricing
+                  {t("msc.seePricing")}
                 </Button>
               </Link>
             </div>

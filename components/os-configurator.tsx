@@ -8,6 +8,7 @@ import { bundles, addons } from "@/lib/solutions";
 import { getBenchmark } from "@/lib/benchmarks";
 import { formatCurrency } from "@/lib/utils";
 import { track } from "@/lib/analytics";
+import { useLocale } from "@/lib/locale-context";
 
 /**
  * "Build Your OS" — pick a base vertical stack, toggle add-on agents, and see
@@ -15,6 +16,7 @@ import { track } from "@/lib/analytics";
  * configurable platform (the differentiator competitors don't productize).
  */
 export function OsConfigurator() {
+  const { t } = useLocale();
   const [baseIdx, setBaseIdx] = useState(0);
   const [selected, setSelected] = useState<string[]>([]);
   const base = bundles[baseIdx];
@@ -38,7 +40,7 @@ export function OsConfigurator() {
           <div className="rounded-3xl glass p-6">
             <label className="block">
               <span className="text-xs font-semibold uppercase tracking-[0.2em] text-cyan-electric">
-                1 · Pick your industry OS
+                1 · {t("sol.cfgStep1")}
               </span>
               <select
                 value={baseIdx}
@@ -47,7 +49,7 @@ export function OsConfigurator() {
               >
                 {bundles.map((b, i) => (
                   <option key={b.slug} value={i}>
-                    {b.name} — from {formatCurrency(b.basePrice)}/mo
+                    {t(b.name)} — {t("sol.cfgFrom")} {formatCurrency(b.basePrice)}{t("sol.perMonth")}
                   </option>
                 ))}
               </select>
@@ -59,13 +61,13 @@ export function OsConfigurator() {
                   key={it}
                   className="inline-flex items-center gap-1 rounded-full border border-emerald-400/25 bg-emerald-400/10 px-2.5 py-1 text-[11px] text-emerald-300"
                 >
-                  <Check className="h-3 w-3" /> {it}
+                  <Check className="h-3 w-3" /> {t(it)}
                 </span>
               ))}
             </div>
 
             <p className="mt-6 text-xs font-semibold uppercase tracking-[0.2em] text-cyan-electric">
-              2 · Add agents
+              2 · {t("sol.cfgStep2")}
             </p>
             <div className="mt-3 grid gap-2 sm:grid-cols-2">
               {addons.map((a) => {
@@ -90,10 +92,10 @@ export function OsConfigurator() {
                     </span>
                     <span className="min-w-0">
                       <span className="flex items-center gap-1.5 text-sm font-medium">
-                        {a.name}
+                        {t(a.name)}
                         <span className="text-xs text-cyan-electric">+{formatCurrency(a.price)}</span>
                       </span>
-                      <span className="mt-0.5 block text-xs text-muted-foreground">{a.desc}</span>
+                      <span className="mt-0.5 block text-xs text-muted-foreground">{t(a.desc)}</span>
                     </span>
                   </button>
                 );
@@ -105,42 +107,42 @@ export function OsConfigurator() {
         {/* Live summary */}
         <div className="lg:col-span-2">
           <div className="sticky top-24 rounded-3xl gradient-border glass-strong p-6">
-            <p className="font-display text-lg font-semibold">{base.name}</p>
+            <p className="font-display text-lg font-semibold">{t(base.name)}</p>
             {chosen.length > 0 && (
               <p className="mt-0.5 text-xs text-muted-foreground">
-                + {chosen.map((a) => a.name).join(", ")}
+                + {chosen.map((a) => t(a.name)).join(", ")}
               </p>
             )}
 
             <div className="mt-5 flex items-baseline gap-1">
               <span className="font-display text-4xl font-semibold tabular-nums">{formatCurrency(price)}</span>
-              <span className="text-sm text-muted-foreground">/ mo</span>
+              <span className="text-sm text-muted-foreground">{t("sol.cfgPerMo")}</span>
             </div>
 
             <div className="mt-4 space-y-2 text-sm">
-              <Row label="Est. monthly savings" value={`${formatCurrency(savings)}`} accent />
-              <Row label="Net gain / month" value={`${net >= 0 ? "+" : ""}${formatCurrency(net)}`} />
-              <Row label="Return" value={`${roi.toFixed(1)}×`} />
-              <Row label="Pays for itself in" value={`~${payback} days`} />
+              <Row label={t("sol.rowSavings")} value={`${formatCurrency(savings)}`} accent />
+              <Row label={t("sol.rowNetGain")} value={`${net >= 0 ? "+" : ""}${formatCurrency(net)}`} />
+              <Row label={t("sol.rowReturn")} value={`${roi.toFixed(1)}×`} />
+              <Row label={t("sol.rowPayback")} value={`~${payback} ${t("sol.days")}`} />
             </div>
 
             {bench && (
               <p className="mt-4 rounded-xl border border-indigo-400/25 bg-indigo-400/10 p-3 text-xs text-muted-foreground">
-                Peers in this space save around{" "}
+                {t("sol.cfgPeersPrefix")}{" "}
                 <span className="font-medium text-cyan-electric">
-                  {formatCurrency(bench.avgMonthlySavings)}/mo
+                  {formatCurrency(bench.avgMonthlySavings)}{t("sol.perMonth")}
                 </span>{" "}
-                and cut reply time from {bench.replyTimeBefore} to {bench.replyTimeAfter}.
+                {t("sol.cfgPeersMid")} {t(bench.replyTimeBefore)} {t("sol.cfgPeersTo")} {t(bench.replyTimeAfter)}.
               </p>
             )}
 
             <Link href="/build" onClick={() => track("configurator_build", { os: base.name, addons: selected, price, savings })}>
               <Button size="lg" className="mt-5 w-full">
-                Build this stack <ArrowRight className="h-4 w-4" />
+                {t("sol.buildThisStack")} <ArrowRight className="h-4 w-4" />
               </Button>
             </Link>
             <p className="mt-3 flex items-center justify-center gap-1.5 text-[11px] text-muted-foreground">
-              <ShieldCheck className="h-3.5 w-3.5 text-cyan-electric" /> 21-day ROI guarantee · month-to-month
+              <ShieldCheck className="h-3.5 w-3.5 text-cyan-electric" /> {t("sol.cfgGuarantee")}
             </p>
           </div>
         </div>

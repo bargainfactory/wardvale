@@ -106,7 +106,7 @@ export default function ResultsPage() {
                           <div className="rounded-2xl border border-cyan-electric/30 bg-cyan-electric/10 p-4">
                             <p className="text-xs text-muted-foreground">{t("results.savedMo")}</p>
                             <p className="mt-1 font-display text-2xl font-semibold gradient-text">
-                              {cs.savings}
+                              {t(cs.savings)}
                             </p>
                           </div>
                           <div className="rounded-2xl border border-border bg-card/40 p-4">
@@ -181,11 +181,11 @@ export default function ResultsPage() {
                 transition={{ delay: i * 0.06 }}
                 className="glass rounded-3xl p-7"
               >
-                <p className="text-muted-foreground">&ldquo;{t(`testimonial.${i + 1}.quote`)}&rdquo;</p>
+                <p className="text-muted-foreground">&ldquo;{t(tm.quote)}&rdquo;</p>
                 <div className="mt-4 flex items-center justify-between">
                   <div>
                     <p className="text-sm font-semibold">{tm.name}</p>
-                    <p className="text-xs text-muted-foreground">{tm.role}, {tm.company}</p>
+                    <p className="text-xs text-muted-foreground">{t(tm.role)}, {tm.company}</p>
                   </div>
                   <span className="rounded-full border border-cyan-electric/25 bg-cyan-electric/10 px-3 py-1 text-sm font-semibold text-cyan-electric tabular-nums">
                     {tm.metric}

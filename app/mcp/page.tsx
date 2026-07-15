@@ -2,35 +2,18 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { PageLayout } from "@/components/page-layout";
 import { Button } from "@/components/ui/button";
+import { getT } from "@/lib/i18n-server";
 
-export const metadata: Metadata = {
-  title: "MCP Server — Connect FlowForge to your AI assistant",
-  description:
-    "FlowForge exposes a Model Context Protocol (MCP) endpoint so Claude, ChatGPT, and other AI assistants can scope automations, browse services and playbooks, and pull pricing directly.",
-  alternates: { canonical: "/mcp" },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const { t } = await getT();
+  return {
+    title: t("msc.mcpMetaTitle"),
+    description: t("msc.mcpMetaDescription"),
+    alternates: { canonical: "/mcp" },
+  };
+}
 
 const ENDPOINT = "https://flowforge.ai/api/mcp";
-
-const TOOLS: { name: string; description: string }[] = [
-  {
-    name: "scope_automation",
-    description:
-      "Give it a business and a workflow, and it returns a recommended automation blueprint — trigger, steps, and estimated monthly savings.",
-  },
-  {
-    name: "list_services",
-    description: "Returns FlowForge's full menu of AI automation services.",
-  },
-  {
-    name: "list_playbooks",
-    description: "Lists the industry playbooks, each mapping to /automations/{slug}.",
-  },
-  {
-    name: "get_pricing",
-    description: "Returns the three monthly retainer tiers with prices and blurbs.",
-  },
-];
 
 const CONFIG_SNIPPET = `{
   "mcpServers": {
@@ -40,7 +23,16 @@ const CONFIG_SNIPPET = `{
   }
 }`;
 
-export default function McpPage() {
+export default async function McpPage() {
+  const { t } = await getT();
+
+  const TOOLS: { name: string; description: string }[] = [
+    { name: "scope_automation", description: t("msc.mcpToolScopeDesc") },
+    { name: "list_services", description: t("msc.mcpToolListServicesDesc") },
+    { name: "list_playbooks", description: t("msc.mcpToolListPlaybooksDesc") },
+    { name: "get_pricing", description: t("msc.mcpToolGetPricingDesc") },
+  ];
+
   return (
     <PageLayout>
       <section className="relative overflow-hidden pb-16">
@@ -51,13 +43,10 @@ export default function McpPage() {
               Model Context Protocol
             </p>
             <h1 className="mt-4 font-display text-4xl font-semibold tracking-tight sm:text-5xl">
-              Connect FlowForge to your <span className="gradient-text">AI assistant</span>
+              {t("msc.mcpH1a")} <span className="gradient-text">{t("msc.mcpH1b")}</span>
             </h1>
             <p className="mx-auto mt-6 max-w-2xl text-lg text-muted-foreground">
-              FlowForge ships a Model Context Protocol (MCP) server. Point Claude, ChatGPT,
-              or any MCP-compatible client at our endpoint and it can scope automations,
-              browse our services and industry playbooks, and pull live pricing — all without
-              leaving the chat.
+              {t("msc.mcpIntro")}
             </p>
           </div>
         </div>
@@ -69,13 +58,13 @@ export default function McpPage() {
           <div className="mx-auto max-w-3xl">
             <div className="glass rounded-2xl border border-border p-6">
               <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                Endpoint
+                {t("msc.mcpEndpoint")}
               </p>
               <pre className="mt-3 overflow-x-auto rounded-xl bg-navy-900/60 p-4 text-sm">
                 <code className="text-cyan-electric">POST {ENDPOINT}</code>
               </pre>
               <p className="mt-3 text-sm text-muted-foreground">
-                JSON-RPC 2.0 over HTTP. Implements the standard MCP handshake
+                {t("msc.mcpHandshake")}{" "}
                 (<code className="text-foreground">initialize</code>,{" "}
                 <code className="text-foreground">tools/list</code>,{" "}
                 <code className="text-foreground">tools/call</code>).
@@ -89,7 +78,7 @@ export default function McpPage() {
       <section className="pb-16">
         <div className="container">
           <div className="mx-auto max-w-3xl">
-            <h2 className="font-display text-2xl font-semibold">Available tools</h2>
+            <h2 className="font-display text-2xl font-semibold">{t("msc.mcpAvailableTools")}</h2>
             <div className="mt-6 grid gap-4">
               {TOOLS.map((tool) => (
                 <div
@@ -111,11 +100,9 @@ export default function McpPage() {
       <section className="pb-16">
         <div className="container">
           <div className="mx-auto max-w-3xl">
-            <h2 className="font-display text-2xl font-semibold">Add it to your MCP client</h2>
+            <h2 className="font-display text-2xl font-semibold">{t("msc.mcpAddClient")}</h2>
             <p className="mt-3 text-muted-foreground">
-              Drop this into your client&apos;s MCP configuration (for example, Claude Desktop&apos;s
-              config file), then restart the client. FlowForge&apos;s tools will appear
-              automatically.
+              {t("msc.mcpAddClientBody")}
             </p>
             <div className="glass mt-6 rounded-2xl border border-border p-6">
               <pre className="overflow-x-auto rounded-xl bg-navy-900/60 p-4 text-sm leading-relaxed">
@@ -123,9 +110,8 @@ export default function McpPage() {
               </pre>
             </div>
             <p className="mt-3 text-sm text-muted-foreground">
-              No API key required to browse services, playbooks, and pricing. The{" "}
-              <code className="text-foreground">scope_automation</code> tool works out of the box
-              and gets sharper when our AI layer is enabled.
+              {t("msc.mcpNoKeyPre")}{" "}
+              <code className="text-foreground">scope_automation</code>{t("msc.mcpNoKeyPost")}
             </p>
           </div>
         </div>
@@ -136,14 +122,14 @@ export default function McpPage() {
         <div className="container">
           <div className="mx-auto max-w-2xl rounded-3xl gradient-border glass-strong p-10 text-center">
             <h2 className="font-display text-3xl font-semibold">
-              Rather have us build it?
+              {t("msc.mcpCtaTitle")}
             </h2>
             <p className="mt-3 text-muted-foreground">
-              Skip the wiring. Book a scoping call and we&apos;ll ship your first automation in days.
+              {t("msc.mcpCtaBody")}
             </p>
             <div className="mt-6 flex justify-center">
               <Link href="/build">
-                <Button size="lg">Scope my automation</Button>
+                <Button size="lg">{t("msc.mcpScopeCta")}</Button>
               </Link>
             </div>
           </div>

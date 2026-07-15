@@ -18,22 +18,9 @@ const toneColor: Record<string, string> = {
   pay: "bg-fuchsia-400/15 text-fuchsia-300 border-fuchsia-400/30",
 };
 
-const serviceKeys: Record<string, string> = {
-  "lead-capture": "lead",
-  "onboarding": "onboarding",
-  "email-triage": "inbox",
-  "custom-agents": "custom",
-};
-
 export default function ServicesPage() {
   const { t } = useLocale();
   const mounted = useMounted();
-  // Use a translation when present, else fall back to the literal from data.ts
-  // (newer services ship English-only and rely on this fallback).
-  const tf = (key: string, fallback: string) => {
-    const v = t(key);
-    return v === key ? fallback : v;
-  };
 
   return (
     <PageLayout>
@@ -64,7 +51,6 @@ export default function ServicesPage() {
           <div className="space-y-16">
             {services.map((s, i) => {
               const Icon = s.icon;
-              const sk = serviceKeys[s.id];
               return (
                 <motion.article
                   key={s.id}
@@ -83,8 +69,8 @@ export default function ServicesPage() {
                         Service {i + 1}
                       </span>
                     </div>
-                    <h2 className="mt-4 font-display text-3xl font-semibold">{tf(`service.${sk}.title`, s.title)}</h2>
-                    <p className="mt-3 text-lg text-muted-foreground">{tf(`service.${sk}.desc`, s.description)}</p>
+                    <h2 className="mt-4 font-display text-3xl font-semibold">{t(s.title)}</h2>
+                    <p className="mt-3 text-lg text-muted-foreground">{t(s.description)}</p>
 
                     <div className="mt-6 flex flex-wrap gap-3">
                       {s.outcomes.map((o, oi) => (
@@ -92,7 +78,7 @@ export default function ServicesPage() {
                           key={oi}
                           className="rounded-full border border-cyan-electric/25 bg-cyan-electric/10 px-3 py-1.5 text-sm font-medium text-cyan-electric"
                         >
-                          {tf(`service.${sk}.outcome${oi + 1}`, o)}
+                          {t(o)}
                         </span>
                       ))}
                     </div>
@@ -137,7 +123,7 @@ export default function ServicesPage() {
                                 toneColor[node.tone]
                               )}
                             >
-                              {tf(`service.${sk}.flow${j + 1}`, node.label)}
+                              {t(node.label)}
                             </div>
                             {j < s.flow.length - 1 && (
                               <div className="absolute left-[15px] ml-[1px] h-3 w-px bg-cyan-electric/30" />

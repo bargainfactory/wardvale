@@ -31,12 +31,12 @@ export function Footer() {
             </h4>
             <ul className="space-y-2 text-sm">
               <li><Link href="/services" className="hover:text-cyan-electric">{t("nav.services")}</Link></li>
-              <li><Link href="/solutions" className="hover:text-cyan-electric">Solutions</Link></li>
+              <li><Link href="/solutions" className="hover:text-cyan-electric">{t("nav.solutions")}</Link></li>
               <li><Link href="/results" className="hover:text-cyan-electric">{t("nav.results")}</Link></li>
-              <li><Link href="/impact" className="hover:text-cyan-electric">Live impact</Link></li>
+              <li><Link href="/impact" className="hover:text-cyan-electric">{t("footer.liveImpact")}</Link></li>
               <li><Link href="/pricing" className="hover:text-cyan-electric">{t("nav.pricing")}</Link></li>
               <li><Link href="/portal" className="hover:text-cyan-electric">{t("nav.portal")}</Link></li>
-              <li><Link href="/portal/agency" className="hover:text-cyan-electric">For agencies</Link></li>
+              <li><Link href="/portal/agency" className="hover:text-cyan-electric">{t("footer.forAgencies")}</Link></li>
             </ul>
           </div>
 
@@ -45,12 +45,12 @@ export function Footer() {
               {t("footer.resources")}
             </h4>
             <ul className="space-y-2 text-sm">
-              <li><Link href="/connect" className="hover:text-cyan-electric">See it on your data</Link></li>
-              <li><Link href="/connections" className="hover:text-cyan-electric">Connections</Link></li>
-              <li><Link href="/build" className="hover:text-cyan-electric">Build your automation</Link></li>
-              <li><Link href="/mcp" className="hover:text-cyan-electric">MCP for AI assistants</Link></li>
+              <li><Link href="/connect" className="hover:text-cyan-electric">{t("footer.seeData")}</Link></li>
+              <li><Link href="/connections" className="hover:text-cyan-electric">{t("footer.connections")}</Link></li>
+              <li><Link href="/build" className="hover:text-cyan-electric">{t("footer.buildAutomation")}</Link></li>
+              <li><Link href="/mcp" className="hover:text-cyan-electric">{t("footer.mcp")}</Link></li>
               <li><Link href="/pricing#calculator" className="hover:text-cyan-electric">{t("footer.roiCalc")}</Link></li>
-              <li><Link href="/pricing#faq" className="hover:text-cyan-electric">FAQ</Link></li>
+              <li><Link href="/pricing#faq" className="hover:text-cyan-electric">{t("footer.faq")}</Link></li>
               <li><Link href="/privacy" className="hover:text-cyan-electric">{t("footer.privacy")}</Link></li>
               <li><Link href="/terms" className="hover:text-cyan-electric">{t("footer.terms")}</Link></li>
             </ul>
@@ -59,7 +59,7 @@ export function Footer() {
 
         <div className="mt-12 flex flex-col items-center justify-between gap-3 border-t border-border/60 pt-6 text-xs text-muted-foreground md:flex-row">
           <p>© {new Date().getFullYear()} FlowForge AI. {t("footer.rights")}</p>
-          <p>Built with Next.js 15 · Deployed on Vercel · Your data stays in your accounts</p>
+          <p>{t("footer.builtWith")}</p>
         </div>
       </div>
     </footer>

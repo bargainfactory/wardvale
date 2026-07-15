@@ -154,14 +154,14 @@ export function PortalDashboard(props: Props) {
   const { roi } = props;
 
   async function rotateKey() {
-    if (!window.confirm("Rotate your ingestion key? The old key stops working immediately.")) return;
+    if (!window.confirm(t("prt.rotateConfirm"))) return;
     setRotating(true);
     try {
       const res = await fetch("/api/portal/ingest-key/rotate", { method: "POST" });
       const d = (await res.json().catch(() => ({}))) as { key?: string };
       if (d.key) {
         setNewKey(d.key);
-        setAudit((log) => [{ time: "just now", actor: userEmail ?? "you", action: "ingest_key.rotated", detail: "Rotated the ingestion API key" }, ...log]);
+        setAudit((log) => [{ time: "just now", actor: userEmail ?? "you", action: "ingest_key.rotated", detail: t("prt.auditRotatedKey") }, ...log]);
       }
     } catch {
       /* ignore */
@@ -183,7 +183,7 @@ export function PortalDashboard(props: Props) {
       }
     }
     setPolicySaved(true);
-    setAudit((log) => [{ time: "just now", actor: userEmail ?? "you", action: "policy.updated", detail: "Updated governance policy" }, ...log]);
+    setAudit((log) => [{ time: "just now", actor: userEmail ?? "you", action: "policy.updated", detail: t("prt.auditPolicyUpdated") }, ...log]);
   }
   const ent = entitlement(plan);
 
@@ -249,7 +249,7 @@ export function PortalDashboard(props: Props) {
         const created = data.approvals ?? [];
         setApprovals((list) => [...created, ...list]);
         setAudit((log) => [
-          { time: "just now", actor: "runtime", action: "agent.run", detail: `${r.label}: ${data.decided ?? 0} decided, ${created.length} queued for approval` },
+          { time: "just now", actor: "runtime", action: "agent.run", detail: `${t(`prt.agent.${r.id}`)}: ${data.decided ?? 0} ${t("prt.decided")}, ${created.length} ${t("prt.queuedForApproval")}` },
           ...log,
         ]);
         setTab("approvals");
@@ -275,7 +275,7 @@ export function PortalDashboard(props: Props) {
           }));
         setApprovals((list) => [...created, ...list]);
         setAudit((log) => [
-          { time: "just now", actor: "runtime", action: "agent.run", detail: `${r.label}: ${data.decided ?? 0} decided, ${created.length} queued for approval` },
+          { time: "just now", actor: "runtime", action: "agent.run", detail: `${t(`prt.agent.${r.id}`)}: ${data.decided ?? 0} ${t("prt.decided")}, ${created.length} ${t("prt.queuedForApproval")}` },
           ...log,
         ]);
         setTab("approvals");
@@ -314,7 +314,7 @@ export function PortalDashboard(props: Props) {
     setApprovals((list) => list.filter((a) => !ids.includes(a.id)));
     setSelected(new Set());
     setAudit((log) => [
-      { time: "just now", actor: userEmail ?? "you", action: `approval.${decision}`, detail: `${targets.length} action${targets.length === 1 ? "" : "s"} (batch)` },
+      { time: "just now", actor: userEmail ?? "you", action: `approval.${decision}`, detail: `${targets.length} ${targets.length === 1 ? t("prt.actionSingular") : t("prt.actionPlural")} (${t("prt.batch")})` },
       ...log,
     ]);
     if (!isDemo) {
@@ -386,7 +386,7 @@ export function PortalDashboard(props: Props) {
           ) : (
             <>
               <span className="rounded-full border border-emerald-400/30 bg-emerald-400/10 px-3 py-1 text-xs font-medium text-emerald-300">
-                Live · signed in
+                {t("prt.liveSignedIn")}
               </span>
               {userEmail && <span className="text-xs text-muted-foreground">{userEmail}</span>}
               <SignOutButton />
@@ -396,11 +396,11 @@ export function PortalDashboard(props: Props) {
 
         <motion.div initial={mounted ? { opacity: 0, y: 16 } : false} animate={{ opacity: 1, y: 0 }} className="mb-6">
           <p className="text-xs font-semibold uppercase tracking-[0.2em] text-cyan-electric">
-            Agent Control Plane · {clientName}
+            {t("prt.controlPlane")} · {clientName}
           </p>
-          <h1 className="mt-1 font-display text-3xl font-semibold">Your agents, secured &amp; in one place.</h1>
+          <h1 className="mt-1 font-display text-3xl font-semibold">{t("prt.headline")}</h1>
           <p className="mt-1 text-muted-foreground">
-            {activeCount} active · {connections.length} connections · every action audited.
+            {activeCount} {t("prt.activeLower")} · {connections.length} {t("prt.connectionsLower")} · {t("prt.everyActionAudited")}
           </p>
         </motion.div>
 
@@ -412,24 +412,24 @@ export function PortalDashboard(props: Props) {
           >
             <Sparkles className="h-5 w-5 text-cyan-electric" />
             <div className="min-w-0 flex-1">
-              <p className="font-medium">Finish setting up your agents</p>
-              <p className="text-sm text-muted-foreground">Pick a pack, add your business details, and connect your tools — 2 minutes.</p>
+              <p className="font-medium">{t("prt.finishSetup")}</p>
+              <p className="text-sm text-muted-foreground">{t("prt.finishSetupSub")}</p>
             </div>
             <span className="inline-flex items-center gap-1 text-sm font-semibold text-cyan-electric">
-              Get set up <ArrowUpRight className="h-4 w-4" />
+              {t("prt.getSetUp")} <ArrowUpRight className="h-4 w-4" />
             </span>
           </Link>
         )}
 
         {/* Tabs */}
         <div className="mb-6 flex flex-wrap gap-1 rounded-full border border-border bg-card/40 p-1 text-sm">
-          <TabButton icon={LayoutDashboard} label="Overview" active={tab === "overview"} onClick={() => setTab("overview")} />
-          <TabButton icon={DollarSign} label="ROI" active={tab === "roi"} onClick={() => setTab("roi")} />
-          <TabButton icon={Bot} label={`Agents (${agents.length})`} active={tab === "agents"} onClick={() => setTab("agents")} />
-          <TabButton icon={ClipboardCheck} label={`Approvals (${approvals.length})`} active={tab === "approvals"} onClick={() => setTab("approvals")} />
-          <TabButton icon={Plug} label={`Connections (${connections.length})`} active={tab === "connections"} onClick={() => setTab("connections")} />
-          <TabButton icon={Lock} label="Trust" active={tab === "trust"} onClick={() => setTab("trust")} />
-          <TabButton icon={ShieldCheck} label="Audit" active={tab === "audit"} onClick={() => setTab("audit")} />
+          <TabButton icon={LayoutDashboard} label={t("prt.tabOverview")} active={tab === "overview"} onClick={() => setTab("overview")} />
+          <TabButton icon={DollarSign} label={t("prt.tabRoi")} active={tab === "roi"} onClick={() => setTab("roi")} />
+          <TabButton icon={Bot} label={`${t("prt.tabAgents")} (${agents.length})`} active={tab === "agents"} onClick={() => setTab("agents")} />
+          <TabButton icon={ClipboardCheck} label={`${t("prt.tabApprovals")} (${approvals.length})`} active={tab === "approvals"} onClick={() => setTab("approvals")} />
+          <TabButton icon={Plug} label={`${t("prt.tabConnections")} (${connections.length})`} active={tab === "connections"} onClick={() => setTab("connections")} />
+          <TabButton icon={Lock} label={t("prt.tabTrust")} active={tab === "trust"} onClick={() => setTab("trust")} />
+          <TabButton icon={ShieldCheck} label={t("prt.tabAudit")} active={tab === "audit"} onClick={() => setTab("audit")} />
         </div>
 
         {tab === "overview" && (
@@ -441,9 +441,9 @@ export function PortalDashboard(props: Props) {
               <KPI icon={ArrowUpRight} label={t("portal.roiMonth")} value={kpis.roi} delta={deltas?.roi} />
             </div>
             <div className="mt-6 rounded-3xl border border-border bg-card/40 backdrop-blur">
-              <div className="border-b border-border px-6 py-4 font-display font-semibold">Recent activity</div>
+              <div className="border-b border-border px-6 py-4 font-display font-semibold">{t("prt.recentActivity")}</div>
               {logs.length === 0 ? (
-                <p className="px-6 py-8 text-center text-sm text-muted-foreground">Run activity will stream here.</p>
+                <p className="px-6 py-8 text-center text-sm text-muted-foreground">{t("prt.activityEmpty")}</p>
               ) : (
                 <ul className="divide-y divide-border/50">
                   {logs.map((l, i) => (
@@ -464,18 +464,18 @@ export function PortalDashboard(props: Props) {
             <div className="mb-4 overflow-hidden rounded-3xl border border-cyan-electric/25 bg-gradient-to-br from-cyan-electric/10 to-indigo-500/5 p-6">
               <div className="flex flex-wrap items-end justify-between gap-4">
                 <div>
-                  <span className="text-xs font-semibold uppercase tracking-[0.2em] text-cyan-electric">Proven value</span>
+                  <span className="text-xs font-semibold uppercase tracking-[0.2em] text-cyan-electric">{t("prt.provenValue")}</span>
                   <p className="mt-1 font-display text-3xl font-semibold">
-                    ${props.roiProof.realized.toLocaleString()} made
+                    ${props.roiProof.realized.toLocaleString()} {t("prt.made")}
                     {props.roiProof.monthlyCost > 0 && (
-                      <span className="text-muted-foreground"> · you pay ${props.roiProof.monthlyCost.toLocaleString()}/mo</span>
+                      <span className="text-muted-foreground"> · {t("prt.youPay")} ${props.roiProof.monthlyCost.toLocaleString()}{t("prt.perMo")}</span>
                     )}
                   </p>
                 </div>
                 {props.roiProof.multiple != null && (
                   <div className="text-right">
                     <p className="font-display text-4xl font-semibold tabular-nums text-cyan-electric">{props.roiProof.multiple}×</p>
-                    <p className="text-[11px] text-muted-foreground">return on your retainer</p>
+                    <p className="text-[11px] text-muted-foreground">{t("prt.returnOnRetainer")}</p>
                   </div>
                 )}
               </div>
@@ -484,13 +484,13 @@ export function PortalDashboard(props: Props) {
                 {props.roiProof.met ? (
                   <div className="flex items-center gap-2 text-sm text-emerald-300">
                     <CheckCircle2 className="h-4 w-4" />
-                    Broke even{props.roiProof.daysActive <= props.roiProof.guaranteeDays ? ` in ${props.roiProof.daysActive} days — within the ${props.roiProof.guaranteeDays}-day guarantee` : ""}.
+                    {t("prt.brokeEven")}{props.roiProof.daysActive <= props.roiProof.guaranteeDays ? ` ${t("prt.inLabel")} ${props.roiProof.daysActive} ${t("prt.daysWithin")} ${props.roiProof.guaranteeDays}${t("prt.dayGuarantee")}` : ""}.
                   </div>
                 ) : (
                   <div>
                     <div className="flex items-center justify-between text-xs">
-                      <span className="text-muted-foreground">Break-even guarantee · day {props.roiProof.daysActive} of {props.roiProof.guaranteeDays}</span>
-                      <span className="text-muted-foreground">${props.roiProof.remaining.toLocaleString()} to go</span>
+                      <span className="text-muted-foreground">{t("prt.breakEvenGuarantee")} · {t("prt.day")} {props.roiProof.daysActive} {t("prt.of")} {props.roiProof.guaranteeDays}</span>
+                      <span className="text-muted-foreground">${props.roiProof.remaining.toLocaleString()} {t("prt.toGo")}</span>
                     </div>
                     <div className="mt-2 h-2 overflow-hidden rounded-full bg-white/5">
                       <div
@@ -498,7 +498,7 @@ export function PortalDashboard(props: Props) {
                         style={{ width: `${Math.min(100, props.roiProof.monthlyCost > 0 ? Math.round((props.roiProof.realized / props.roiProof.monthlyCost) * 100) : 100)}%` }}
                       />
                     </div>
-                    <p className="mt-2 text-[11px] text-muted-foreground">If your agents haven&rsquo;t covered the retainer by day {props.roiProof.guaranteeDays}, we keep optimizing at no charge.</p>
+                    <p className="mt-2 text-[11px] text-muted-foreground">{t("prt.guaranteeNote1")}{props.roiProof.guaranteeDays}{t("prt.guaranteeNote2")}</p>
                   </div>
                 )}
               </div>
@@ -506,32 +506,32 @@ export function PortalDashboard(props: Props) {
 
             <div className="grid gap-4 sm:grid-cols-3">
               <div className="rounded-2xl border border-emerald-400/25 bg-emerald-400/5 p-5">
-                <span className="text-xs text-muted-foreground">Realized value (confirmed)</span>
+                <span className="text-xs text-muted-foreground">{t("prt.realizedValueConfirmed")}</span>
                 <p className="mt-2 font-display text-3xl font-semibold tabular-nums text-emerald-300">${roi.realized.toLocaleString()}</p>
-                <p className="text-[11px] text-muted-foreground">{roi.won} outcomes won</p>
+                <p className="text-[11px] text-muted-foreground">{roi.won} {t("prt.outcomesWon")}</p>
               </div>
               <div className="rounded-2xl border border-border bg-card/40 p-5">
-                <span className="text-xs text-muted-foreground">In pipeline (pending)</span>
+                <span className="text-xs text-muted-foreground">{t("prt.inPipelinePending")}</span>
                 <p className="mt-2 font-display text-3xl font-semibold tabular-nums text-cyan-electric">${roi.pipeline.toLocaleString()}</p>
-                <p className="text-[11px] text-muted-foreground">value at stake, awaiting outcome</p>
+                <p className="text-[11px] text-muted-foreground">{t("prt.valueAtStake")}</p>
               </div>
               <div className="rounded-2xl border border-border bg-card/40 p-5">
-                <span className="text-xs text-muted-foreground">Win rate</span>
+                <span className="text-xs text-muted-foreground">{t("prt.winRate")}</span>
                 <p className="mt-2 font-display text-3xl font-semibold tabular-nums">{roi.winRate}%</p>
-                <p className="text-[11px] text-muted-foreground">of {roi.resolved} resolved outcomes</p>
+                <p className="text-[11px] text-muted-foreground">{t("prt.of")} {roi.resolved} {t("prt.resolvedOutcomes")}</p>
               </div>
             </div>
 
             <div className="mt-6 rounded-3xl border border-border bg-card/40 backdrop-blur">
               <div className="flex items-center justify-between border-b border-border px-6 py-4">
                 <h2 className="flex items-center gap-2 font-display font-semibold">
-                  <DollarSign className="h-4 w-4 text-cyan-electric" /> Attributed outcomes
+                  <DollarSign className="h-4 w-4 text-cyan-electric" /> {t("prt.attributedOutcomes")}
                 </h2>
-                <span className="text-xs text-muted-foreground">Confirm what paid off — that&rsquo;s your realized ROI</span>
+                <span className="text-xs text-muted-foreground">{t("prt.confirmPaidOff")}</span>
               </div>
               {outcomes.length === 0 ? (
                 <p className="px-6 py-10 text-center text-sm text-muted-foreground">
-                  As agents send actions with money at stake, they&rsquo;ll appear here to track and confirm.
+                  {t("prt.outcomesEmpty")}
                 </p>
               ) : (
                 <ul className="divide-y divide-border/50">
@@ -550,13 +550,13 @@ export function PortalDashboard(props: Props) {
                             onClick={() => resolveOutcome(o.id, "won")}
                             className="inline-flex items-center gap-1.5 rounded-full border border-emerald-400/30 px-3 py-1 text-xs font-medium text-emerald-300 transition hover:bg-emerald-400/10"
                           >
-                            <Check className="h-3 w-3" /> Won
+                            <Check className="h-3 w-3" /> {t("prt.won")}
                           </button>
                           <button
                             onClick={() => resolveOutcome(o.id, "lost")}
                             className="inline-flex items-center gap-1.5 rounded-full border border-border px-3 py-1 text-xs font-medium text-muted-foreground transition hover:bg-white/5"
                           >
-                            <X className="h-3 w-3" /> Lost
+                            <X className="h-3 w-3" /> {t("prt.lost")}
                           </button>
                         </div>
                       ) : (
@@ -565,7 +565,7 @@ export function PortalDashboard(props: Props) {
                             o.status === "won" ? "bg-emerald-400/10 text-emerald-300" : "bg-white/5 text-muted-foreground"
                           }`}
                         >
-                          {o.status}
+                          {t(`prt.status.${o.status}`)}
                         </span>
                       )}
                     </li>
@@ -578,10 +578,10 @@ export function PortalDashboard(props: Props) {
               <div className="mt-6 rounded-3xl border border-border bg-card/40 p-6 backdrop-blur">
                 <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
                   <h2 className="flex items-center gap-2 font-display font-semibold">
-                    <ArrowUpRight className="h-4 w-4 text-cyan-electric" /> How you compare
+                    <ArrowUpRight className="h-4 w-4 text-cyan-electric" /> {t("prt.howYouCompare")}
                   </h2>
                   <span className="text-xs text-muted-foreground">
-                    {props.benchmarks.industry} · {props.benchmarks.sampleSize} anonymized peers
+                    {props.benchmarks.industry} · {props.benchmarks.sampleSize} {t("prt.anonymizedPeers")}
                   </span>
                 </div>
                 <div className="grid gap-4 sm:grid-cols-2">
@@ -594,12 +594,12 @@ export function PortalDashboard(props: Props) {
                         <div className="flex items-center justify-between text-sm">
                           <span className="font-medium">{m.label}</span>
                           <span className={ahead ? "text-emerald-300" : "text-yellow-300"}>
-                            {ahead ? "ahead of peers" : "room to grow"}
+                            {ahead ? t("prt.aheadOfPeers") : t("prt.roomToGrow")}
                           </span>
                         </div>
                         <div className="mt-3 space-y-2">
-                          <Bar label="You" value={m.you} max={max} display={fmt(m.you)} accent />
-                          <Bar label="Peers" value={m.peers} max={max} display={fmt(m.peers)} />
+                          <Bar label={t("prt.you")} value={m.you} max={max} display={fmt(m.you)} accent />
+                          <Bar label={t("prt.peers")} value={m.peers} max={max} display={fmt(m.peers)} />
                         </div>
                       </div>
                     );
@@ -615,13 +615,13 @@ export function PortalDashboard(props: Props) {
             <div className="border-b border-border px-6 py-4">
               <div className="flex items-center justify-between">
                 <h2 className="flex items-center gap-2 font-display font-semibold">
-                  <Bot className="h-4 w-4 text-cyan-electric" /> Agents
+                  <Bot className="h-4 w-4 text-cyan-electric" /> {t("prt.tabAgents")}
                 </h2>
-                <span className="hidden text-xs text-muted-foreground sm:inline">Pause any agent — the kill switch</span>
+                <span className="hidden text-xs text-muted-foreground sm:inline">{t("prt.pauseKillSwitch")}</span>
               </div>
               <div className="mt-3 flex flex-wrap items-center gap-2">
                 <span className="mr-1 text-xs text-muted-foreground">
-                  {isDemo ? "Run a cycle (sample):" : "Run a cycle on your data:"}
+                  {isDemo ? t("prt.runCycleSample") : t("prt.runCycleLive")}
                 </span>
                 {RUNNERS.map((r) => (
                   <button
@@ -631,7 +631,7 @@ export function PortalDashboard(props: Props) {
                     className="inline-flex items-center gap-1.5 rounded-full border border-cyan-electric/30 bg-cyan-electric/10 px-3 py-1 text-xs font-semibold text-cyan-electric transition hover:bg-cyan-electric/20 disabled:opacity-50"
                   >
                     {running === r.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <Play className="h-3 w-3" />}
-                    {r.label}
+                    {t(`prt.agent.${r.id}`)}
                   </button>
                 ))}
               </div>
@@ -639,9 +639,9 @@ export function PortalDashboard(props: Props) {
             {configs.length > 0 && (
               <div className="border-b border-border px-6 py-5">
                 <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-                  <h3 className="font-display text-sm font-semibold">Configure agents</h3>
+                  <h3 className="font-display text-sm font-semibold">{t("prt.configureAgents")}</h3>
                   <span className="text-xs text-muted-foreground">
-                    <span className="capitalize">{ent.label}</span> plan · {enabledCount}/{ent.maxAgents} active
+                    <span className="capitalize">{ent.label}</span> {t("prt.plan")} · {enabledCount}/{ent.maxAgents} {t("prt.activeLower")}
                   </span>
                 </div>
                 <div className="space-y-2">
@@ -653,21 +653,21 @@ export function PortalDashboard(props: Props) {
                         <button
                           onClick={() => updateConfig(c.key, { enabled: !c.enabled })}
                           disabled={!canToggle}
-                          title={!canToggle ? `Upgrade to enable more than ${ent.maxAgents} agents` : undefined}
+                          title={!canToggle ? `${t("prt.upgradeTitle1")}${ent.maxAgents}${t("prt.upgradeTitle2")}` : undefined}
                           className={`rounded-full border px-3 py-1 text-xs font-medium transition disabled:opacity-40 ${
                             c.enabled ? "border-emerald-400/30 text-emerald-300 hover:bg-emerald-400/10" : "border-border text-muted-foreground hover:bg-white/5"
                           }`}
                         >
-                          {c.enabled ? "On" : "Off"}
+                          {c.enabled ? t("prt.on") : t("prt.off")}
                         </button>
                         <button
                           onClick={() => updateConfig(c.key, { autoSend: !c.autoSend })}
-                          title="Auto-send executes without approval"
+                          title={t("prt.autoSendTitle")}
                           className={`rounded-full border px-3 py-1 text-xs font-medium transition ${
                             c.autoSend ? "border-cyan-electric/30 text-cyan-electric hover:bg-cyan-electric/10" : "border-border text-muted-foreground hover:bg-white/5"
                           }`}
                         >
-                          {c.autoSend ? "Auto-send" : "Approve first"}
+                          {c.autoSend ? t("prt.autoSend") : t("prt.approveFirst")}
                         </button>
                         <select
                           value={c.schedule}
@@ -676,7 +676,7 @@ export function PortalDashboard(props: Props) {
                         >
                           {(["manual", "daily", "hourly", "off"] as Schedule[]).map((s) => (
                             <option key={s} value={s} disabled={!ent.schedules.includes(s)}>
-                              {s}
+                              {t(`prt.schedule.${s}`)}
                             </option>
                           ))}
                         </select>
@@ -689,18 +689,18 @@ export function PortalDashboard(props: Props) {
             <div className="overflow-x-auto">
               {agents.length === 0 ? (
                 <p className="px-6 py-10 text-center text-sm text-muted-foreground">
-                  No agents yet — they&rsquo;ll appear here as we build and launch them.
+                  {t("prt.noAgents")}
                 </p>
               ) : (
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="border-b border-border text-xs uppercase tracking-wider text-muted-foreground">
-                      <th className="px-6 py-3 text-left font-medium">Agent</th>
-                      <th className="px-4 py-3 text-left font-medium">Status</th>
-                      <th className="px-4 py-3 text-right font-medium">Runs</th>
-                      <th className="px-4 py-3 text-right font-medium">Success</th>
-                      <th className="px-4 py-3 text-right font-medium">Saved</th>
-                      <th className="px-4 py-3 text-right font-medium">Control</th>
+                      <th className="px-6 py-3 text-left font-medium">{t("prt.thAgent")}</th>
+                      <th className="px-4 py-3 text-left font-medium">{t("prt.thStatus")}</th>
+                      <th className="px-4 py-3 text-right font-medium">{t("prt.thRuns")}</th>
+                      <th className="px-4 py-3 text-right font-medium">{t("prt.thSuccess")}</th>
+                      <th className="px-4 py-3 text-right font-medium">{t("prt.thSaved")}</th>
+                      <th className="px-4 py-3 text-right font-medium">{t("prt.thControl")}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -714,7 +714,7 @@ export function PortalDashboard(props: Props) {
                             }`}
                           >
                             <span className={`h-1.5 w-1.5 rounded-full ${a.status === "active" ? "bg-emerald-400" : "bg-yellow-400"}`} />
-                            {a.status}
+                            {t(`prt.status.${a.status}`)}
                           </span>
                         </td>
                         <td className="px-4 py-4 text-right tabular-nums text-muted-foreground">{a.runs.toLocaleString()}</td>
@@ -733,7 +733,7 @@ export function PortalDashboard(props: Props) {
                             }`}
                           >
                             {a.status === "active" ? <Pause className="h-3 w-3" /> : <Play className="h-3 w-3" />}
-                            {a.status === "active" ? "Pause" : "Resume"}
+                            {a.status === "active" ? t("prt.pause") : t("prt.resume")}
                           </button>
                         </td>
                       </tr>
@@ -749,23 +749,23 @@ export function PortalDashboard(props: Props) {
           <div className="rounded-3xl border border-border bg-card/40 backdrop-blur">
             <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border px-6 py-4">
               <h2 className="flex items-center gap-2 font-display font-semibold">
-                <ClipboardCheck className="h-4 w-4 text-cyan-electric" /> Pending approvals
+                <ClipboardCheck className="h-4 w-4 text-cyan-electric" /> {t("prt.pendingApprovals")}
               </h2>
               <div className="flex items-center gap-2">
                 {selected.size > 0 ? (
                   <>
-                    <span className="text-xs text-muted-foreground">{selected.size} selected</span>
+                    <span className="text-xs text-muted-foreground">{selected.size} {t("prt.selected")}</span>
                     <button
                       onClick={() => decideMany([...selected], "approved")}
                       className="inline-flex items-center gap-1.5 rounded-full border border-emerald-400/30 px-3 py-1 text-xs font-medium text-emerald-300 transition hover:bg-emerald-400/10"
                     >
-                      <Check className="h-3 w-3" /> Approve
+                      <Check className="h-3 w-3" /> {t("prt.approve")}
                     </button>
                     <button
                       onClick={() => decideMany([...selected], "rejected")}
                       className="inline-flex items-center gap-1.5 rounded-full border border-red-500/30 px-3 py-1 text-xs font-medium text-red-400 transition hover:bg-red-500/10"
                     >
-                      <X className="h-3 w-3" /> Reject
+                      <X className="h-3 w-3" /> {t("prt.reject")}
                     </button>
                   </>
                 ) : approvals.length > 0 ? (
@@ -773,16 +773,16 @@ export function PortalDashboard(props: Props) {
                     onClick={() => decideMany(approvals.map((a) => a.id), "approved")}
                     className="inline-flex items-center gap-1.5 rounded-full border border-emerald-400/30 bg-emerald-400/10 px-3 py-1 text-xs font-semibold text-emerald-300 transition hover:bg-emerald-400/20"
                   >
-                    <Check className="h-3 w-3" /> Approve all ({approvals.length})
+                    <Check className="h-3 w-3" /> {t("prt.approveAll")} ({approvals.length})
                   </button>
                 ) : (
-                  <span className="text-xs text-muted-foreground">Agents draft — you approve before anything is sent</span>
+                  <span className="text-xs text-muted-foreground">{t("prt.approvalsHint")}</span>
                 )}
               </div>
             </div>
             {approvals.length === 0 ? (
               <p className="px-6 py-10 text-center text-sm text-muted-foreground">
-                Nothing waiting — your agents are all caught up.
+                {t("prt.approvalsEmpty")}
               </p>
             ) : (
               <ul className="divide-y divide-border/50">
@@ -795,7 +795,7 @@ export function PortalDashboard(props: Props) {
                           type="checkbox"
                           checked={selected.has(a.id)}
                           onChange={() => toggleSelect(a.id)}
-                          aria-label="Select approval"
+                          aria-label={t("prt.selectApproval")}
                           className="h-4 w-4 shrink-0 accent-cyan-400"
                         />
                         <div className="min-w-0 flex-1">
@@ -813,20 +813,20 @@ export function PortalDashboard(props: Props) {
                               onClick={() => setEditing(isEditing ? null : { id: a.id, text: a.draft ?? "" })}
                               className="inline-flex items-center gap-1.5 rounded-full border border-border px-3 py-1 text-xs font-medium text-muted-foreground transition hover:bg-white/5"
                             >
-                              {isEditing ? "Close" : "Edit"}
+                              {isEditing ? t("prt.close") : t("prt.edit")}
                             </button>
                           )}
                           <button
                             onClick={() => decide(a, "approved", isEditing ? editing?.text : undefined)}
                             className="inline-flex items-center gap-1.5 rounded-full border border-emerald-400/30 px-3 py-1 text-xs font-medium text-emerald-300 transition hover:bg-emerald-400/10"
                           >
-                            <Check className="h-3 w-3" /> {isEditing ? "Save & approve" : "Approve"}
+                            <Check className="h-3 w-3" /> {isEditing ? t("prt.saveApprove") : t("prt.approve")}
                           </button>
                           <button
                             onClick={() => decide(a, "rejected")}
                             className="inline-flex items-center gap-1.5 rounded-full border border-red-500/30 px-3 py-1 text-xs font-medium text-red-400 transition hover:bg-red-500/10"
                           >
-                            <X className="h-3 w-3" /> Reject
+                            <X className="h-3 w-3" /> {t("prt.reject")}
                           </button>
                         </div>
                       </div>
@@ -871,11 +871,11 @@ export function PortalDashboard(props: Props) {
                       }`}
                     >
                       <span className={`h-1.5 w-1.5 rounded-full ${c.status === "connected" ? "bg-emerald-400" : c.status === "error" ? "bg-red-400" : "bg-muted-foreground"}`} />
-                      {c.status}
+                      {t(`prt.status.${c.status}`)}
                     </span>
                   </div>
                   <p className="mt-3 text-xs text-muted-foreground">
-                    Scope: <span className="text-foreground">{c.scope}</span>
+                    {t("prt.scopeLabel")} <span className="text-foreground">{c.scope}</span>
                   </p>
                   {(c.health === "expired" || c.health === "error") && c.reconnectHref && (
                     <a
@@ -883,7 +883,7 @@ export function PortalDashboard(props: Props) {
                       className="mt-3 inline-flex items-center gap-1.5 rounded-full border border-yellow-400/30 bg-yellow-400/10 px-3 py-1 text-xs font-medium text-yellow-300 transition hover:bg-yellow-400/20"
                     >
                       <ArrowUpRight className="h-3 w-3" />
-                      {c.health === "expired" ? "Reconnect — access expired" : "Reconnect"}
+                      {c.health === "expired" ? t("prt.reconnectExpired") : t("prt.reconnect")}
                     </a>
                   )}
                 </div>
@@ -893,7 +893,7 @@ export function PortalDashboard(props: Props) {
               href="/connections"
               className="flex items-center justify-center rounded-2xl border border-dashed border-border p-5 text-sm text-muted-foreground transition hover:border-cyan-electric/40 hover:text-cyan-electric"
             >
-              <Plug className="mr-2 h-4 w-4" /> Connect another tool
+              <Plug className="mr-2 h-4 w-4" /> {t("prt.connectAnotherTool")}
             </Link>
           </div>
         )}
@@ -902,36 +902,36 @@ export function PortalDashboard(props: Props) {
           <div className="space-y-6">
             <div className="rounded-3xl border border-border bg-card/40 p-6 backdrop-blur">
               <h2 className="flex items-center gap-2 font-display font-semibold">
-                <Lock className="h-4 w-4 text-cyan-electric" /> Guardrails &amp; policy
+                <Lock className="h-4 w-4 text-cyan-electric" /> {t("prt.guardrailsPolicy")}
               </h2>
               <p className="mt-1 text-sm text-muted-foreground">
-                Even with auto-send on, these limits force an action back to approval. Leave a field blank to disable it.
+                {t("prt.guardrailsSub")}
               </p>
               <div className="mt-5 grid gap-4 sm:grid-cols-3">
                 <label className="block">
-                  <span className="mb-1 block text-xs font-medium text-muted-foreground">Daily auto-send cap ($)</span>
+                  <span className="mb-1 block text-xs font-medium text-muted-foreground">{t("prt.dailyCapLabel")}</span>
                   <input
                     type="number"
                     min={0}
                     value={policy.dailySpendCap ?? ""}
                     onChange={(e) => setPolicy((p) => ({ ...p, dailySpendCap: e.target.value === "" ? null : Number(e.target.value) }))}
-                    placeholder="no cap"
+                    placeholder={t("prt.noCap")}
                     className={inputCls}
                   />
                 </label>
                 <label className="block">
-                  <span className="mb-1 block text-xs font-medium text-muted-foreground">Always approve over ($)</span>
+                  <span className="mb-1 block text-xs font-medium text-muted-foreground">{t("prt.alwaysApproveOver")}</span>
                   <input
                     type="number"
                     min={0}
                     value={policy.requireApprovalOver ?? ""}
                     onChange={(e) => setPolicy((p) => ({ ...p, requireApprovalOver: e.target.value === "" ? null : Number(e.target.value) }))}
-                    placeholder="no threshold"
+                    placeholder={t("prt.noThreshold")}
                     className={inputCls}
                   />
                 </label>
                 <label className="block">
-                  <span className="mb-1 block text-xs font-medium text-muted-foreground">Allowed email domains</span>
+                  <span className="mb-1 block text-xs font-medium text-muted-foreground">{t("prt.allowedDomains")}</span>
                   <input
                     value={policy.allowedDomains}
                     onChange={(e) => setPolicy((p) => ({ ...p, allowedDomains: e.target.value }))}
@@ -941,29 +941,29 @@ export function PortalDashboard(props: Props) {
                 </label>
               </div>
               <div className="mt-5 flex items-center gap-3">
-                <Button size="sm" onClick={savePolicy}>Save policy</Button>
-                {policySaved && <span className="text-xs text-emerald-300">Saved</span>}
+                <Button size="sm" onClick={savePolicy}>{t("prt.savePolicy")}</Button>
+                {policySaved && <span className="text-xs text-emerald-300">{t("prt.saved")}</span>}
               </div>
             </div>
 
             <div className="rounded-3xl border border-border bg-card/40 p-6 backdrop-blur">
               <h2 className="flex items-center gap-2 font-display font-semibold">
-                <Lock className="h-4 w-4 text-cyan-electric" /> Ingestion API key
+                <Lock className="h-4 w-4 text-cyan-electric" /> {t("prt.ingestKeyHeading")}
               </h2>
               <p className="mt-1 text-sm text-muted-foreground">
-                The bearer secret that authenticates external agent runs. Treat it like a password — rotate it if it may have leaked.
+                {t("prt.ingestKeySub")}
               </p>
               <div className="mt-4 flex flex-wrap items-center gap-3">
                 <code className="rounded-lg border border-border bg-card/60 px-3 py-2 font-mono text-sm">
                   ••••••••••••{props.ingestKeyLast4}
                 </code>
                 <Button size="sm" variant="outline" onClick={rotateKey} disabled={rotating}>
-                  {rotating ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <ShieldCheck className="h-3.5 w-3.5" />} Rotate key
+                  {rotating ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <ShieldCheck className="h-3.5 w-3.5" />} {t("prt.rotateKey")}
                 </Button>
               </div>
               {newKey && (
                 <div className="mt-3 rounded-xl border border-emerald-400/30 bg-emerald-400/10 p-3">
-                  <p className="text-xs text-emerald-200">New key — copy it now, it won&rsquo;t be shown again:</p>
+                  <p className="text-xs text-emerald-200">{t("prt.newKeyNote")}</p>
                   <code className="mt-1 block break-all font-mono text-xs text-emerald-100">{newKey}</code>
                 </div>
               )}
@@ -971,19 +971,19 @@ export function PortalDashboard(props: Props) {
 
             <div className="rounded-3xl border border-border bg-card/40 p-6 backdrop-blur">
               <h2 className="flex items-center gap-2 font-display font-semibold">
-                <ShieldCheck className="h-4 w-4 text-emerald-300" /> Controls &amp; data
+                <ShieldCheck className="h-4 w-4 text-emerald-300" /> {t("prt.controlsData")}
               </h2>
               <ul className="mt-3 space-y-2 text-sm text-muted-foreground">
-                <li>• Prompt-injection guardrails + PII redaction on every untrusted input.</li>
-                <li>• Least-privilege OAuth scopes; tokens stored server-side and never exposed by the API.</li>
-                <li>• Row-level security: you can only ever read your own data.</li>
-                <li>• Every action is written to an immutable audit log.</li>
+                <li>• {t("prt.trustBullet1")}</li>
+                <li>• {t("prt.trustBullet2")}</li>
+                <li>• {t("prt.trustBullet3")}</li>
+                <li>• {t("prt.trustBullet4")}</li>
               </ul>
               <a
                 href="/api/portal/audit/export"
                 className="mt-5 inline-flex items-center gap-1.5 rounded-full border border-border px-4 py-2 text-xs font-medium transition hover:border-cyan-electric/40 hover:text-cyan-electric"
               >
-                <ArrowUpRight className="h-3.5 w-3.5" /> Export audit log (CSV)
+                <ArrowUpRight className="h-3.5 w-3.5" /> {t("prt.exportAudit")}
               </a>
             </div>
           </div>
@@ -992,10 +992,10 @@ export function PortalDashboard(props: Props) {
         {tab === "audit" && (
           <div className="rounded-3xl border border-border bg-card/40 backdrop-blur">
             <div className="flex items-center gap-2 border-b border-border px-6 py-4 font-display font-semibold">
-              <ShieldCheck className="h-4 w-4 text-cyan-electric" /> Governance audit log
+              <ShieldCheck className="h-4 w-4 text-cyan-electric" /> {t("prt.governanceAudit")}
             </div>
             {audit.length === 0 ? (
-              <p className="px-6 py-8 text-center text-sm text-muted-foreground">No governance events yet.</p>
+              <p className="px-6 py-8 text-center text-sm text-muted-foreground">{t("prt.auditEmpty")}</p>
             ) : (
               <ul className="divide-y divide-border/50">
                 {audit.map((a, i) => (
@@ -1056,6 +1056,7 @@ function TabButton({ icon: Icon, label, active, onClick }: { icon: React.Compone
 }
 
 function SignOutButton() {
+  const { t } = useLocale();
   async function signOut() {
     try {
       await createClient().auth.signOut();
@@ -1067,7 +1068,7 @@ function SignOutButton() {
   return (
     <Button variant="outline" size="sm" onClick={signOut} className="ml-auto">
       <LogOut className="h-3.5 w-3.5" />
-      Sign out
+      {t("prt.signOut")}
     </Button>
   );
 }
@@ -1084,6 +1085,7 @@ function KPI({
   delta?: string;
 }) {
   const mounted = useMounted();
+  const { t } = useLocale();
   return (
     <motion.div
       initial={mounted ? { opacity: 0, y: 12 } : false}
@@ -1095,7 +1097,7 @@ function KPI({
         <Icon className="h-4 w-4 text-cyan-electric" />
       </div>
       <p className="mt-2 font-display text-2xl font-semibold tabular-nums">{value}</p>
-      {delta && <p className="text-[11px] text-emerald-300">{delta} vs last month</p>}
+      {delta && <p className="text-[11px] text-emerald-300">{delta} {t("prt.vsLastMonth")}</p>}
     </motion.div>
   );
 }

@@ -36,11 +36,11 @@ export function Nav() {
   };
 
   const links = [
-    { href: "/build", label: "Build" },
+    { href: "/build", label: t("nav.build") },
     { href: "/services", label: t("nav.services") },
-    { href: "/solutions", label: "Solutions" },
-    { href: "/connections", label: "Connectors" },
-    { href: "/impact", label: "Impact" },
+    { href: "/solutions", label: t("nav.solutions") },
+    { href: "/connections", label: t("nav.connectors") },
+    { href: "/impact", label: t("nav.impact") },
     { href: "/results", label: t("nav.results") },
     { href: "/process", label: t("nav.process") },
     { href: "/pricing", label: t("nav.pricing") },

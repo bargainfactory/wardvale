@@ -11,113 +11,148 @@ export type Benchmark = {
  * Representative automation benchmarks by vertical. Numbers reflect typical
  * outcomes across FlowForge engagements and comparable published case data —
  * used to give prospects a realistic anchor before their own data is live.
+ *
+ * NOTE: `vertical` is a stable lookup key used by getBenchmark() to match
+ * user/query strings — keep it in English, never localize it. The
+ * `replyTime*` and `topAutomation` values are i18n keys ("bm.*") resolved to
+ * display text at the render site via t(). Use benchmarkLabelKey(vertical) to
+ * get the i18n key for the human-visible vertical name.
  */
 export const benchmarks: Benchmark[] = [
   {
     vertical: "Restaurant",
     avgMonthlySavings: 3400,
     avgHoursSaved: 48,
-    replyTimeBefore: "3–6 hours",
-    replyTimeAfter: "under 1 min",
-    topAutomation: "Reservation & review recovery agent",
+    replyTimeBefore: "bm.reply3to6Hours",
+    replyTimeAfter: "bm.replyUnder1Min",
+    topAutomation: "bm.restaurantTopAutomation",
   },
   {
     vertical: "E-commerce",
     avgMonthlySavings: 6200,
     avgHoursSaved: 72,
-    replyTimeBefore: "8–24 hours",
-    replyTimeAfter: "instant",
-    topAutomation: "Support triage & abandoned-cart winback",
+    replyTimeBefore: "bm.reply8to24Hours",
+    replyTimeAfter: "bm.replyInstant",
+    topAutomation: "bm.ecommerceTopAutomation",
   },
   {
     vertical: "Home services",
     avgMonthlySavings: 4800,
     avgHoursSaved: 61,
-    replyTimeBefore: "2–8 hours",
-    replyTimeAfter: "under 30 sec",
-    topAutomation: "Missed-call → booked-job voice agent",
+    replyTimeBefore: "bm.reply2to8Hours",
+    replyTimeAfter: "bm.replyUnder30Sec",
+    topAutomation: "bm.homeServicesTopAutomation",
   },
   {
     vertical: "Real estate",
     avgMonthlySavings: 5600,
     avgHoursSaved: 54,
-    replyTimeBefore: "1–4 hours",
-    replyTimeAfter: "under 2 min",
-    topAutomation: "Lead qualification & showing scheduler",
+    replyTimeBefore: "bm.reply1to4Hours",
+    replyTimeAfter: "bm.replyUnder2Min",
+    topAutomation: "bm.realEstateTopAutomation",
   },
   {
     vertical: "Dental / clinic",
     avgMonthlySavings: 5200,
     avgHoursSaved: 58,
-    replyTimeBefore: "4–12 hours",
-    replyTimeAfter: "under 1 min",
-    topAutomation: "AI receptionist with rebooking & recalls",
+    replyTimeBefore: "bm.reply4to12Hours",
+    replyTimeAfter: "bm.replyUnder1Min",
+    topAutomation: "bm.dentalTopAutomation",
   },
   {
     vertical: "Consulting",
     avgMonthlySavings: 4100,
     avgHoursSaved: 44,
-    replyTimeBefore: "1–2 days",
-    replyTimeAfter: "under 5 min",
-    topAutomation: "Proposal drafting & follow-up sequences",
+    replyTimeBefore: "bm.reply1to2Days",
+    replyTimeAfter: "bm.replyUnder5Min",
+    topAutomation: "bm.consultingTopAutomation",
   },
   {
     vertical: "Law firm",
     avgMonthlySavings: 7400,
     avgHoursSaved: 66,
-    replyTimeBefore: "1–3 days",
-    replyTimeAfter: "under 10 min",
-    topAutomation: "Intake screening & client onboarding",
+    replyTimeBefore: "bm.reply1to3Days",
+    replyTimeAfter: "bm.replyUnder10Min",
+    topAutomation: "bm.lawFirmTopAutomation",
   },
   {
     vertical: "Fitness",
     avgMonthlySavings: 2600,
     avgHoursSaved: 39,
-    replyTimeBefore: "3–8 hours",
-    replyTimeAfter: "under 1 min",
-    topAutomation: "Trial-to-member nurture & no-show winback",
+    replyTimeBefore: "bm.reply3to8Hours",
+    replyTimeAfter: "bm.replyUnder1Min",
+    topAutomation: "bm.fitnessTopAutomation",
   },
   {
     vertical: "Med spa",
     avgMonthlySavings: 5000,
     avgHoursSaved: 52,
-    replyTimeBefore: "2–6 hours",
-    replyTimeAfter: "under 1 min",
-    topAutomation: "Booking, cancellation-fill & rebooking agent",
+    replyTimeBefore: "bm.reply2to6Hours",
+    replyTimeAfter: "bm.replyUnder1Min",
+    topAutomation: "bm.medSpaTopAutomation",
   },
   {
     vertical: "Veterinary",
     avgMonthlySavings: 4400,
     avgHoursSaved: 50,
-    replyTimeBefore: "3–8 hours",
-    replyTimeAfter: "under 2 min",
-    topAutomation: "Appointment reminders & vaccine recalls",
+    replyTimeBefore: "bm.reply3to8Hours",
+    replyTimeAfter: "bm.replyUnder2Min",
+    topAutomation: "bm.veterinaryTopAutomation",
   },
   {
     vertical: "Auto repair",
     avgMonthlySavings: 6000,
     avgHoursSaved: 57,
-    replyTimeBefore: "2–6 hours",
-    replyTimeAfter: "under 30 sec",
-    topAutomation: "Service scheduling & missed-call recovery",
+    replyTimeBefore: "bm.reply2to6Hours",
+    replyTimeAfter: "bm.replyUnder30Sec",
+    topAutomation: "bm.autoRepairTopAutomation",
   },
   {
     vertical: "Insurance",
     avgMonthlySavings: 6500,
     avgHoursSaved: 60,
-    replyTimeBefore: "1–2 days",
-    replyTimeAfter: "under 5 min",
-    topAutomation: "Lead qualification & renewal chasing",
+    replyTimeBefore: "bm.reply1to2Days",
+    replyTimeAfter: "bm.replyUnder5Min",
+    topAutomation: "bm.insuranceTopAutomation",
   },
   {
     vertical: "Property management",
     avgMonthlySavings: 4600,
     avgHoursSaved: 55,
-    replyTimeBefore: "4–12 hours",
-    replyTimeAfter: "under 2 min",
-    topAutomation: "Maintenance triage & tenant comms",
+    replyTimeBefore: "bm.reply4to12Hours",
+    replyTimeAfter: "bm.replyUnder2Min",
+    topAutomation: "bm.propertyMgmtTopAutomation",
   },
 ];
+
+/**
+ * Maps each vertical's stable English lookup value to the i18n key for its
+ * human-visible name. Render sites should display the vertical via
+ * t(benchmarkLabelKey(b.vertical)) rather than the raw `vertical` string.
+ */
+const VERTICAL_LABEL_KEYS: Record<string, string> = {
+  Restaurant: "bm.verticalRestaurant",
+  "E-commerce": "bm.verticalEcommerce",
+  "Home services": "bm.verticalHomeServices",
+  "Real estate": "bm.verticalRealEstate",
+  "Dental / clinic": "bm.verticalDental",
+  Consulting: "bm.verticalConsulting",
+  "Law firm": "bm.verticalLawFirm",
+  Fitness: "bm.verticalFitness",
+  "Med spa": "bm.verticalMedSpa",
+  Veterinary: "bm.verticalVeterinary",
+  "Auto repair": "bm.verticalAutoRepair",
+  Insurance: "bm.verticalInsurance",
+  "Property management": "bm.verticalPropertyMgmt",
+};
+
+/**
+ * Returns the i18n key ("bm.vertical*") for a benchmark's display name.
+ * Falls back to the raw vertical string if it is not a known vertical.
+ */
+export function benchmarkLabelKey(vertical: string): string {
+  return VERTICAL_LABEL_KEYS[vertical] ?? vertical;
+}
 
 /**
  * Look up a benchmark by vertical. Matches case-insensitively and by partial

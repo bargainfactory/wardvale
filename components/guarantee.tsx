@@ -1,12 +1,11 @@
-import { ShieldCheck } from "lucide-react";
+"use client";
 
-// Single source of truth for the ROI guarantee copy.
-export const GUARANTEE_HEADLINE = "Break even in 21 days — or we work free until you do.";
-export const GUARANTEE_SUB =
-  "We scope every build to pay for itself fast. If your automations haven't covered the retainer within 21 days of launch, we keep optimizing at no charge until they do.";
+import { ShieldCheck } from "lucide-react";
+import { useLocale } from "@/lib/locale-context";
 
 /** Full-width guarantee banner for pricing / landing pages. */
 export function GuaranteeBanner() {
+  const { t } = useLocale();
   return (
     <div className="mx-auto max-w-4xl">
       <div className="flex flex-col items-center gap-4 rounded-3xl gradient-border glass-strong p-8 text-center sm:flex-row sm:text-left">
@@ -14,8 +13,8 @@ export function GuaranteeBanner() {
           <ShieldCheck className="h-7 w-7" />
         </div>
         <div>
-          <h3 className="font-display text-xl font-semibold">{GUARANTEE_HEADLINE}</h3>
-          <p className="mt-1 text-sm text-muted-foreground">{GUARANTEE_SUB}</p>
+          <h3 className="font-display text-xl font-semibold">{t("cmp.guarantee.headline")}</h3>
+          <p className="mt-1 text-sm text-muted-foreground">{t("cmp.guarantee.sub")}</p>
         </div>
       </div>
     </div>
@@ -24,10 +23,11 @@ export function GuaranteeBanner() {
 
 /** Compact inline guarantee pill for blueprints / tight spaces. */
 export function GuaranteePill() {
+  const { t } = useLocale();
   return (
     <span className="inline-flex items-center gap-1.5 rounded-full border border-cyan-electric/25 bg-cyan-electric/10 px-3 py-1 text-xs font-medium text-cyan-electric">
       <ShieldCheck className="h-3.5 w-3.5" />
-      21-day ROI guarantee — or we work free
+      {t("cmp.guarantee.pill")}
     </span>
   );
 }

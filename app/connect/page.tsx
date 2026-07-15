@@ -5,13 +5,16 @@ import { ArrowRight, Check, Lock, Mail, ShieldCheck, Sparkles } from "lucide-rea
 import { PageLayout } from "@/components/page-layout";
 import { Button } from "@/components/ui/button";
 import type { InboxPreview } from "@/lib/inbox-preview";
+import { getT } from "@/lib/i18n-server";
 
-export const metadata: Metadata = {
-  title: "See It On Your Data — Connect Your Inbox",
-  description:
-    "Connect Gmail read-only and watch FlowForge preview a real inbox automation on your actual emails — what we'd auto-draft, triage, and archive. Nothing is stored.",
-  alternates: { canonical: "/connect" },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const { t } = await getT();
+  return {
+    title: t("msc.connectMetaTitle"),
+    description: t("msc.connectMetaDescription"),
+    alternates: { canonical: "/connect" },
+  };
+}
 
 const CONFIGURED = !!(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET);
 
@@ -51,6 +54,8 @@ export default async function ConnectPage() {
   const preview = live ?? SAMPLE;
   const isLive = !!live;
 
+  const { t } = await getT();
+
   return (
     <PageLayout>
       <section className="relative overflow-hidden pb-10 pt-4">
@@ -59,16 +64,16 @@ export default async function ConnectPage() {
         <div className="container relative">
           <div className="mx-auto max-w-2xl text-center">
             <span className="inline-flex items-center gap-1.5 rounded-full border border-cyan-electric/25 bg-cyan-electric/10 px-3 py-1 text-xs font-medium text-cyan-electric">
-              <Sparkles className="h-3 w-3" /> See it on your data
+              <Sparkles className="h-3 w-3" /> {t("msc.connectBadge")}
             </span>
             <h1 className="mt-4 font-display text-4xl font-semibold tracking-tight sm:text-5xl">
-              {isLive ? "Here's your inbox, " : "Watch it work on "}
-              <span className="gradient-text">{isLive ? "automated." : "your real inbox."}</span>
+              {isLive ? t("msc.connectH1LiveA") : t("msc.connectH1A")}{" "}
+              <span className="gradient-text">
+                {isLive ? t("msc.connectH1LiveB") : t("msc.connectH1B")}
+              </span>
             </h1>
             <p className="mx-auto mt-4 max-w-xl text-lg text-muted-foreground">
-              {isLive
-                ? "Below is exactly what an Inbox Triage agent would do with your last few emails."
-                : "Connect Gmail read-only and we'll preview what our Inbox Triage agent would do with your actual emails — no imagination required."}
+              {isLive ? t("msc.connectSubLive") : t("msc.connectSub")}
             </p>
           </div>
         </div>
@@ -81,22 +86,22 @@ export default async function ConnectPage() {
               <div className="flex items-center justify-between border-b border-white/10 px-6 py-4">
                 <div className="flex items-center gap-2 text-sm">
                   <Mail className="h-4 w-4 text-cyan-electric" />
-                  <span className="font-medium">{isLive ? "Your inbox" : "Sample inbox"}</span>
+                  <span className="font-medium">{isLive ? t("msc.connectYourInbox") : t("msc.connectSampleInbox")}</span>
                   {!isLive && (
                     <span className="rounded-full border border-border bg-card/50 px-2 py-0.5 text-[11px] text-muted-foreground">
-                      preview
+                      {t("msc.connectPreview")}
                     </span>
                   )}
                 </div>
                 <span className="text-xs text-muted-foreground">
-                  ~<span className="font-medium text-cyan-electric">{preview.estMinutesSaved} min</span> saved
+                  ~<span className="font-medium text-cyan-electric">{preview.estMinutesSaved} {t("msc.connectMinAbbrev")}</span> {t("msc.connectSaved")}
                 </span>
               </div>
 
               <div className="grid gap-3 p-6 sm:grid-cols-3">
-                <Stat label="Emails scanned" value={preview.total} />
-                <Stat label="Auto-drafted" value={preview.autoDraft} accent />
-                <Stat label="Triaged" value={preview.triage} />
+                <Stat label={t("msc.connectStatScanned")} value={preview.total} />
+                <Stat label={t("msc.connectStatDrafted")} value={preview.autoDraft} accent />
+                <Stat label={t("msc.connectStatTriaged")} value={preview.triage} />
               </div>
 
               <ul className="divide-y divide-border/50 px-2 pb-2">
@@ -120,35 +125,35 @@ export default async function ConnectPage() {
               {isLive ? (
                 <Link href="/build">
                   <Button size="lg">
-                    Build this for real <ArrowRight className="h-4 w-4" />
+                    {t("msc.connectBuildReal")} <ArrowRight className="h-4 w-4" />
                   </Button>
                 </Link>
               ) : CONFIGURED ? (
                 <a href="/api/connect/google/start">
                   <Button size="lg">
-                    <Mail className="h-4 w-4" /> Connect Gmail (read-only)
+                    <Mail className="h-4 w-4" /> {t("msc.connectGmailBtn")}
                   </Button>
                 </a>
               ) : (
                 <div className="text-center">
                   <Button size="lg" disabled>
-                    <Lock className="h-4 w-4" /> Live connect coming soon
+                    <Lock className="h-4 w-4" /> {t("msc.connectComingSoon")}
                   </Button>
                   <p className="mt-2 text-xs text-muted-foreground">
-                    This is a sample. Live inbox connect activates once Google OAuth is configured.
+                    {t("msc.connectSampleNote")}
                   </p>
                 </div>
               )}
 
               <div className="mt-2 flex flex-wrap items-center justify-center gap-x-5 gap-y-1 text-xs text-muted-foreground">
                 <span className="inline-flex items-center gap-1.5">
-                  <ShieldCheck className="h-3.5 w-3.5 text-emerald-300" /> Read-only access
+                  <ShieldCheck className="h-3.5 w-3.5 text-emerald-300" /> {t("msc.connectReadOnly")}
                 </span>
                 <span className="inline-flex items-center gap-1.5">
-                  <Check className="h-3.5 w-3.5 text-emerald-300" /> Nothing stored
+                  <Check className="h-3.5 w-3.5 text-emerald-300" /> {t("msc.connectNothingStored")}
                 </span>
                 <span className="inline-flex items-center gap-1.5">
-                  <Check className="h-3.5 w-3.5 text-emerald-300" /> Revoke anytime in your Google account
+                  <Check className="h-3.5 w-3.5 text-emerald-300" /> {t("msc.connectRevoke")}
                 </span>
               </div>
             </div>

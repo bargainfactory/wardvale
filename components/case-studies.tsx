@@ -5,8 +5,10 @@ import { useState } from "react";
 import { caseStudies } from "@/lib/data";
 import { SectionHeader } from "@/components/services";
 import { cn } from "@/lib/utils";
+import { useLocale } from "@/lib/locale-context";
 
 export function CaseStudies() {
+  const { t } = useLocale();
   const [active, setActive] = useState(caseStudies[0].id);
   const current = caseStudies.find((c) => c.id === active)!;
 
@@ -39,7 +41,7 @@ export function CaseStudies() {
                 )}
               >
                 <Icon className="h-4 w-4" />
-                {c.vertical}
+                {t(c.vertical)}
               </button>
             );
           })}
@@ -55,15 +57,15 @@ export function CaseStudies() {
           <div className="lg:col-span-2">
             <div className="gradient-border glass relative h-full overflow-hidden rounded-3xl p-8">
               <p className="text-xs font-semibold uppercase tracking-wider text-cyan-electric">
-                {current.vertical}
+                {t(current.vertical)}
               </p>
               <h3 className="mt-2 font-display text-2xl font-semibold">
                 {current.company}
               </h3>
-              <p className="mt-3 text-muted-foreground">{current.headline}</p>
+              <p className="mt-3 text-muted-foreground">{t(current.headline)}</p>
 
               <div className="mt-8 grid grid-cols-2 gap-4">
-                <Metric label="Saved / month" value={current.savings} accent />
+                <Metric label="Saved / month" value={t(current.savings)} accent />
                 <Metric label="Hours back / month" value={`${current.hoursPerMonth}h`} />
               </div>
 
@@ -122,6 +124,7 @@ function BeforeAfterCard({
   items: { label: string; value: string }[];
   tone: "before" | "after";
 }) {
+  const { t } = useLocale();
   return (
     <div
       className={cn(
@@ -147,7 +150,7 @@ function BeforeAfterCard({
       <dl className="mt-5 space-y-3">
         {items.map((i) => (
           <div key={i.label} className="flex items-baseline justify-between gap-4 border-b border-border/50 pb-3 last:border-0 last:pb-0">
-            <dt className="text-sm text-muted-foreground">{i.label}</dt>
+            <dt className="text-sm text-muted-foreground">{t(i.label)}</dt>
             <dd className="font-display text-lg font-semibold tabular-nums">{i.value}</dd>
           </div>
         ))}

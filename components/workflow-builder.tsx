@@ -24,10 +24,11 @@ import { Button } from "@/components/ui/button";
 import { WorkflowDiagram } from "@/components/workflow-diagram";
 import { GuaranteePill } from "@/components/guarantee";
 import { tiers } from "@/lib/data";
-import { getBenchmark } from "@/lib/benchmarks";
+import { getBenchmark, benchmarkLabelKey } from "@/lib/benchmarks";
 import { formatCurrency } from "@/lib/utils";
 import { track } from "@/lib/analytics";
 import { useSpeechRecognition, speak, stopSpeaking } from "@/lib/use-speech";
+import { useLocale } from "@/lib/locale-context";
 
 type Msg = { role: "user" | "assistant"; content: string };
 type Step = { label: string; tool: string };
@@ -63,6 +64,7 @@ function readFile(file: File, as: "dataURL" | "text"): Promise<string> {
 }
 
 export function WorkflowBuilder() {
+  const { t } = useLocale();
   const [phase, setPhase] = useState<Phase>("intro");
   const [messages, setMessages] = useState<Msg[]>([]);
   const [input, setInput] = useState("");
@@ -100,7 +102,7 @@ export function WorkflowBuilder() {
 
   function apply(reply: ApiReply | null, history: Msg[]) {
     if (!reply) {
-      setMessages([...history, { role: "assistant", content: "Sorry — something went wrong. Try answering again." }]);
+      setMessages([...history, { role: "assistant", content: t("bld.errorRetry") }]);
       setPhase("asking");
       return;
     }
@@ -112,7 +114,7 @@ export function WorkflowBuilder() {
       track("blueprint_generated", { tier: reply.blueprint.suggestedTier });
       return;
     }
-    const q = reply.question ?? "Tell me a bit more about that.";
+    const q = reply.question ?? t("bld.fallbackQuestion");
     setMessages([...history, { role: "assistant", content: q }]);
     setPhase("asking");
     if (voiceOut) speak(q);
@@ -129,7 +131,7 @@ export function WorkflowBuilder() {
     const answer = input.trim();
     if ((!answer && !attachment) || phase === "thinking") return;
     if (listening) stop();
-    const content = answer || (attachment ? `(Shared a file: ${attachment.name})` : "");
+    const content = answer || (attachment ? `(${t("bld.sharedFile")}: ${attachment.name})` : "");
     const history = [...messages, { role: "user" as const, content }];
     const sentAttachment = attachment;
     setMessages(history);
@@ -146,7 +148,7 @@ export function WorkflowBuilder() {
     if (!file) return;
     setFileError(null);
     if (file.size > MAX_FILE_BYTES) {
-      setFileError("That file is over 3 MB — please attach a smaller one.");
+      setFileError(t("bld.fileTooLarge"));
       return;
     }
     const isImage = file.type.startsWith("image/");
@@ -164,10 +166,10 @@ export function WorkflowBuilder() {
         setAttachment({ kind: "text", name: file.name, text });
         track("builder_attachment", { kind: "text" });
       } else {
-        setFileError("Attach a screenshot/image or a text/CSV file.");
+        setFileError(t("bld.fileWrongType"));
       }
     } catch {
-      setFileError("Couldn't read that file. Try another.");
+      setFileError(t("bld.fileReadError"));
     }
   }
 
@@ -196,15 +198,15 @@ export function WorkflowBuilder() {
             <span className="grid h-8 w-8 place-items-center rounded-lg bg-gradient-to-br from-cyan-electric to-indigo-400 text-navy-900">
               <Wand2 className="h-4 w-4" />
             </span>
-            <span className="font-display text-sm font-semibold">Workflow Builder</span>
+            <span className="font-display text-sm font-semibold">{t("bld.builderTitle")}</span>
           </div>
           <button
             onClick={toggleVoiceOut}
             className="flex items-center gap-1.5 rounded-full border border-border px-3 py-1 text-xs text-muted-foreground transition hover:text-foreground"
-            aria-label="Toggle voice"
+            aria-label={t("bld.toggleVoice")}
           >
             {voiceOut ? <Volume2 className="h-3.5 w-3.5 text-cyan-electric" /> : <VolumeX className="h-3.5 w-3.5" />}
-            {voiceOut ? "Voice on" : "Voice off"}
+            {voiceOut ? t("bld.voiceOn") : t("bld.voiceOff")}
           </button>
         </div>
 
@@ -225,21 +227,20 @@ export function WorkflowBuilder() {
             {phase === "intro" && (
               <motion.div key="intro" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="py-6 text-center">
                 <span className="inline-flex items-center gap-1.5 rounded-full border border-cyan-electric/25 bg-cyan-electric/10 px-3 py-1 text-xs font-medium text-cyan-electric">
-                  <Sparkles className="h-3 w-3" /> Text or voice · 60 seconds
+                  <Sparkles className="h-3 w-3" /> {t("bld.introBadge")}
                 </span>
                 <h3 className="mt-4 font-display text-2xl font-semibold">
-                  Describe the work you want automated.
+                  {t("bld.introTitle")}
                 </h3>
                 <p className="mx-auto mt-2 max-w-md text-muted-foreground">
-                  Answer a few quick questions — by typing or talking — and we&rsquo;ll draft a concrete
-                  automation blueprint for your business, live.
+                  {t("bld.introSubtitle")}
                 </p>
                 <Button size="lg" className="mt-6" onClick={begin}>
-                  <Bot className="h-4 w-4" /> Start building
+                  <Bot className="h-4 w-4" /> {t("bld.startBuilding")}
                 </Button>
                 {supported && (
                   <p className="mt-3 text-xs text-muted-foreground">
-                    <Mic className="mr-1 inline h-3 w-3" /> Voice input supported in this browser
+                    <Mic className="mr-1 inline h-3 w-3" /> {t("bld.voiceSupported")}
                   </p>
                 )}
               </motion.div>
@@ -266,7 +267,7 @@ export function WorkflowBuilder() {
                   {phase === "thinking" && (
                     <div className="flex items-center gap-2 px-1 text-sm text-muted-foreground">
                       <Loader2 className="h-4 w-4 animate-spin text-cyan-electric" />
-                      Thinking through your workflow…
+                      {t("bld.thinking")}
                     </div>
                   )}
                 </div>
@@ -283,12 +284,12 @@ export function WorkflowBuilder() {
                         className="mb-2 flex items-center gap-3 overflow-hidden rounded-2xl border border-cyan-electric/40 bg-cyan-electric/10 px-4 py-2.5"
                       >
                         <Waveform level={level} />
-                        <span className="text-sm font-medium text-cyan-electric">Listening…</span>
+                        <span className="text-sm font-medium text-cyan-electric">{t("bld.listening")}</span>
                         <button
                           onClick={stop}
                           className="ml-auto inline-flex items-center gap-1.5 rounded-full bg-cyan-electric px-3 py-1 text-xs font-semibold text-navy-900"
                         >
-                          <Square className="h-3 w-3 fill-current" /> Stop
+                          <Square className="h-3 w-3 fill-current" /> {t("bld.stop")}
                         </button>
                       </motion.div>
                     )}
@@ -304,7 +305,7 @@ export function WorkflowBuilder() {
                       <span className="min-w-0 flex-1 truncate">{attachment.name}</span>
                       <button
                         onClick={() => setAttachment(null)}
-                        aria-label="Remove attachment"
+                        aria-label={t("bld.removeAttachment")}
                         className="shrink-0 text-muted-foreground transition hover:text-foreground"
                       >
                         <X className="h-4 w-4" />
@@ -332,13 +333,13 @@ export function WorkflowBuilder() {
                         }
                       }}
                       rows={1}
-                      placeholder={listening ? "Speak now — your words appear here…" : "Type your answer, or tap the mic to talk"}
+                      placeholder={listening ? t("bld.placeholderListening") : t("bld.placeholderIdle")}
                       className="max-h-32 flex-1 resize-none bg-transparent px-2 py-1.5 text-sm placeholder:text-muted-foreground focus:outline-none"
                     />
                     <button
                       onClick={() => fileRef.current?.click()}
-                      aria-label="Attach a file"
-                      title="Attach a screenshot, CSV, or doc"
+                      aria-label={t("bld.attachFile")}
+                      title={t("bld.attachTitle")}
                       className="grid h-10 w-10 shrink-0 place-items-center rounded-xl border border-border text-muted-foreground transition hover:text-cyan-electric"
                     >
                       <Paperclip className="h-4 w-4" />
@@ -346,7 +347,7 @@ export function WorkflowBuilder() {
                     {supported && (
                       <button
                         onClick={toggleMic}
-                        aria-label="Voice input"
+                        aria-label={t("bld.voiceInput")}
                         className={`grid h-10 w-10 shrink-0 place-items-center rounded-xl transition ${
                           listening
                             ? "animate-pulse bg-red-500/20 text-red-400"
@@ -359,7 +360,7 @@ export function WorkflowBuilder() {
                     <button
                       onClick={send}
                       disabled={(!input.trim() && !attachment) || phase === "thinking"}
-                      aria-label="Send"
+                      aria-label={t("bld.send")}
                       className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-gradient-to-br from-cyan-electric to-indigo-400 text-navy-900 transition disabled:opacity-40"
                     >
                       <Send className="h-4 w-4" />
@@ -369,14 +370,12 @@ export function WorkflowBuilder() {
                     <p className="mt-2 text-center text-xs text-red-400">{fileError || error}</p>
                   ) : (
                     <p className="mt-2 text-center text-xs text-muted-foreground">
-                      {listening
-                        ? "Speak naturally — pause when you're done, then Send."
-                        : "Type, talk, or attach a screenshot/CSV · Enter to send"}
+                      {listening ? t("bld.helperListening") : t("bld.helperIdle")}
                     </p>
                   )}
                   {!supported && (
                     <p className="mt-1 text-center text-[11px] text-muted-foreground/70">
-                      Voice input works in Chrome, Edge, and Safari.
+                      {t("bld.voiceBrowsers")}
                     </p>
                   )}
                 </div>
@@ -395,6 +394,7 @@ export function WorkflowBuilder() {
 }
 
 function BlueprintCard({ blueprint, businessType }: { blueprint: Blueprint; businessType?: string }) {
+  const { t } = useLocale();
   const [email, setEmail] = useState("");
   const [name, setName] = useState("");
   const [sent, setSent] = useState(false);
@@ -433,9 +433,9 @@ function BlueprintCard({ blueprint, businessType }: { blueprint: Blueprint; busi
           <div className="mt-4 flex items-start gap-2 rounded-2xl border border-indigo-400/25 bg-indigo-400/10 p-3 text-sm">
             <TrendingUp className="mt-0.5 h-4 w-4 shrink-0 text-indigo-300" />
             <p className="text-muted-foreground">
-              <span className="font-medium text-foreground">{bench.vertical}s like you</span> save around{" "}
-              <span className="font-medium text-cyan-electric">${bench.avgMonthlySavings.toLocaleString()}/mo</span> and cut
-              reply time from {bench.replyTimeBefore} to {bench.replyTimeAfter}.
+              <span className="font-medium text-foreground">{t(benchmarkLabelKey(bench.vertical))}{t("bld.benchLikeYou")}</span> {t("bld.benchSaveAround")}{" "}
+              <span className="font-medium text-cyan-electric">${bench.avgMonthlySavings.toLocaleString()}{t("bld.benchPerMo")}</span> {t("bld.benchCutReply")}{" "}
+              {t(bench.replyTimeBefore)} {t("bld.benchTo")} {t(bench.replyTimeAfter)}.
             </p>
           </div>
         );
@@ -479,28 +479,28 @@ function BlueprintCard({ blueprint, businessType }: { blueprint: Blueprint; busi
       <div className="mt-4 rounded-2xl border border-border bg-card/40 p-4">
         {sent ? (
           <p className="flex items-center gap-2 text-sm text-emerald-300">
-            <Check className="h-4 w-4" /> Sent! Check your inbox for the full blueprint.
+            <Check className="h-4 w-4" /> {t("bld.emailSent")}
           </p>
         ) : (
           <>
-            <p className="text-sm font-medium">Email me this blueprint</p>
+            <p className="text-sm font-medium">{t("bld.emailPrompt")}</p>
             <div className="mt-2 flex flex-col gap-2 sm:flex-row">
               <input
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                placeholder="Name (optional)"
+                placeholder={t("bld.namePlaceholder")}
                 className="rounded-xl border border-border bg-card/40 px-3 py-2 text-sm placeholder:text-muted-foreground focus:border-cyan-electric/50 focus:outline-none sm:w-40"
               />
               <input
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="you@business.com"
+                placeholder={t("bld.emailPlaceholder")}
                 className="flex-1 rounded-xl border border-border bg-card/40 px-3 py-2 text-sm placeholder:text-muted-foreground focus:border-cyan-electric/50 focus:outline-none"
               />
               <Button onClick={emailMe} disabled={!email.trim() || sending}>
                 {sending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-                Send
+                {t("bld.send")}
               </Button>
             </div>
           </>
@@ -527,6 +527,7 @@ function Waveform({ level }: { level: number }) {
 }
 
 function RoiPanel({ roi, suggestedTier }: { roi: Roi; suggestedTier: "starter" | "growth" | "scale" }) {
+  const { t } = useLocale();
   const [tasks, setTasks] = useState(roi.tasksPerMonth);
   const [minutes, setMinutes] = useState(roi.minutesPerTask);
   const [cost, setCost] = useState(roi.hourlyCost);
@@ -541,23 +542,23 @@ function RoiPanel({ roi, suggestedTier }: { roi: Roi; suggestedTier: "starter" |
   return (
     <div className="mt-4 rounded-2xl border border-cyan-electric/25 bg-cyan-electric/[0.06] p-5">
       <div className="flex items-center justify-between">
-        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-cyan-electric">Your ROI</p>
-        <p className="text-xs text-muted-foreground">Drag to match your numbers</p>
+        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-cyan-electric">{t("bld.roiTitle")}</p>
+        <p className="text-xs text-muted-foreground">{t("bld.roiDrag")}</p>
       </div>
 
       <div className="mt-4 grid gap-4 sm:grid-cols-3">
-        <Slider label="Runs / month" min={10} max={taskMax} step={10} value={tasks} onChange={setTasks} format={(v) => v.toLocaleString()} />
-        <Slider label="Minutes / run" min={1} max={60} step={1} value={minutes} onChange={setMinutes} format={(v) => `${v}m`} />
-        <Slider label="Hourly cost" min={15} max={120} step={1} value={cost} onChange={setCost} format={(v) => `$${v}`} />
+        <Slider label={t("bld.roiRunsMonth")} min={10} max={taskMax} step={10} value={tasks} onChange={setTasks} format={(v) => v.toLocaleString()} />
+        <Slider label={t("bld.roiMinutesRun")} min={1} max={60} step={1} value={minutes} onChange={setMinutes} format={(v) => `${v}m`} />
+        <Slider label={t("bld.roiHourlyCost")} min={15} max={120} step={1} value={cost} onChange={setCost} format={(v) => `$${v}`} />
       </div>
 
       <div className="mt-5 grid gap-3 sm:grid-cols-3">
-        <Metric label="Labor saved" value={formatCurrency(monthly)} sub={`${Math.round(hours)}h / month`} highlight />
-        <Metric label={`Net after ${tier.name}`} value={`${net >= 0 ? "+" : ""}${formatCurrency(net)}`} sub={`${formatCurrency(tier.price)}/mo retainer`} />
-        <Metric label="Payback" value={paybackDays ? `${paybackDays} days` : "—"} sub={net >= 0 ? "then pure upside" : "raise volume to break even"} />
+        <Metric label={t("bld.roiLaborSaved")} value={formatCurrency(monthly)} sub={`${Math.round(hours)}${t("bld.roiHoursMonth")}`} highlight />
+        <Metric label={`${t("bld.netAfter")} ${t(tier.name)}`} value={`${net >= 0 ? "+" : ""}${formatCurrency(net)}`} sub={`${formatCurrency(tier.price)}${t("bld.perMoRetainer")}`} />
+        <Metric label={t("bld.payback")} value={paybackDays ? `${paybackDays} ${t("bld.days")}` : "—"} sub={net >= 0 ? t("bld.thenUpside") : t("bld.raiseVolume")} />
       </div>
       <p className="mt-3 text-[11px] text-muted-foreground">
-        Estimate = runs × minutes ÷ 60 × hourly cost, vs. the {tier.name} retainer.
+        {t("bld.estimatePrefix")} {t(tier.name)}{t("bld.estimateSuffix")}
       </p>
     </div>
   );

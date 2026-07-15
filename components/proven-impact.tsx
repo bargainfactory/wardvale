@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useLocale } from "@/lib/locale-context";
 
 type Impact = { realized: number; businesses: number; actions: number };
 
@@ -10,6 +11,7 @@ type Impact = { realized: number; businesses: number; actions: number };
  * never advertises $0 before the data exists.
  */
 export function ProvenImpact() {
+  const { t } = useLocale();
   const [data, setData] = useState<Impact | null>(null);
 
   useEffect(() => {
@@ -28,9 +30,9 @@ export function ProvenImpact() {
   if (!data || data.realized <= 0) return null;
 
   const stats = [
-    { label: "made for clients", value: `$${data.realized.toLocaleString()}` },
-    { label: "businesses automated", value: data.businesses.toLocaleString() },
-    { label: "actions taken", value: data.actions.toLocaleString() },
+    { label: t("cmp.impact.madeForClients"), value: `$${data.realized.toLocaleString()}` },
+    { label: t("cmp.impact.businessesAutomated"), value: data.businesses.toLocaleString() },
+    { label: t("cmp.impact.actionsTaken"), value: data.actions.toLocaleString() },
   ];
 
   return (
@@ -43,7 +45,7 @@ export function ProvenImpact() {
           </div>
         ))}
       </div>
-      <p className="mt-2 text-center text-[11px] text-muted-foreground">Realized value, confirmed by attribution — updated live.</p>
+      <p className="mt-2 text-center text-[11px] text-muted-foreground">{t("cmp.impact.footnote")}</p>
     </div>
   );
 }

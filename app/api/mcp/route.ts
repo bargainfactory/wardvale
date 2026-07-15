@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { services, tiers } from "@/lib/data";
+import { dictionaries } from "@/lib/i18n";
 import { seoPages } from "@/lib/seo-pages";
 import { callModel } from "@/lib/model";
 import { rateLimit, clientIp } from "@/lib/rate-limit";
@@ -134,9 +135,13 @@ const TOOLS: ToolDefinition[] = [
   },
 ];
 
+// Content data fields are i18n keys; the MCP wire protocol has no locale
+// context, so resolve them against the English dictionary.
+const en = (key: string): string => dictionaries.en[key] ?? key;
+
 function listServices(): ToolContent {
   const body = services
-    .map((s) => `• ${s.title} — ${s.description}`)
+    .map((s) => `• ${en(s.title)} — ${en(s.description)}`)
     .join("\n");
   return text(`FlowForge AI services:\n\n${body}`);
 }
@@ -144,7 +149,7 @@ function listServices(): ToolContent {
 function listPlaybooks(): ToolContent {
   const body = seoPages
     .map(
-      (p) => `• ${p.slug} — ${p.vertical}: ${p.workflow} (/automations/${p.slug})`
+      (p) => `• ${p.slug} — ${en(p.vertical)}: ${en(p.workflow)} (/automations/${p.slug})`
     )
     .join("\n");
   return text(`FlowForge industry playbooks:\n\n${body}`);
@@ -152,7 +157,7 @@ function listPlaybooks(): ToolContent {
 
 function getPricing(): ToolContent {
   const body = tiers
-    .map((t) => `• ${t.name} — $${t.price.toLocaleString()}/mo — ${t.blurb}`)
+    .map((t) => `• ${en(t.name)} — $${t.price.toLocaleString()}/mo — ${en(t.blurb)}`)
     .join("\n");
   return text(`FlowForge monthly retainer tiers:\n\n${body}`);
 }

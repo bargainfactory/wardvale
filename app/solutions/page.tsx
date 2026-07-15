@@ -7,15 +7,19 @@ import { GuaranteeBanner } from "@/components/guarantee";
 import { OsConfigurator } from "@/components/os-configurator";
 import { bundles } from "@/lib/solutions";
 import { getBenchmark } from "@/lib/benchmarks";
+import { getT } from "@/lib/i18n-server";
 
-export const metadata: Metadata = {
-  title: "Industry Solutions — Done-for-You Automation Bundles",
-  description:
-    "Pre-built automation stacks tuned to your industry — restaurants, home services, clinics, med spas, veterinary, auto, real estate, law, insurance, property, e-commerce — or configure your own OS with live ROI. Ship in 14 days.",
-  alternates: { canonical: "/solutions" },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const { t } = await getT();
+  return {
+    title: t("sol.metaTitle"),
+    description: t("sol.metaDesc"),
+    alternates: { canonical: "/solutions" },
+  };
+}
 
-export default function SolutionsPage() {
+export default async function SolutionsPage() {
+  const { t } = await getT();
   return (
     <PageLayout>
       <section className="relative overflow-hidden pb-16 pt-4">
@@ -23,13 +27,12 @@ export default function SolutionsPage() {
         <div className="pointer-events-none absolute inset-0 bg-mesh-dark" />
         <div className="container relative">
           <div className="mx-auto max-w-3xl text-center">
-            <span className="text-xs font-semibold uppercase tracking-[0.2em] text-cyan-electric">Industry solutions</span>
+            <span className="text-xs font-semibold uppercase tracking-[0.2em] text-cyan-electric">{t("sol.eyebrow")}</span>
             <h1 className="mt-3 font-display text-4xl font-semibold tracking-tight sm:text-5xl">
-              A complete automation stack, <span className="gradient-text">built for your industry.</span>
+              {t("sol.heroTitle1")} <span className="gradient-text">{t("sol.heroTitle2")}</span>
             </h1>
             <p className="mx-auto mt-4 max-w-xl text-lg text-muted-foreground">
-              Each OS is a pre-built bundle of the automations that move the needle in your vertical —
-              deployed, monitored, and tuned to your voice in 14 days. Or build your own below.
+              {t("sol.heroSub")}
             </p>
           </div>
         </div>
@@ -48,36 +51,36 @@ export default function SolutionsPage() {
                       <Icon className="h-5 w-5" strokeWidth={2.25} />
                     </div>
                     <span className="rounded-full border border-cyan-electric/25 bg-cyan-electric/10 px-3 py-1 text-xs font-semibold text-cyan-electric tabular-nums">
-                      {b.savings}
+                      {t(b.savings)}
                     </span>
                   </div>
-                  <h2 className="mt-5 font-display text-xl font-semibold">{b.name}</h2>
-                  <p className="mt-1 text-sm text-muted-foreground">{b.tagline}</p>
+                  <h2 className="mt-5 font-display text-xl font-semibold">{t(b.name)}</h2>
+                  <p className="mt-1 text-sm text-muted-foreground">{t(b.tagline)}</p>
                   <ul className="mt-5 flex-1 space-y-2">
                     {b.includes.map((it) => (
                       <li key={it} className="flex items-start gap-2 text-sm">
                         <Check className="mt-0.5 h-4 w-4 shrink-0 text-cyan-electric" />
-                        <span>{it}</span>
+                        <span>{t(it)}</span>
                       </li>
                     ))}
                   </ul>
 
                   {bench && (
                     <p className="mt-4 text-xs text-muted-foreground">
-                      Peers save ~<span className="font-medium text-cyan-electric">${bench.avgMonthlySavings.toLocaleString()}/mo</span>
-                      {" · "}reply time {bench.replyTimeBefore} → {bench.replyTimeAfter}
+                      {t("sol.peersSavePrefix")}~<span className="font-medium text-cyan-electric">${bench.avgMonthlySavings.toLocaleString()}{t("sol.perMonth")}</span>
+                      {" · "}{t("sol.replyTimeLabel")} {t(bench.replyTimeBefore)} → {t(bench.replyTimeAfter)}
                     </p>
                   )}
 
                   <div className="mt-6 flex items-center gap-4">
                     <Link href="/build">
-                      <Button size="sm">Build yours</Button>
+                      <Button size="sm">{t("sol.buildYours")}</Button>
                     </Link>
                     <Link
                       href={`/automations/${b.slug}`}
                       className="inline-flex items-center gap-1 text-sm text-muted-foreground transition group-hover:text-cyan-electric"
                     >
-                      See the playbook <ArrowRight className="h-3.5 w-3.5" />
+                      {t("sol.seePlaybook")} <ArrowRight className="h-3.5 w-3.5" />
                     </Link>
                   </div>
                 </div>
@@ -91,13 +94,12 @@ export default function SolutionsPage() {
       <section className="border-y border-border/60 py-20">
         <div className="container">
           <div className="mx-auto max-w-2xl text-center">
-            <span className="text-xs font-semibold uppercase tracking-[0.2em] text-cyan-electric">Build your OS</span>
+            <span className="text-xs font-semibold uppercase tracking-[0.2em] text-cyan-electric">{t("sol.buildOsEyebrow")}</span>
             <h2 className="mt-3 font-display text-3xl font-semibold tracking-tight sm:text-4xl">
-              Mix and match. <span className="gradient-text">See your ROI live.</span>
+              {t("sol.mixMatch1")} <span className="gradient-text">{t("sol.mixMatch2")}</span>
             </h2>
             <p className="mx-auto mt-3 max-w-xl text-muted-foreground">
-              Start from your industry stack, bolt on the agents you want, and watch the price, savings,
-              and payback update in real time — no sales call required.
+              {t("sol.mixMatchSub")}
             </p>
           </div>
           <div className="mt-12">
@@ -115,19 +117,19 @@ export default function SolutionsPage() {
       <section className="pb-16">
         <div className="container">
           <div className="mx-auto max-w-2xl rounded-3xl gradient-border glass-strong p-10 text-center">
-            <h2 className="font-display text-3xl font-semibold">Don&rsquo;t see your industry?</h2>
+            <h2 className="font-display text-3xl font-semibold">{t("sol.noIndustryTitle")}</h2>
             <p className="mt-3 text-muted-foreground">
-              We build custom stacks for any vertical. Describe your workflow and we&rsquo;ll scope one live.
+              {t("sol.noIndustrySub")}
             </p>
             <div className="mt-6 flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
               <Link href="/build">
                 <Button size="lg">
-                  Build your automation <ArrowRight className="h-4 w-4" />
+                  {t("sol.buildAutomation")} <ArrowRight className="h-4 w-4" />
                 </Button>
               </Link>
               <Link href="/pricing">
                 <Button variant="secondary" size="lg">
-                  See pricing
+                  {t("sol.seePricing")}
                 </Button>
               </Link>
             </div>

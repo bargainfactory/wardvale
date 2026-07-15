@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Activity, ArrowUpRight, Bot, CheckCircle2, Clock } from "lucide-react";
 import { SectionHeader } from "@/components/services";
 import { Button } from "@/components/ui/button";
+import { useLocale } from "@/lib/locale-context";
 
 const runs = [
   { name: "Inbox triage", status: "ok", last: "42s ago", runs: 1284, saved: "$214" },
@@ -15,17 +16,18 @@ const runs = [
 ];
 
 export function PortalTeaser() {
+  const { t } = useLocale();
   return (
     <section className="relative py-24 lg:py-32">
       <div className="container">
         <SectionHeader
-          eyebrow="Client portal"
+          eyebrow={t("prt.teaserEyebrow")}
           title={
             <>
-              Watch your agents <span className="gradient-text">work for you.</span>
+              {t("portal.watchTitle.1")} <span className="gradient-text">{t("portal.watchTitle.2")}</span>
             </>
           }
-          sub="Every retainer includes a private dashboard — live runs, ROI, and one-click tune-ups."
+          sub={t("portal.watchSub")}
         />
 
         <motion.div
@@ -48,23 +50,23 @@ export function PortalTeaser() {
                 <span className="absolute inline-flex h-full w-full animate-pulse-ring rounded-full bg-emerald-400" />
                 <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-400" />
               </span>
-              live
+              {t("prt.live")}
             </div>
           </div>
 
           <div className="grid gap-4 p-5 lg:grid-cols-3">
             <div className="grid grid-cols-2 gap-3 lg:col-span-1 lg:grid-cols-1">
-              <KPI icon={Activity} label="Runs today" value="1,772" delta="+12%" />
-              <KPI icon={Clock} label="Hours saved" value="37.4h" delta="+4h" />
-              <KPI icon={CheckCircle2} label="Success rate" value="99.2%" delta="+0.3%" />
-              <KPI icon={ArrowUpRight} label="ROI this month" value="$3,412" delta="+$480" />
+              <KPI icon={Activity} label={t("prt.teaserRunsToday")} value="1,772" delta="+12%" />
+              <KPI icon={Clock} label={t("portal.hoursSaved")} value="37.4h" delta="+4h" />
+              <KPI icon={CheckCircle2} label={t("prt.teaserSuccessRate")} value="99.2%" delta="+0.3%" />
+              <KPI icon={ArrowUpRight} label={t("portal.roiMonth")} value="$3,412" delta="+$480" />
             </div>
 
             <div className="lg:col-span-2">
               <div className="rounded-2xl border border-white/10 bg-navy-950/40">
                 <div className="flex items-center justify-between border-b border-white/10 px-5 py-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                  <span>Active automations</span>
-                  <span>Runs / Saved</span>
+                  <span>{t("portal.activeAutomations")}</span>
+                  <span>{t("prt.teaserRunsSaved")}</span>
                 </div>
                 <ul>
                   {runs.map((r, i) => (
@@ -103,7 +105,7 @@ export function PortalTeaser() {
 
         <div className="mt-8 text-center">
           <Link href="/portal">
-            <Button variant="secondary" size="lg">Preview the portal</Button>
+            <Button variant="secondary" size="lg">{t("portal.preview")}</Button>
           </Link>
         </div>
       </div>
@@ -122,6 +124,7 @@ function KPI({
   value: string;
   delta: string;
 }) {
+  const { t } = useLocale();
   return (
     <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
       <div className="flex items-center justify-between">
@@ -129,7 +132,7 @@ function KPI({
         <Icon className="h-4 w-4 text-cyan-electric" />
       </div>
       <p className="mt-2 font-display text-xl font-semibold tabular-nums">{value}</p>
-      <p className="text-[11px] text-emerald-300">{delta} vs last week</p>
+      <p className="text-[11px] text-emerald-300">{delta} {t("prt.vsLastWeek")}</p>
     </div>
   );
 }

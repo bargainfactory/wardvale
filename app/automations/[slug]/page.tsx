@@ -5,6 +5,7 @@ import { ArrowRight, Check, Sparkles, TrendingDown } from "lucide-react";
 import { PageLayout } from "@/components/page-layout";
 import { Button } from "@/components/ui/button";
 import { seoPages } from "@/lib/seo-pages";
+import { getT } from "@/lib/i18n-server";
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://flowforge.ai";
 
@@ -21,9 +22,10 @@ export async function generateMetadata({
   const page = seoPages.find((p) => p.slug === slug);
   if (!page) notFound();
 
+  const { t } = await getT();
   return {
-    title: page.metaTitle,
-    description: page.metaDescription,
+    title: t(page.metaTitle),
+    description: t(page.metaDescription),
     alternates: { canonical: `/automations/${slug}` },
   };
 }
@@ -46,14 +48,15 @@ export default async function AutomationPage({
   const page = seoPages.find((p) => p.slug === slug);
   if (!page) notFound();
 
-  const { head, tail } = splitHeadline(page.h1);
+  const { t } = await getT();
+  const { head, tail } = splitHeadline(t(page.h1));
 
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "Service",
-    name: page.workflow,
-    serviceType: `${page.vertical} automation`,
-    description: page.metaDescription,
+    name: t(page.workflow),
+    serviceType: `${t(page.vertical)} automation`,
+    description: t(page.metaDescription),
     provider: {
       "@type": "Organization",
       name: "FlowForge AI",
@@ -63,7 +66,7 @@ export default async function AutomationPage({
     url: `${siteUrl}/automations/${page.slug}`,
     offers: {
       "@type": "Offer",
-      description: `Estimated savings ${page.savings}`,
+      description: `Estimated savings ${t(page.savings)}`,
       priceCurrency: "USD",
     },
   };
@@ -82,25 +85,25 @@ export default async function AutomationPage({
         <div className="container relative">
           <div className="mx-auto max-w-3xl text-center">
             <p className="text-xs font-semibold uppercase tracking-[0.2em] text-cyan-electric">
-              {page.vertical} automation
+              {t(page.vertical)} {t("msc.slugAutomationLabel")}
             </p>
             <h1 className="mt-4 font-display text-4xl font-semibold tracking-tight sm:text-5xl lg:text-[56px] lg:leading-[1.1]">
               {head && <>{head} </>}
               <span className="gradient-text">{tail}</span>
             </h1>
             <p className="mx-auto mt-6 max-w-2xl text-lg text-muted-foreground">
-              {page.metaDescription}
+              {t(page.metaDescription)}
             </p>
             <div className="mt-8 flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
               <Link href="/build">
                 <Button size="lg">
-                  Build this automation free
+                  {t("msc.slugBuildFree")}
                   <ArrowRight className="h-4 w-4" />
                 </Button>
               </Link>
               <Link href="/pricing">
                 <Button variant="outline" size="lg">
-                  See pricing
+                  {t("msc.seePricing")}
                 </Button>
               </Link>
             </div>
@@ -114,18 +117,18 @@ export default async function AutomationPage({
           <div className="mx-auto grid max-w-5xl gap-5 md:grid-cols-2">
             <div className="glass rounded-3xl p-8">
               <p className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">
-                The problem
+                {t("msc.slugTheProblem")}
               </p>
               <p className="mt-4 text-base leading-relaxed text-muted-foreground">
-                {page.problem}
+                {t(page.problem)}
               </p>
             </div>
             <div className="gradient-border glass-strong rounded-3xl p-8">
               <p className="text-xs font-semibold uppercase tracking-[0.2em] text-cyan-electric">
-                How FlowForge fixes it
+                {t("msc.slugHowFixes")}
               </p>
               <p className="mt-4 text-base leading-relaxed text-foreground/90">
-                {page.solution}
+                {t(page.solution)}
               </p>
             </div>
           </div>
@@ -138,10 +141,10 @@ export default async function AutomationPage({
           <div className="mx-auto max-w-5xl">
             <div className="mb-8 text-center">
               <h2 className="font-display text-3xl font-semibold">
-                How the automation runs
+                {t("msc.slugHowRuns")}
               </h2>
               <p className="mt-2 text-muted-foreground">
-                Four connected steps, running fully hands-off.
+                {t("msc.slugHowRunsSub")}
               </p>
             </div>
             <div className="flex flex-col items-stretch gap-4 lg:flex-row lg:items-center">
@@ -153,11 +156,11 @@ export default async function AutomationPage({
                         {i + 1}
                       </span>
                       <span className="text-[11px] font-semibold uppercase tracking-wider text-cyan-electric">
-                        {step.tool}
+                        {t(step.tool)}
                       </span>
                     </div>
                     <p className="mt-3 text-sm font-medium leading-snug">
-                      {step.label}
+                      {t(step.label)}
                     </p>
                   </div>
                   {i < page.steps.length - 1 && (
@@ -178,19 +181,19 @@ export default async function AutomationPage({
               <div className="flex items-center gap-2 text-cyan-electric">
                 <TrendingDown className="h-5 w-5" />
                 <span className="text-xs font-semibold uppercase tracking-[0.2em]">
-                  Estimated impact
+                  {t("msc.slugEstImpact")}
                 </span>
               </div>
               <p className="mt-4 font-display text-5xl font-semibold tabular-nums gradient-text">
-                {page.savings}
+                {t(page.savings)}
               </p>
               <p className="mt-2 text-sm text-muted-foreground">
-                saved in labor and recovered revenue, typical for a small {page.vertical.toLowerCase()} business.
+                {t("msc.slugSavingsPre")}{t(page.vertical).toLowerCase()}{t("msc.slugSavingsPost")}
               </p>
             </div>
             <div className="glass rounded-3xl p-8">
               <p className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">
-                Tools we connect
+                {t("msc.slugToolsConnect")}
               </p>
               <div className="mt-5 flex flex-wrap gap-2.5">
                 {page.tools.map((tool) => (
@@ -199,13 +202,12 @@ export default async function AutomationPage({
                     className="inline-flex items-center gap-1.5 rounded-full border border-border bg-card/40 px-3.5 py-1.5 text-sm text-foreground"
                   >
                     <Check className="h-3.5 w-3.5 text-cyan-electric" />
-                    {tool}
+                    {t(tool)}
                   </span>
                 ))}
               </div>
               <p className="mt-6 text-sm text-muted-foreground">
-                Already using something else? FlowForge integrates with the tools you
-                run today, no rip-and-replace required.
+                {t("msc.slugToolsBody")}
               </p>
             </div>
           </div>
@@ -217,25 +219,24 @@ export default async function AutomationPage({
         <div className="container">
           <div className="mx-auto max-w-2xl rounded-3xl gradient-border glass-strong p-10 text-center">
             <span className="inline-flex items-center gap-1.5 rounded-full bg-cyan-electric/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-wider text-cyan-electric">
-              <Sparkles className="h-3 w-3" /> Free to build
+              <Sparkles className="h-3 w-3" /> {t("msc.slugFreeToBuild")}
             </span>
             <h2 className="mt-5 font-display text-3xl font-semibold">
-              Build your {page.workflow.toLowerCase()} in minutes
+              {t("msc.slugBuildPre")}{t(page.workflow).toLowerCase()}{t("msc.slugBuildPost")}
             </h2>
             <p className="mt-3 text-muted-foreground">
-              Map it out in our interactive builder and see exactly what FlowForge
-              would run for you. No credit card, no commitment.
+              {t("msc.slugCtaBody")}
             </p>
             <div className="mt-6 flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
               <Link href="/build">
                 <Button size="lg">
-                  Build this automation free
+                  {t("msc.slugBuildFree")}
                   <ArrowRight className="h-4 w-4" />
                 </Button>
               </Link>
               <Link href="/pricing">
                 <Button variant="secondary" size="lg">
-                  See pricing
+                  {t("msc.seePricing")}
                 </Button>
               </Link>
             </div>

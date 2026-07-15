@@ -3,8 +3,10 @@
 import { motion } from "framer-motion";
 import { steps } from "@/lib/data";
 import { SectionHeader } from "@/components/services";
+import { useLocale } from "@/lib/locale-context";
 
 export function HowItWorks() {
+  const { t } = useLocale();
   return (
     <section id="process" className="relative py-24 lg:py-32">
       <div className="container">
@@ -54,9 +56,9 @@ export function HowItWorks() {
                       </div>
                     </div>
                     <h3 className="mt-5 font-display text-xl font-semibold">
-                      {s.title}
+                      {t(s.title)}
                     </h3>
-                    <p className="mt-2 text-muted-foreground">{s.desc}</p>
+                    <p className="mt-2 text-muted-foreground">{t(s.desc)}</p>
                   </div>
 
                   <div

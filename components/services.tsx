@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import { ArrowRight } from "lucide-react";
 import { services } from "@/lib/data";
 import { cn } from "@/lib/utils";
+import { useLocale } from "@/lib/locale-context";
 
 const toneColor: Record<string, string> = {
   zap: "bg-cyan-electric/15 text-cyan-electric border-cyan-electric/30",
@@ -13,6 +14,7 @@ const toneColor: Record<string, string> = {
 };
 
 export function Services() {
+  const { t } = useLocale();
   return (
     <section id="services" className="relative py-24 lg:py-32">
       <div className="container">
@@ -45,8 +47,8 @@ export function Services() {
                   <ArrowRight className="h-4 w-4 text-muted-foreground transition group-hover:-rotate-45 group-hover:text-cyan-electric" />
                 </div>
 
-                <h3 className="mt-5 font-display text-xl font-semibold">{s.title}</h3>
-                <p className="mt-2 text-sm text-muted-foreground">{s.description}</p>
+                <h3 className="mt-5 font-display text-xl font-semibold">{t(s.title)}</h3>
+                <p className="mt-2 text-sm text-muted-foreground">{t(s.description)}</p>
 
                 <FlowPreview flow={s.flow} />
 
@@ -56,7 +58,7 @@ export function Services() {
                       key={o}
                       className="rounded-full border border-border bg-card/60 px-2.5 py-1 text-[11px] font-medium text-muted-foreground"
                     >
-                      {o}
+                      {t(o)}
                     </span>
                   ))}
                 </div>
@@ -74,6 +76,7 @@ function FlowPreview({
 }: {
   flow: { label: string; tone: string }[];
 }) {
+  const { t } = useLocale();
   return (
     <div className="mt-6 overflow-hidden rounded-2xl border border-white/10 bg-navy-950/40 p-3">
       <div className="flex items-center gap-2 overflow-x-auto">
@@ -95,7 +98,7 @@ function FlowPreview({
                 toneColor[node.tone]
               )}
             >
-              {node.label}
+              {t(node.label)}
             </motion.div>
             {i < flow.length - 1 && (
               <svg width="22" height="10" viewBox="0 0 22 10" className="shrink-0">

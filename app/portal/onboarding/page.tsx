@@ -4,11 +4,15 @@ import { isSupabaseAuthConfigured, getPortalUserEmail } from "@/lib/supabase-ssr
 import { getServiceClient } from "@/lib/supabase-server";
 import { ensureClientProvisioned } from "@/lib/provisioning";
 import { OnboardingWizard } from "@/components/onboarding-wizard";
+import { getT } from "@/lib/i18n-server";
 
-export const metadata: Metadata = {
-  title: "Get set up — FlowForge AI",
-  robots: { index: false, follow: false },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const { t } = await getT();
+  return {
+    title: t("prt.onboardingMetaTitle"),
+    robots: { index: false, follow: false },
+  };
+}
 
 const EMPTY = { industry: "", hours: "", services: "", pricing: "", faq: "", tone: "" };
 

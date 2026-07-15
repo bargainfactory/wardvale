@@ -6,8 +6,10 @@ import { useEffect, useRef, useState, useCallback } from "react";
 import { testimonials, trustBadges } from "@/lib/data";
 import { SectionHeader } from "@/components/services";
 import { cn } from "@/lib/utils";
+import { useLocale } from "@/lib/locale-context";
 
 export function Testimonials() {
+  const { t } = useLocale();
   const [idx, setIdx] = useState(0);
   const [dir, setDir] = useState(1);
   const timer = useRef<ReturnType<typeof setInterval>>(null);
@@ -27,7 +29,7 @@ export function Testimonials() {
     return () => { if (timer.current) clearInterval(timer.current); };
   }, [next]);
 
-  const t = testimonials[idx];
+  const item = testimonials[idx];
 
   return (
     <section className="relative py-24 lg:py-32">
@@ -64,18 +66,18 @@ export function Testimonials() {
                 </div>
 
                 <blockquote className="mt-5 font-display text-xl font-medium leading-relaxed sm:text-2xl">
-                  &ldquo;{t.quote}&rdquo;
+                  &ldquo;{t(item.quote)}&rdquo;
                 </blockquote>
 
                 <div className="mt-6 flex items-center justify-between">
                   <div>
-                    <p className="font-semibold">{t.name}</p>
+                    <p className="font-semibold">{item.name}</p>
                     <p className="text-sm text-muted-foreground">
-                      {t.role}, {t.company}
+                      {t(item.role)}, {item.company}
                     </p>
                   </div>
                   <span className="rounded-full border border-cyan-electric/25 bg-cyan-electric/10 px-3 py-1.5 text-sm font-semibold text-cyan-electric tabular-nums">
-                    {t.metric}
+                    {item.metric}
                   </span>
                 </div>
               </motion.div>
@@ -118,7 +120,7 @@ export function Testimonials() {
               key={b}
               className="rounded-full border border-border bg-card/50 px-4 py-2 text-xs font-medium text-muted-foreground backdrop-blur"
             >
-              {b}
+              {t(b)}
             </span>
           ))}
         </div>
