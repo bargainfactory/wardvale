@@ -14,3 +14,10 @@ Thumbs.db
 coverage/
 next-env.d.ts
 *.tsbuildinfo
+
+# secrets / key screenshots (never commit)
+*.jpg
+*.jpeg
+*XAI*
+*API KEY*
+*.pem
