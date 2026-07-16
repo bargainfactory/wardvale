@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { useState } from "react";
 import { ArrowRight, Check, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -9,6 +8,7 @@ import { getBenchmark } from "@/lib/benchmarks";
 import { formatCurrency } from "@/lib/utils";
 import { track } from "@/lib/analytics";
 import { useLocale } from "@/lib/locale-context";
+import { useStartExperience } from "@/components/start-experience/provider";
 
 /**
  * "Build Your OS" — pick a base vertical stack, toggle add-on agents, and see
@@ -17,6 +17,7 @@ import { useLocale } from "@/lib/locale-context";
  */
 export function OsConfigurator() {
   const { t } = useLocale();
+  const { open: openStart } = useStartExperience();
   const [baseIdx, setBaseIdx] = useState(0);
   const [selected, setSelected] = useState<string[]>([]);
   const base = bundles[baseIdx];
@@ -136,11 +137,16 @@ export function OsConfigurator() {
               </p>
             )}
 
-            <Link href="/build" onClick={() => track("configurator_build", { os: base.name, addons: selected, price, savings })}>
-              <Button size="lg" className="mt-5 w-full">
-                {t("sol.buildThisStack")} <ArrowRight className="h-4 w-4" />
-              </Button>
-            </Link>
+            <Button
+              size="lg"
+              className="mt-5 w-full"
+              onClick={() => {
+                track("configurator_build", { os: base.name, addons: selected, price, savings });
+                openStart(base.slug);
+              }}
+            >
+              {t("sol.buildThisStack")} <ArrowRight className="h-4 w-4" />
+            </Button>
             <p className="mt-3 flex items-center justify-center gap-1.5 text-[11px] text-muted-foreground">
               <ShieldCheck className="h-3.5 w-3.5 text-cyan-electric" /> {t("sol.cfgGuarantee")}
             </p>

@@ -3,13 +3,13 @@
 import { motion } from "framer-motion";
 import { useMounted } from "@/lib/use-mounted";
 import { ArrowRight } from "lucide-react";
-import Link from "next/link";
 import { PageLayout } from "@/components/page-layout";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { caseStudies, testimonials } from "@/lib/data";
 import { cn } from "@/lib/utils";
 import { useLocale } from "@/lib/locale-context";
+import { useStartExperience } from "@/components/start-experience/provider";
 
 const caseKeys: Record<string, string> = {
   "nona-bistro": "nona",
@@ -21,6 +21,7 @@ const caseKeys: Record<string, string> = {
 export default function ResultsPage() {
   const { t } = useLocale();
   const mounted = useMounted();
+  const { open: openStart } = useStartExperience();
 
   return (
     <PageLayout>
@@ -118,12 +119,10 @@ export default function ResultsPage() {
                         </div>
 
                         <div className="mt-6">
-                          <Link href="/pricing#quote">
-                            <Button className="w-full">
-                              {t("results.getResults")}
-                              <ArrowRight className="h-4 w-4" />
-                            </Button>
-                          </Link>
+                          <Button className="w-full" onClick={() => openStart()}>
+                            {t("results.getResults")}
+                            <ArrowRight className="h-4 w-4" />
+                          </Button>
                         </div>
                       </div>
                     </div>
@@ -208,12 +207,10 @@ export default function ResultsPage() {
               {t("results.joinSub")}
             </p>
             <div className="mt-6">
-              <Link href="/pricing#quote">
-                <Button size="lg">
-                  {t("cta.getAudit")}
-                  <ArrowRight className="h-4 w-4" />
-                </Button>
-              </Link>
+              <Button size="lg" onClick={() => openStart()}>
+                {t("cta.getAudit")}
+                <ArrowRight className="h-4 w-4" />
+              </Button>
             </div>
           </div>
         </div>

@@ -28,7 +28,8 @@ import { Button } from "@/components/ui/button";
 import { testimonials, trustBadges, tiers } from "@/lib/data";
 import { useLocale } from "@/lib/locale-context";
 import { getVariant } from "@/lib/analytics";
-import { WorkflowBuilder } from "@/components/workflow-builder";
+import { StartFlow } from "@/components/start-experience/start-flow";
+import { useStartExperience } from "@/components/start-experience/provider";
 import { GuaranteeBanner } from "@/components/guarantee";
 import { ProvenImpact } from "@/components/proven-impact";
 
@@ -42,6 +43,7 @@ const resultTeasers = [
 export default function Home() {
   const { t } = useLocale();
   const mounted = useMounted();
+  const { open: openStart } = useStartExperience();
 
   // Keep the Growth teaser price consistent with the /pricing A/B test.
   const [growthVariant, setGrowthVariant] = useState<"A" | "B">("A");
@@ -82,20 +84,19 @@ export default function Home() {
               {t("hero.sub")} <span className="text-foreground font-medium">{t("hero.sub.price")}</span>.
             </p>
             <div className="mt-9 flex flex-col items-center justify-center gap-3 sm:flex-row">
-              <Link href="#builder">
-                <Button size="lg">{t("hero.ctaPrimary")}<ArrowRight className="h-4 w-4" /></Button>
-              </Link>
+              <Button size="lg" onClick={() => openStart()}>{t("hero.ctaPrimary")}<ArrowRight className="h-4 w-4" /></Button>
               <Link href="/results">
                 <Button variant="secondary" size="lg"><Play className="h-4 w-4" />{t("hero.ctaSecondary")}</Button>
               </Link>
             </div>
-            <Link
-              href="/build"
+            <button
+              type="button"
+              onClick={() => openStart()}
               className="mt-4 inline-flex items-center gap-1.5 text-sm text-cyan-electric transition hover:gap-2"
             >
-              <Mic className="h-3.5 w-3.5" /> Or describe your workflow by voice
+              <Mic className="h-3.5 w-3.5" /> {t("start.typeOrSpeak")}
               <ArrowRight className="h-3.5 w-3.5" />
-            </Link>
+            </button>
             <p className="mt-4 text-xs text-muted-foreground">
               {t("hero.trust")}
             </p>
@@ -193,7 +194,9 @@ export default function Home() {
             </p>
           </div>
           <div className="mt-10">
-            <WorkflowBuilder />
+            <div className="mx-auto max-w-3xl gradient-border glass-strong overflow-hidden rounded-3xl">
+              <StartFlow />
+            </div>
           </div>
         </div>
       </section>
@@ -392,9 +395,7 @@ export default function Home() {
               {t("cta.readySub")}
             </p>
             <div className="mt-6 flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
-              <Link href="/pricing#quote">
-                <Button size="lg">{t("cta.getAudit")}<ArrowRight className="h-4 w-4" /></Button>
-              </Link>
+              <Button size="lg" onClick={() => openStart()}>{t("cta.getAudit")}<ArrowRight className="h-4 w-4" /></Button>
               <Link href="/process">
                 <Button variant="secondary" size="lg">{t("cta.seeHow")}</Button>
               </Link>

@@ -41,6 +41,10 @@ export async function POST(req: Request) {
 
   try {
     const body = await req.json();
+    // Industry is chosen up front in the Start experience; sanitize (it's fed
+    // into the system prompt) and keep it short.
+    const industry =
+      typeof body.industry === "string" ? body.industry.replace(/[\r\n`]+/g, " ").trim().slice(0, 80) : "";
 
     // Action: persist + email the finished blueprint.
     if (body.action === "email") {
@@ -57,10 +61,10 @@ export async function POST(req: Request) {
       await saveLead({
         name,
         email,
-        businessType: businessType ?? blueprint?.title,
+        businessType: businessType ?? industry ?? blueprint?.title,
         painPoints: blueprint?.summary,
         source: "workflow",
-        metadata: { blueprint },
+        metadata: { blueprint, industry },
       });
       if (email && blueprint) {
         await sendWorkflowBlueprint({ to: email, name, blueprint });
@@ -77,16 +81,19 @@ export async function POST(req: Request) {
       trace.flag("noKey", true);
       trace.setStatus("fallback");
       await trace.end();
-      return NextResponse.json(scriptedFallback(messages));
+      return NextResponse.json(scriptedFallback(messages, industry));
     }
 
     const answered = messages.filter((m) => m.role === "user").length;
     const nudge =
       answered >= 7 ? "\n\nYou now have plenty of detail — set done=true and return the blueprint." : "";
+    const industryClause = industry
+      ? `\n\nThe user has ALREADY chosen their industry: ${industry}. Do NOT ask what business they run — tailor every question and the final blueprint specifically to a ${industry} business, and ask thorough, specific questions (current tools / systems of record, volume, goals, constraints).`
+      : "";
 
     const attachment: Attachment | undefined = body.attachment;
     const apiMessages: ChatCompletionMessageParam[] = [
-      { role: "system", content: `${SECURITY_PREAMBLE}\n\n${SYSTEM}${nudge}` },
+      { role: "system", content: `${SECURITY_PREAMBLE}\n\n${SYSTEM}${industryClause}${nudge}` },
     ];
     messages.forEach((m, i) => {
       const isLast = i === messages.length - 1;
@@ -119,7 +126,7 @@ export async function POST(req: Request) {
       trace.flag("overBudget", true);
       trace.setStatus("fallback");
       await trace.end();
-      return NextResponse.json(scriptedFallback(messages));
+      return NextResponse.json(scriptedFallback(messages, industry));
     }
 
     if (attachment) trace.flag("attachment", attachment.kind ?? "unknown");
@@ -142,7 +149,7 @@ export async function POST(req: Request) {
     if (!parsed) {
       trace.setStatus("parse_fail");
       await trace.end();
-      return NextResponse.json(scriptedFallback(messages));
+      return NextResponse.json(scriptedFallback(messages, industry));
     }
     trace.flag("done", Boolean(parsed.done));
     await trace.end();
@@ -175,14 +182,17 @@ const SCRIPT = [
   "How often does it happen — daily, per order, weekly? And roughly how many?",
 ];
 
-function scriptedFallback(messages: Msg[]) {
+function scriptedFallback(messages: Msg[], industry = "") {
+  // When the industry was chosen up front, skip the "what business?" question
+  // and seed it as the first value.
+  const script = industry ? SCRIPT.slice(1) : SCRIPT;
   const answers = messages.filter((m) => m.role === "user").map((m) => m.content);
   const i = answers.length;
-  if (i < SCRIPT.length) {
-    return { done: false, progress: Math.round((i / SCRIPT.length) * 90), question: SCRIPT[i] };
+  if (i < script.length) {
+    return { done: false, progress: Math.round((i / script.length) * 90), question: script[i] };
   }
   const [biz = "your business", task = "a repetitive task", trigger = "an inbound event", tools = "your tools", volume = ""] =
-    answers;
+    industry ? [industry, ...answers] : answers;
   const roi = estimateRoi(volume);
   const monthly = Math.round((roi.tasksPerMonth * roi.minutesPerTask) / 60 * roi.hourlyCost);
   const blueprint: Blueprint = {

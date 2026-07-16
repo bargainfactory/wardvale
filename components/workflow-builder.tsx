@@ -63,9 +63,9 @@ function readFile(file: File, as: "dataURL" | "text"): Promise<string> {
   });
 }
 
-export function WorkflowBuilder() {
+export function WorkflowBuilder({ industry = "", embedded = false }: { industry?: string; embedded?: boolean } = {}) {
   const { t } = useLocale();
-  const [phase, setPhase] = useState<Phase>("intro");
+  const [phase, setPhase] = useState<Phase>(industry ? "thinking" : "intro");
   const [messages, setMessages] = useState<Msg[]>([]);
   const [input, setInput] = useState("");
   const [progress, setProgress] = useState(0);
@@ -86,6 +86,16 @@ export function WorkflowBuilder() {
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
   }, [messages, phase]);
+
+  // Industry chosen up front (Start experience) → begin immediately, skip intro.
+  const startedRef = useRef(false);
+  useEffect(() => {
+    if (industry && !startedRef.current) {
+      startedRef.current = true;
+      void begin();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [industry]);
 
   async function call(payload: object): Promise<ApiReply | null> {
     try {
@@ -123,7 +133,7 @@ export function WorkflowBuilder() {
   async function begin() {
     track("builder_start");
     setPhase("thinking");
-    const reply = await call({ messages: [] });
+    const reply = await call({ messages: [], industry });
     apply(reply, []);
   }
 
@@ -140,7 +150,7 @@ export function WorkflowBuilder() {
     setFileError(null);
     reset();
     setPhase("thinking");
-    const reply = await call({ messages: history, attachment: sentAttachment ?? undefined });
+    const reply = await call({ messages: history, attachment: sentAttachment ?? undefined, industry });
     apply(reply, history);
   }
 
@@ -190,8 +200,8 @@ export function WorkflowBuilder() {
   }
 
   return (
-    <div className="mx-auto max-w-3xl">
-      <div className="gradient-border glass-strong overflow-hidden rounded-3xl">
+    <div className={embedded ? "" : "mx-auto max-w-3xl"}>
+      <div className={embedded ? "overflow-hidden rounded-3xl" : "gradient-border glass-strong overflow-hidden rounded-3xl"}>
         {/* Header */}
         <div className="flex items-center justify-between border-b border-white/10 px-6 py-4">
           <div className="flex items-center gap-2">
@@ -384,7 +394,12 @@ export function WorkflowBuilder() {
 
             {/* Blueprint */}
             {phase === "done" && blueprint && (
-              <BlueprintCard key="done" blueprint={blueprint} businessType={messages.find((m) => m.role === "user")?.content} />
+              <BlueprintCard
+                key="done"
+                blueprint={blueprint}
+                industry={industry}
+                businessType={messages.find((m) => m.role === "user")?.content}
+              />
             )}
           </AnimatePresence>
         </div>
@@ -393,13 +408,27 @@ export function WorkflowBuilder() {
   );
 }
 
-function BlueprintCard({ blueprint, businessType }: { blueprint: Blueprint; businessType?: string }) {
+function BlueprintCard({ blueprint, businessType, industry }: { blueprint: Blueprint; businessType?: string; industry?: string }) {
   const { t } = useLocale();
   const [email, setEmail] = useState("");
   const [name, setName] = useState("");
   const [sent, setSent] = useState(false);
   const [sending, setSending] = useState(false);
   const roi: Roi = blueprint.roi ?? { tasksPerMonth: 400, minutesPerTask: 5, hourlyCost: 25 };
+
+  // Pre-fill the strategy-call booking with everything we've captured (same
+  // Calendly query-param pattern as the contact form): name, email, a1=industry,
+  // a2=the tailored blueprint. Recomputes as the visitor types their details.
+  const bookUrl = (() => {
+    const params = new URLSearchParams();
+    if (name.trim()) params.set("name", name.trim());
+    if (email.trim()) params.set("email", email.trim());
+    const a1 = industry || businessType || blueprint.title;
+    if (a1) params.set("a1", a1);
+    params.set("a2", blueprint.title);
+    const q = params.toString();
+    return q ? `${CALENDLY}?${q}` : CALENDLY;
+  })();
 
   async function emailMe() {
     if (!email.trim()) return;
@@ -427,7 +456,7 @@ function BlueprintCard({ blueprint, businessType }: { blueprint: Blueprint; busi
       <p className="mt-1 text-sm text-muted-foreground">{blueprint.summary}</p>
 
       {(() => {
-        const bench = businessType ? getBenchmark(businessType) : undefined;
+        const bench = getBenchmark(industry || businessType || "");
         if (!bench) return null;
         return (
           <div className="mt-4 flex items-start gap-2 rounded-2xl border border-indigo-400/25 bg-indigo-400/10 p-3 text-sm">
@@ -465,9 +494,9 @@ function BlueprintCard({ blueprint, businessType }: { blueprint: Blueprint; busi
 
       {/* CTAs */}
       <div className="mt-6 flex flex-col gap-3 sm:flex-row">
-        <a href={CALENDLY} target="_blank" rel="noopener noreferrer" className="flex-1">
+        <a href={bookUrl} target="_blank" rel="noopener noreferrer" className="flex-1">
           <Button size="lg" className="w-full">
-            <Calendar className="h-4 w-4" /> {blueprint.nextStep}
+            <Calendar className="h-4 w-4" /> {t("start.bookPrefilled")}
           </Button>
         </a>
       </div>

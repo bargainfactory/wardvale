@@ -5,6 +5,7 @@ import { PageLayout } from "@/components/page-layout";
 import { Button } from "@/components/ui/button";
 import { GuaranteeBanner } from "@/components/guarantee";
 import { OsConfigurator } from "@/components/os-configurator";
+import { StartCTA } from "@/components/start-experience/start-cta";
 import { bundles } from "@/lib/solutions";
 import { getBenchmark } from "@/lib/benchmarks";
 import { getT } from "@/lib/i18n-server";
@@ -73,9 +74,7 @@ export default async function SolutionsPage() {
                   )}
 
                   <div className="mt-6 flex items-center gap-4">
-                    <Link href="/build">
-                      <Button size="sm">{t("sol.buildYours")}</Button>
-                    </Link>
+                    <StartCTA industry={b.slug} size="sm">{t("sol.buildYours")}</StartCTA>
                     <Link
                       href={`/automations/${b.slug}`}
                       className="inline-flex items-center gap-1 text-sm text-muted-foreground transition group-hover:text-cyan-electric"
@@ -122,11 +121,9 @@ export default async function SolutionsPage() {
               {t("sol.noIndustrySub")}
             </p>
             <div className="mt-6 flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
-              <Link href="/build">
-                <Button size="lg">
-                  {t("sol.buildAutomation")} <ArrowRight className="h-4 w-4" />
-                </Button>
-              </Link>
+              <StartCTA size="lg">
+                {t("sol.buildAutomation")} <ArrowRight className="h-4 w-4" />
+              </StartCTA>
               <Link href="/pricing">
                 <Button variant="secondary" size="lg">
                   {t("sol.seePricing")}

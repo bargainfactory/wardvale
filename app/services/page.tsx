@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { services } from "@/lib/data";
 import { cn } from "@/lib/utils";
 import { useLocale } from "@/lib/locale-context";
+import { useStartExperience } from "@/components/start-experience/provider";
 
 const toneColor: Record<string, string> = {
   zap: "bg-cyan-electric/15 text-cyan-electric border-cyan-electric/30",
@@ -21,6 +22,7 @@ const toneColor: Record<string, string> = {
 export default function ServicesPage() {
   const { t } = useLocale();
   const mounted = useMounted();
+  const { open: openStart } = useStartExperience();
 
   return (
     <PageLayout>
@@ -84,12 +86,10 @@ export default function ServicesPage() {
                     </div>
 
                     <div className="mt-8">
-                      <Link href="/pricing#quote">
-                        <Button>
-                          {t("services.cta")}
-                          <ArrowRight className="h-4 w-4" />
-                        </Button>
-                      </Link>
+                      <Button onClick={() => openStart()}>
+                        {t("services.cta")}
+                        <ArrowRight className="h-4 w-4" />
+                      </Button>
                     </div>
                   </div>
 
@@ -174,12 +174,10 @@ export default function ServicesPage() {
               {t("services.notSure.sub")}
             </p>
             <div className="mt-6 flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
-              <Link href="/pricing#quote">
-                <Button size="lg">
-                  {t("cta.getAudit")}
-                  <ArrowRight className="h-4 w-4" />
-                </Button>
-              </Link>
+              <Button size="lg" onClick={() => openStart()}>
+                {t("cta.getAudit")}
+                <ArrowRight className="h-4 w-4" />
+              </Button>
               <Link href="/results">
                 <Button variant="secondary" size="lg">{t("cta.seeResults")}</Button>
               </Link>

@@ -1447,6 +1447,15 @@ const en: Dict = {
   "seo.propertyManagementMaintenanceAndTenantComms.step4": "Convert new inquiries lead-to-lease",
   "seo.propertyManagementMaintenanceAndTenantComms.savings": "~$5,300/mo",
   "seo.propertyManagementMaintenanceAndTenantComms.toolPropertyManagementSoftware": "property-management software",
+  "start.bookPrefilled": "Book strategy call (pre-filled)",
+  "start.changeIndustry": "Change industry",
+  "start.typeOrSpeak": "Type your answers, or tap the mic to speak.",
+  "start.eyebrow": "Tailored automation",
+  "start.pickIndustryTitle": "What's your industry?",
+  "start.pickIndustrySub": "Pick yours and we'll tailor a few quick questions — then build an automation blueprint for your business.",
+  "start.justBook": "Prefer to just book a strategy call?",
+  "start.dialogLabel": "Build your tailored automation",
+  "start.close": "Close",
 };
 
 const es: Dict = {
@@ -2871,6 +2880,15 @@ const es: Dict = {
   "seo.propertyManagementMaintenanceAndTenantComms.step4": "Convierte las nuevas consultas de lead a contrato",
   "seo.propertyManagementMaintenanceAndTenantComms.savings": "~$5,300/mes",
   "seo.propertyManagementMaintenanceAndTenantComms.toolPropertyManagementSoftware": "software de gestión de propiedades",
+  "start.bookPrefilled": "Reservar llamada estratégica (rellenada)",
+  "start.changeIndustry": "Cambiar sector",
+  "start.typeOrSpeak": "Escribe tus respuestas o toca el micrófono para hablar.",
+  "start.eyebrow": "Automatización a medida",
+  "start.pickIndustryTitle": "¿Cuál es tu sector?",
+  "start.pickIndustrySub": "Elige el tuyo y adaptaremos unas preguntas rápidas; luego crearemos un plan de automatización para tu negocio.",
+  "start.justBook": "¿Prefieres reservar una llamada estratégica directamente?",
+  "start.dialogLabel": "Crea tu automatización a medida",
+  "start.close": "Cerrar",
 };
 
 const fr: Dict = {
@@ -4295,6 +4313,15 @@ const fr: Dict = {
   "seo.propertyManagementMaintenanceAndTenantComms.step4": "Convertir les nouvelles demandes du lead au bail",
   "seo.propertyManagementMaintenanceAndTenantComms.savings": "~$5,300/mois",
   "seo.propertyManagementMaintenanceAndTenantComms.toolPropertyManagementSoftware": "logiciel de gestion immobilière",
+  "start.bookPrefilled": "Réserver un appel stratégique (pré-rempli)",
+  "start.changeIndustry": "Changer de secteur",
+  "start.typeOrSpeak": "Écrivez vos réponses ou appuyez sur le micro pour parler.",
+  "start.eyebrow": "Automatisation sur mesure",
+  "start.pickIndustryTitle": "Quel est votre secteur ?",
+  "start.pickIndustrySub": "Choisissez le vôtre et nous adapterons quelques questions rapides, puis créerons un plan d'automatisation pour votre entreprise.",
+  "start.justBook": "Vous préférez simplement réserver un appel stratégique ?",
+  "start.dialogLabel": "Créez votre automatisation sur mesure",
+  "start.close": "Fermer",
 };
 
 const pt: Dict = {
@@ -5704,6 +5731,15 @@ const pt: Dict = {
   "seo.propertyManagementMaintenanceAndTenantComms.step4": "Converter os novos pedidos de lead a contrato",
   "seo.propertyManagementMaintenanceAndTenantComms.savings": "~$5,300/mês",
   "seo.propertyManagementMaintenanceAndTenantComms.toolPropertyManagementSoftware": "software de gestão de imóveis",
+  "start.bookPrefilled": "Agendar chamada estratégica (pré-preenchida)",
+  "start.changeIndustry": "Mudar de setor",
+  "start.typeOrSpeak": "Digite suas respostas ou toque no microfone para falar.",
+  "start.eyebrow": "Automação sob medida",
+  "start.pickIndustryTitle": "Qual é o seu setor?",
+  "start.pickIndustrySub": "Escolha o seu e adaptaremos algumas perguntas rápidas; depois criaremos um plano de automação para o seu negócio.",
+  "start.justBook": "Prefere apenas agendar uma chamada estratégica?",
+  "start.dialogLabel": "Crie sua automação sob medida",
+  "start.close": "Fechar",
 };
 
 const de: Dict = {
@@ -7113,6 +7149,15 @@ const de: Dict = {
   "seo.propertyManagementMaintenanceAndTenantComms.step4": "Neue Anfragen vom Lead zum Mietvertrag umwandeln",
   "seo.propertyManagementMaintenanceAndTenantComms.savings": "~$5.300/Mon.",
   "seo.propertyManagementMaintenanceAndTenantComms.toolPropertyManagementSoftware": "Immobilienverwaltungs-Software",
+  "start.bookPrefilled": "Strategiegespräch buchen (vorausgefüllt)",
+  "start.changeIndustry": "Branche ändern",
+  "start.typeOrSpeak": "Tippe deine Antworten oder tippe zum Sprechen auf das Mikrofon.",
+  "start.eyebrow": "Maßgeschneiderte Automatisierung",
+  "start.pickIndustryTitle": "Was ist deine Branche?",
+  "start.pickIndustrySub": "Wähle deine aus und wir passen ein paar kurze Fragen an – dann erstellen wir einen Automatisierungsplan für dein Unternehmen.",
+  "start.justBook": "Lieber direkt ein Strategiegespräch buchen?",
+  "start.dialogLabel": "Erstelle deine maßgeschneiderte Automatisierung",
+  "start.close": "Schließen",
 };
 
 export const dictionaries: Record<Locale, Dict> = { en, es, fr, pt, de };

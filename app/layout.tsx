@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { headers } from "next/headers";
 import { ThemeProvider } from "@/components/theme-provider";
 import { LocaleProvider } from "@/lib/locale-context";
+import { StartExperienceProvider } from "@/components/start-experience/provider";
 import { AnalyticsProvider } from "@/components/analytics-provider";
 import { PwaRegister } from "@/components/pwa-register";
 import { locales, type Locale } from "@/lib/i18n";
@@ -238,7 +239,7 @@ export default async function RootLayout({
           disableTransitionOnChange
         >
           <LocaleProvider initialLocale={locale}>
-            {children}
+            <StartExperienceProvider>{children}</StartExperienceProvider>
             <AnalyticsProvider />
             <PwaRegister />
           </LocaleProvider>

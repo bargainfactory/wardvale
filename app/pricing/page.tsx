@@ -8,7 +8,8 @@ import Link from "next/link";
 import { PageLayout } from "@/components/page-layout";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ContactForm } from "@/components/contact-form";
+import { StartFlow } from "@/components/start-experience/start-flow";
+import { useStartExperience } from "@/components/start-experience/provider";
 import { FAQ } from "@/components/faq";
 import { GuaranteeBanner } from "@/components/guarantee";
 import { track, getVariant } from "@/lib/analytics";
@@ -25,6 +26,7 @@ import { useLocale } from "@/lib/locale-context";
 export default function PricingPage() {
   const { t } = useLocale();
   const mounted = useMounted();
+  const { open: openStart } = useStartExperience();
 
   // Sticky per-visitor variant; server + first client render use "A" (no
   // hydration mismatch), then we resolve the real variant after mount.
@@ -160,12 +162,10 @@ export default function PricingPage() {
                   {t("pricing.enterprise.blurb")}
                 </p>
               </div>
-              <a href="#quote">
-                <Button variant="outline" size="lg">
-                  {t("pricing.enterprise.cta")}
-                  <ArrowRight className="h-4 w-4" />
-                </Button>
-              </a>
+              <Button variant="outline" size="lg" onClick={() => openStart()}>
+                {t("pricing.enterprise.cta")}
+                <ArrowRight className="h-4 w-4" />
+              </Button>
             </div>
           </div>
 
@@ -229,8 +229,14 @@ export default function PricingPage() {
         </div>
       </section>
 
-      {/* Quote form */}
-      <ContactForm />
+      {/* Tailored automation experience (consolidated funnel — replaces the old quote form) */}
+      <section id="quote" className="relative py-24 lg:py-32">
+        <div className="container">
+          <div className="mx-auto max-w-2xl gradient-border glass-strong overflow-hidden rounded-3xl">
+            <StartFlow />
+          </div>
+        </div>
+      </section>
 
       {/* FAQ */}
       <FAQ />

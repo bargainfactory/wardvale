@@ -9,12 +9,14 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { localeLabels, locales, type Locale } from "@/lib/i18n";
 import { useLocale } from "@/lib/locale-context";
+import { useStartExperience } from "@/components/start-experience/provider";
 
 export function Nav() {
   const pathname = usePathname();
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
   const { locale, setLocale, t } = useLocale();
+  const { open: openStart } = useStartExperience();
 
   // Current path with any locale prefix stripped (for active-link matching).
   const normalizedPath = (() => {
@@ -100,11 +102,14 @@ export function Nav() {
               <LocaleSelect locale={locale} onChange={changeLocale} />
             </div>
             <ThemeToggle />
-            <Link href="/pricing#quote" className="hidden md:inline-flex">
-              <Button variant="primary" size="sm">
-                {t("nav.cta")}
-              </Button>
-            </Link>
+            <Button
+              variant="primary"
+              size="sm"
+              onClick={() => openStart()}
+              className="hidden md:inline-flex"
+            >
+              {t("nav.cta")}
+            </Button>
             <button
               type="button"
               aria-label="Menu"
@@ -132,9 +137,15 @@ export function Nav() {
               <div className="mt-3 flex items-center justify-center">
                 <LocaleSelect locale={locale} onChange={changeLocale} />
               </div>
-              <Link href="/pricing#quote" onClick={() => setOpen(false)}>
-                <Button className="mt-3 w-full">{t("nav.cta")}</Button>
-              </Link>
+              <Button
+                className="mt-3 w-full"
+                onClick={() => {
+                  setOpen(false);
+                  openStart();
+                }}
+              >
+                {t("nav.cta")}
+              </Button>
             </div>
           </div>
         )}

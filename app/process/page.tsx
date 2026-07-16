@@ -9,10 +9,12 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { steps } from "@/lib/data";
 import { useLocale } from "@/lib/locale-context";
+import { useStartExperience } from "@/components/start-experience/provider";
 
 export default function ProcessPage() {
   const { t } = useLocale();
   const mounted = useMounted();
+  const { open: openStart } = useStartExperience();
 
   const turnarounds = [t("step.1.time"), t("step.2.time"), t("step.3.time"), t("step.4.time"), t("step.5.time")];
   const details = [t("step.1.detail"), t("step.2.detail"), t("step.3.detail"), t("step.4.detail"), t("step.5.detail")];
@@ -142,12 +144,10 @@ export default function ProcessPage() {
               {t("guarantee.discoverySub")}
             </p>
             <div className="mt-6 flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
-              <Link href="/pricing#quote">
-                <Button size="lg">
-                  {t("cta.getAudit")}
-                  <ArrowRight className="h-4 w-4" />
-                </Button>
-              </Link>
+              <Button size="lg" onClick={() => openStart()}>
+                {t("cta.getAudit")}
+                <ArrowRight className="h-4 w-4" />
+              </Button>
               <Link href="/pricing">
                 <Button variant="secondary" size="lg">{t("pricing.viewDetails")}</Button>
               </Link>
