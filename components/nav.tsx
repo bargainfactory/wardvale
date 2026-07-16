@@ -112,7 +112,9 @@ export function Nav() {
             </Button>
             <button
               type="button"
-              aria-label="Menu"
+              aria-label={t("nav.menu")}
+              aria-expanded={open}
+              aria-controls="mobile-menu"
               onClick={() => setOpen((v) => !v)}
               className="grid h-9 w-9 place-items-center rounded-full border border-border md:hidden"
             >
@@ -122,7 +124,7 @@ export function Nav() {
         </nav>
 
         {open && (
-          <div className="glass-strong mt-2 rounded-3xl p-4 md:hidden">
+          <div id="mobile-menu" className="glass-strong mt-2 rounded-3xl p-4 md:hidden">
             <div className="flex flex-col">
               {links.map((l) => (
                 <Link
@@ -167,6 +169,8 @@ function LocaleSelect({
         <button
           key={l}
           onClick={() => onChange(l)}
+          aria-pressed={locale === l}
+          aria-label={`${localeLabels[l]}`}
           className={cn(
             "rounded-full px-2.5 py-1 transition-colors",
             locale === l

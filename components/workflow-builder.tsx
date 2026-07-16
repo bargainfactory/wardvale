@@ -67,7 +67,7 @@ function readFile(file: File, as: "dataURL" | "text"): Promise<string> {
 }
 
 export function WorkflowBuilder({ industry = "", embedded = false }: { industry?: string; embedded?: boolean } = {}) {
-  const { t } = useLocale();
+  const { t, locale } = useLocale();
   const [phase, setPhase] = useState<Phase>(industry ? "thinking" : "intro");
   const [messages, setMessages] = useState<Msg[]>([]);
   const [input, setInput] = useState("");
@@ -136,7 +136,7 @@ export function WorkflowBuilder({ industry = "", embedded = false }: { industry?
   async function begin() {
     track("builder_start");
     setPhase("thinking");
-    const reply = await call({ messages: [], industry });
+    const reply = await call({ messages: [], industry, locale });
     apply(reply, []);
   }
 
@@ -153,7 +153,7 @@ export function WorkflowBuilder({ industry = "", embedded = false }: { industry?
     setFileError(null);
     reset();
     setPhase("thinking");
-    const reply = await call({ messages: history, attachment: sentAttachment ?? undefined, industry });
+    const reply = await call({ messages: history, attachment: sentAttachment ?? undefined, industry, locale });
     apply(reply, history);
   }
 
@@ -262,7 +262,7 @@ export function WorkflowBuilder({ industry = "", embedded = false }: { industry?
             {/* Q&A */}
             {(phase === "asking" || phase === "thinking") && (
               <motion.div key="qa" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-                <div ref={scrollRef} className="max-h-72 space-y-3 overflow-y-auto pr-1">
+                <div ref={scrollRef} role="log" aria-live="polite" aria-atomic="false" className="max-h-72 space-y-3 overflow-y-auto pr-1">
                   {messages.map((m, i) => (
                     <div key={i} className={m.role === "user" ? "flex justify-end" : "flex justify-start"}>
                       <div
@@ -278,7 +278,7 @@ export function WorkflowBuilder({ industry = "", embedded = false }: { industry?
                     </div>
                   ))}
                   {phase === "thinking" && (
-                    <div className="flex items-center gap-2 px-1 text-sm text-muted-foreground">
+                    <div role="status" className="flex items-center gap-2 px-1 text-sm text-muted-foreground">
                       <Loader2 className="h-4 w-4 animate-spin text-cyan-electric" />
                       {t("bld.thinking")}
                     </div>
@@ -338,6 +338,7 @@ export function WorkflowBuilder({ industry = "", embedded = false }: { industry?
                   <div className={`flex items-end gap-2 rounded-2xl border bg-card/40 p-2 transition-colors ${listening ? "border-cyan-electric/50" : "border-border focus-within:border-cyan-electric/50"}`}>
                     <textarea
                       value={input}
+                      aria-label={t("start.answerLabel")}
                       onChange={(e) => setInput(e.target.value)}
                       onKeyDown={(e) => {
                         if (e.key === "Enter" && !e.shiftKey) {
@@ -552,6 +553,7 @@ function BlueprintCard({ blueprint, businessType, industry }: { blueprint: Bluep
               <input
                 value={name}
                 onChange={(e) => setName(e.target.value)}
+                aria-label={t("bld.namePlaceholder")}
                 placeholder={t("bld.namePlaceholder")}
                 className="rounded-xl border border-border bg-card/40 px-3 py-2 text-sm placeholder:text-muted-foreground focus:border-cyan-electric/50 focus:outline-none sm:w-40"
               />
@@ -559,6 +561,7 @@ function BlueprintCard({ blueprint, businessType, industry }: { blueprint: Bluep
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
+                aria-label={t("bld.emailPlaceholder")}
                 placeholder={t("bld.emailPlaceholder")}
                 className="flex-1 rounded-xl border border-border bg-card/40 px-3 py-2 text-sm placeholder:text-muted-foreground focus:border-cyan-electric/50 focus:outline-none"
               />

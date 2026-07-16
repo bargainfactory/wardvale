@@ -116,6 +116,13 @@ export async function POST(req: Request) {
       ? `\n\nThe user has ALREADY chosen their industry: ${industry}. That slot is FILLED — never ask what business they run. Tailor every question, every parenthetical example, and the final blueprint specifically to a ${industry} business.`
       : "";
 
+    // Localize the interview + blueprint to the visitor's site language.
+    const LANGS: Record<string, string> = { es: "Spanish", fr: "French", pt: "Portuguese", de: "German" };
+    const langName = LANGS[typeof body.locale === "string" ? body.locale : ""];
+    const langClause = langName
+      ? `\n\nWrite EVERYTHING you output — every question, every parenthetical example, and all blueprint text — in ${langName}, regardless of the language the user answers in.`
+      : "";
+
     // Deterministic anti-repeat guard: replaying the questions already asked as an
     // explicit checklist stops the model rewording a filled slot (it drifted on
     // SYSTEMS when this was only implied by the transcript).
@@ -128,7 +135,7 @@ export async function POST(req: Request) {
 
     const attachment: Attachment | undefined = body.attachment;
     const apiMessages: ChatCompletionMessageParam[] = [
-      { role: "system", content: `${SECURITY_PREAMBLE}\n\n${SYSTEM}${industryClause}${askedClause}${nudge}` },
+      { role: "system", content: `${SECURITY_PREAMBLE}\n\n${SYSTEM}${industryClause}${langClause}${askedClause}${nudge}` },
     ];
     messages.forEach((m, i) => {
       const isLast = i === messages.length - 1;

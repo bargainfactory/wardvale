@@ -12,6 +12,12 @@
   ::view-transition-new(*) {
     animation: none !important;
   }
+  /* Stop decorative infinite CSS keyframes (loaders excepted — they convey state). */
+  .animate-pulse-ring,
+  .animate-flow-dash,
+  .animate-pulse {
+    animation: none !important;
+  }
 }
 
 @layer base {

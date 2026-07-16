@@ -2,6 +2,7 @@
 
 import { createContext, useCallback, useContext, useEffect, useState, Suspense, type ReactNode } from "react";
 import { useSearchParams } from "next/navigation";
+import { MotionConfig } from "framer-motion";
 import { Dialog } from "@/components/ui/dialog";
 import { useLocale } from "@/lib/locale-context";
 import { StartFlow } from "./start-flow";
@@ -28,14 +29,18 @@ export function StartExperienceProvider({ children }: { children: ReactNode }) {
 
   return (
     <Ctx.Provider value={{ open: openFn, close: closeFn }}>
-      {children}
-      {/* Deep link: /any/path?start=1&industry=<slug> auto-opens (shareable, SSR links). */}
-      <Suspense fallback={null}>
-        <DeepLink onOpen={openFn} />
-      </Suspense>
-      <Dialog open={open} onClose={closeFn} label={t("start.dialogLabel")} closeLabel={t("start.close")}>
-        {open && <StartFlow key={industry || "pick"} initialIndustry={industry} />}
-      </Dialog>
+      {/* Respect prefers-reduced-motion app-wide: framer-motion transform/layout
+          animations are disabled for users who ask for reduced motion. */}
+      <MotionConfig reducedMotion="user">
+        {children}
+        {/* Deep link: /any/path?start=1&industry=<slug> auto-opens (shareable, SSR links). */}
+        <Suspense fallback={null}>
+          <DeepLink onOpen={openFn} />
+        </Suspense>
+        <Dialog open={open} onClose={closeFn} label={t("start.dialogLabel")} closeLabel={t("start.close")}>
+          {open && <StartFlow key={industry || "pick"} initialIndustry={industry} />}
+        </Dialog>
+      </MotionConfig>
     </Ctx.Provider>
   );
 }

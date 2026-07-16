@@ -1468,6 +1468,8 @@ const en: Dict = {
   "results.metaDesc": "Case studies with hard numbers: dollars saved, hours reclaimed, response times cut. See how restaurants, e-commerce, and service businesses automate with FlowForge.",
   "process.metaTitle": "Our Process — From Discovery to Live in 14 Days",
   "process.metaDesc": "How FlowForge ships revenue-grade automations: discovery, audit, build, launch, and scale. A clear five-step path with turnarounds at every stage.",
+  "start.answerLabel": "Your answer",
+  "nav.menu": "Menu",
 };
 
 const es: Dict = {
@@ -2913,6 +2915,8 @@ const es: Dict = {
   "results.metaDesc": "Casos de éxito con cifras concretas: dólares ahorrados, horas recuperadas, tiempos de respuesta reducidos. Descubre cómo restaurantes, e-commerce y servicios automatizan con FlowForge.",
   "process.metaTitle": "Nuestro proceso — De la consultoría al lanzamiento en 14 días",
   "process.metaDesc": "Cómo FlowForge crea automatizaciones de nivel empresarial: consultoría, auditoría, construcción, lanzamiento y escalado. Un camino claro de cinco pasos con plazos en cada etapa.",
+  "start.answerLabel": "Tu respuesta",
+  "nav.menu": "Menú",
 };
 
 const fr: Dict = {
@@ -4358,6 +4362,8 @@ const fr: Dict = {
   "results.metaDesc": "Études de cas chiffrées : dollars économisés, heures récupérées, temps de réponse réduits. Découvrez comment restaurants, e-commerce et services automatisent avec FlowForge.",
   "process.metaTitle": "Notre processus — De la découverte au lancement en 14 jours",
   "process.metaDesc": "Comment FlowForge livre des automatisations prêtes pour le chiffre d'affaires : découverte, audit, construction, lancement et mise à l'échelle. Un parcours clair en cinq étapes avec des délais à chaque étape.",
+  "start.answerLabel": "Votre réponse",
+  "nav.menu": "Menu",
 };
 
 const pt: Dict = {
@@ -5788,6 +5794,8 @@ const pt: Dict = {
   "results.metaDesc": "Casos de sucesso com números concretos: dólares economizados, horas recuperadas, tempos de resposta reduzidos. Veja como restaurantes, e-commerce e serviços automatizam com a FlowForge.",
   "process.metaTitle": "Nosso processo — Da descoberta ao lançamento em 14 dias",
   "process.metaDesc": "Como a FlowForge cria automações de nível empresarial: descoberta, auditoria, construção, lançamento e escala. Um caminho claro de cinco etapas com prazos em cada fase.",
+  "start.answerLabel": "Sua resposta",
+  "nav.menu": "Menu",
 };
 
 const de: Dict = {
@@ -7218,6 +7226,8 @@ const de: Dict = {
   "results.metaDesc": "Fallstudien mit harten Zahlen: gesparte Dollars, zurückgewonnene Stunden, kürzere Reaktionszeiten. Sehen Sie, wie Restaurants, E-Commerce und Dienstleister mit FlowForge automatisieren.",
   "process.metaTitle": "Unser Prozess — Von der Analyse bis live in 14 Tagen",
   "process.metaDesc": "Wie FlowForge umsatzstarke Automatisierungen liefert: Analyse, Audit, Aufbau, Launch und Skalierung. Ein klarer Fünf-Schritte-Weg mit Zeitplänen in jeder Phase.",
+  "start.answerLabel": "Deine Antwort",
+  "nav.menu": "Menü",
 };
 
 export const dictionaries: Record<Locale, Dict> = { en, es, fr, pt, de };

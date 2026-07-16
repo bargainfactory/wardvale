@@ -78,6 +78,7 @@ export function OsConfigurator() {
                   <button
                     key={a.id}
                     onClick={() => toggle(a.id)}
+                    aria-pressed={on}
                     className={`flex items-start gap-3 rounded-2xl border p-3 text-left transition ${
                       on
                         ? "border-cyan-electric/50 bg-cyan-electric/10"
