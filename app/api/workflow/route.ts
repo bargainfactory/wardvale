@@ -134,7 +134,7 @@ export async function POST(req: Request) {
       const isLast = i === messages.length - 1;
       if (isLast && m.role === "user" && attachment) {
         // Image → vision content part; small enough to inline as a data URL.
-        if (attachment.kind === "image" && attachment.dataUrl && attachment.dataUrl.length < 7_000_000) {
+        if (attachment.kind === "image" && attachment.dataUrl && attachment.dataUrl.length < 1_500_000) {
           apiMessages.push({
             role: "user",
             content: [

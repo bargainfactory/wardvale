@@ -68,7 +68,9 @@ export async function POST(req: Request) {
     trace.mark("model.start");
     const completion = await callModel({
       purpose: "chat",
-      max_tokens: 250,
+      // Headroom for a reasoning model: hidden reasoning tokens count against
+      // max_tokens, so 250 often returned empty content on Grok 4.5.
+      max_tokens: 800,
       temperature: 0.7,
       messages: [{ role: "system", content: SYSTEM_PROMPT }, ...messages.slice(-8)],
     });

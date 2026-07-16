@@ -26,6 +26,16 @@ export function recordTokens(key: string, tokens: number): void {
   else b.tokens += tokens;
 }
 
-// Generous daily ceiling per IP for the public AI endpoints (gpt-4o-mini is
-// cheap; this caps the tail, not normal use).
-export const DAILY_TOKEN_CAP = 200_000;
+// Per-IP daily ceiling for the public AI endpoints. Env-configurable because the
+// right value depends heavily on the model: a reasoning model (Grok 4.5) emits
+// hidden reasoning tokens billed as output, so the same interview costs far more
+// than it did on gpt-4o-mini AND a legitimate user hits the old 200k much sooner.
+// Default raised so real usage isn't silently downgraded to the scripted flow;
+// override via DAILY_TOKEN_CAP for tighter spend control.
+export const DAILY_TOKEN_CAP = Number(process.env.DAILY_TOKEN_CAP) || 500_000;
+
+// Global daily ceiling across ALL lanes (enforced centrally in lib/model.ts), so
+// server-side spenders (agent runtime, judge cron, MCP) that have no per-IP key
+// still have a hard spend backstop. Per-instance in-memory like the rest — set
+// Upstash for a true global cap. Override via GLOBAL_DAILY_TOKEN_CAP.
+export const GLOBAL_DAILY_TOKEN_CAP = Number(process.env.GLOBAL_DAILY_TOKEN_CAP) || 3_000_000;

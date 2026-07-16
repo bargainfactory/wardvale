@@ -453,7 +453,9 @@ export async function runVoiceTurn(said: string, context?: string, trace?: Trace
     trace?.mark("model.start");
     const completion = await callModel({
       purpose: "voice",
-      max_tokens: 120,
+      // A reasoning model needs budget for reasoning before the (short) spoken
+      // reply; 120 was consumed by reasoning and returned empty.
+      max_tokens: 500,
       temperature: 0.5,
       messages: [
         { role: "system", content: sys(`${SECURITY_PREAMBLE}\n\n${VOICE_SYSTEM}`, context) },

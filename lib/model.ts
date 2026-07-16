@@ -1,6 +1,16 @@
 import type { ChatCompletionCreateParamsNonStreaming } from "openai/resources/chat/completions";
 import { getOpenAI } from "@/lib/openai";
 import { getAnthropic } from "@/lib/anthropic";
+import { overBudget, recordTokens, GLOBAL_DAILY_TOKEN_CAP } from "@/lib/usage";
+
+/** Thrown when the global daily token ceiling is hit. Call sites already catch
+ * callModel errors and degrade to a deterministic fallback. */
+export class ModelBudgetError extends Error {
+  constructor() {
+    super("global daily token budget exceeded");
+    this.name = "ModelBudgetError";
+  }
+}
 
 // ── Single seam for every LLM call (roadmap G3 + multi-provider) ─────────────
 // One function over every provider. OpenAI-compatible hosts (OpenAI, xAI Grok,
@@ -167,14 +177,22 @@ export async function callModel(opts: CallModelOpts): Promise<ModelResponse> {
   const resolvedProvider = provider ?? providerFor(purpose);
   const resolvedModel = model || modelFor(resolvedProvider, purpose);
 
-  if (resolvedProvider === "anthropic") {
-    return callAnthropic(body as OpenAIBody, resolvedModel, { jsonSchema, timeoutMs, maxRetries, signal });
-  }
+  // Hard global spend backstop across every lane (reasoning models are pricey).
+  if (overBudget("ai:global", GLOBAL_DAILY_TOKEN_CAP)) throw new ModelBudgetError();
 
-  const params: ChatCompletionCreateParamsNonStreaming = { ...body, model: resolvedModel, stream: false };
-  return getOpenAI().chat.completions.create(params, {
-    timeout: timeoutMs ?? DEFAULT_TIMEOUT_MS,
-    maxRetries: maxRetries ?? DEFAULT_MAX_RETRIES,
-    signal,
-  });
+  let res: ModelResponse;
+  if (resolvedProvider === "anthropic") {
+    res = await callAnthropic(body as OpenAIBody, resolvedModel, { jsonSchema, timeoutMs, maxRetries, signal });
+  } else {
+    const params: ChatCompletionCreateParamsNonStreaming = { ...body, model: resolvedModel, stream: false };
+    res = await getOpenAI().chat.completions.create(params, {
+      timeout: timeoutMs ?? DEFAULT_TIMEOUT_MS,
+      maxRetries: maxRetries ?? DEFAULT_MAX_RETRIES,
+      signal,
+    });
+  }
+  // Central token accounting so server-side lanes (runtime, judge, MCP) that
+  // never called recordTokens now count toward the global ceiling.
+  recordTokens("ai:global", res.usage?.total_tokens ?? 0);
+  return res;
 }
