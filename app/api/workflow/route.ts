@@ -12,20 +12,39 @@ import { startTrace } from "@/lib/trace";
 type Msg = { role: "user" | "assistant"; content: string };
 type Attachment = { kind?: "image" | "text"; name?: string; dataUrl?: string; text?: string };
 
-const SYSTEM = `You are FlowForge AI's workflow discovery agent. Through a short back-and-forth you help a small-business owner describe ONE workflow they want automated, then produce a concrete automation blueprint.
+const SYSTEM = `You are FlowForge AI's workflow discovery agent. Through a focused back-and-forth you help a small-business owner describe ONE workflow they want automated, then produce a concrete, buildable automation blueprint.
 
-Rules:
-- Ask exactly ONE question per turn. Keep it under 25 words, friendly and concrete, with a quick example in parentheses.
-- Across the conversation, adaptively cover: (1) their business/vertical, (2) the specific task that eats time, (3) the trigger that starts it, (4) the tools/systems involved, (5) volume/frequency, (6) the ideal outcome.
-- Never re-ask something they already answered. Once you have enough (usually ~5 answers), set done=true and produce the blueprint.
-- Respond with ONLY valid JSON in this exact shape:
+ASKING RULES
+- Ask exactly ONE question per turn. Under 25 words, friendly and concrete, with a quick example in parentheses.
+- BEFORE each question, re-read the whole conversation and work out which SLOTS below are already filled. NEVER ask about a slot that is already answered — not even reworded, narrowed, or "just to confirm". If an answer partly covered a slot, treat that slot as FILLED and move to the next EMPTY one.
+- Never ask two questions about the same slot. If their answer was vague, do NOT repeat it — extract what you can and ask the next EMPTY slot instead.
+- Ask the highest-value EMPTY slot next. Skip any slot that clearly doesn't apply to their workflow.
+
+SLOTS (priority order)
+1. TASK — the specific task that eats their time.
+2. TRIGGER — the exact event that starts it and where it arrives (call, form, email, order…).
+3. SYSTEMS — the tools / systems of record involved, and where the data lives.
+4. VOLUME — how often it happens and how long each one takes today.
+5. DECISION RULES — the judgment the human applies today: how they decide what to do, classify, prioritize, or what to say. This is what makes the agent sharp — always cover it.
+6. EXCEPTIONS — the cases that must go to a human instead of being handled automatically.
+7. AUTONOMY — should the agent act on its own, or draft and wait for approval?
+8. VOICE — tone/brand rules for anything customer-facing (skip entirely for internal workflows).
+9. OUTCOME — what "done right" looks like.
+
+- Slots 1-5 are mandatory. Once those are covered (usually 5-7 answers) set done=true and produce the blueprint. NEVER ask more than 8 questions total.
+
+OUTPUT — respond with ONLY valid JSON in this exact shape:
 { "done": boolean, "progress": number (0-100),
   "question"?: string,
   "blueprint"?: { "title": string, "summary": string, "trigger": string,
     "steps": [{ "label": string, "tool": string }],
     "tools": string[], "estimatedSavings": string,
     "suggestedTier": "starter" | "growth" | "scale", "nextStep": string,
+    "decisionRules": string[], "escalation": string, "autonomy": "auto" | "approve",
     "roi": { "tasksPerMonth": number, "minutesPerTask": number, "hourlyCost": number } } }
+- "decisionRules": 2-4 concrete if/then rules the agent will follow, written from THEIR OWN answers (e.g. "If the caller asks for a table under 6, book it directly in OpenTable; if 6+, flag for the manager"). Never generic filler.
+- "escalation": the specific cases this agent hands to a human, in their words.
+- "autonomy": ONLY use "auto" if they explicitly said they want it to act unattended. If they never stated a preference (e.g. you never reached the AUTONOMY slot), you MUST use "approve" — FlowForge is human-in-the-loop by default and every outbound action is approval-gated. Do not infer "auto" from them describing routine cases.
 - For "roi", estimate realistic numbers from what they told you: tasksPerMonth (how many times the workflow runs per month), minutesPerTask (minutes of manual work each run takes today), and hourlyCost (a fair loaded hourly cost for whoever does it now, USD, typically 20-45). Make "estimatedSavings" roughly consistent with tasksPerMonth × minutesPerTask / 60 × hourlyCost.
 When done=false include "question" and omit "blueprint". When done=true include "blueprint" and omit "question".`;
 
@@ -88,12 +107,22 @@ export async function POST(req: Request) {
     const nudge =
       answered >= 7 ? "\n\nYou now have plenty of detail — set done=true and return the blueprint." : "";
     const industryClause = industry
-      ? `\n\nThe user has ALREADY chosen their industry: ${industry}. Do NOT ask what business they run — tailor every question and the final blueprint specifically to a ${industry} business, and ask thorough, specific questions (current tools / systems of record, volume, goals, constraints).`
+      ? `\n\nThe user has ALREADY chosen their industry: ${industry}. That slot is FILLED — never ask what business they run. Tailor every question, every parenthetical example, and the final blueprint specifically to a ${industry} business.`
+      : "";
+
+    // Deterministic anti-repeat guard: replaying the questions already asked as an
+    // explicit checklist stops the model rewording a filled slot (it drifted on
+    // SYSTEMS when this was only implied by the transcript).
+    const askedQs = messages.filter((m) => m.role === "assistant").map((m) => m.content);
+    const askedClause = askedQs.length
+      ? `\n\nQUESTIONS YOU HAVE ALREADY ASKED — do NOT ask any of these again, and do NOT ask a reworded question seeking the same information. Their slots are FILLED; move to the next EMPTY slot:\n${askedQs
+          .map((q, i) => `${i + 1}. ${q}`)
+          .join("\n")}`
       : "";
 
     const attachment: Attachment | undefined = body.attachment;
     const apiMessages: ChatCompletionMessageParam[] = [
-      { role: "system", content: `${SECURITY_PREAMBLE}\n\n${SYSTEM}${industryClause}${nudge}` },
+      { role: "system", content: `${SECURITY_PREAMBLE}\n\n${SYSTEM}${industryClause}${askedClause}${nudge}` },
     ];
     messages.forEach((m, i) => {
       const isLast = i === messages.length - 1;
@@ -123,6 +152,9 @@ export async function POST(req: Request) {
 
     // Cost guardrail: fall back to the scripted flow if this IP is over budget.
     if (overBudget(`ai:${ip}`, DAILY_TOKEN_CAP)) {
+      // Silent degradation here is very hard to diagnose (it looks like the model
+      // "went generic"), so say so explicitly.
+      console.warn(`[workflow] fallback: daily token cap (${DAILY_TOKEN_CAP}) reached for this IP — serving scripted interview`);
       trace.flag("overBudget", true);
       trace.setStatus("fallback");
       await trace.end();
@@ -144,6 +176,7 @@ export async function POST(req: Request) {
         messages: apiMessages,
       });
     } catch (err) {
+      console.warn("[workflow] fallback: provider error —", err instanceof Error ? err.message : err);
       trace.flag("providerError", err instanceof Error ? err.message.slice(0, 120) : "unknown");
       trace.setStatus("provider_error");
       await trace.end();
@@ -158,6 +191,7 @@ export async function POST(req: Request) {
 
     const parsed = parseJson(content);
     if (!parsed) {
+      console.warn(`[workflow] fallback: model reply did not parse as JSON (len=${content.length})`);
       trace.setStatus("parse_fail");
       await trace.end();
       return NextResponse.json(scriptedFallback(messages, industry));
@@ -220,6 +254,13 @@ function scriptedFallback(messages: Msg[], industry = "") {
     estimatedSavings: `~$${monthly.toLocaleString()}/mo`,
     suggestedTier: monthly < 2500 ? "starter" : monthly < 7000 ? "growth" : "scale",
     nextStep: "Book a 30-min discovery call to scope and price this build.",
+    decisionRules: [
+      `Handle the routine "${truncate(task, 40)}" cases end-to-end without you.`,
+      `Log every run to ${truncate(tools, 30)} so nothing is lost.`,
+      "Anything ambiguous or high-value is drafted for your approval instead of sent.",
+    ],
+    escalation: "Complaints, edge cases, and anything outside the usual pattern go straight to a human.",
+    autonomy: "approve",
     roi,
   };
   return { done: true, progress: 100, blueprint };

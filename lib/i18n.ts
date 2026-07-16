@@ -1456,6 +1456,10 @@ const en: Dict = {
   "start.justBook": "Prefer to just book a strategy call?",
   "start.dialogLabel": "Build your tailored automation",
   "start.close": "Close",
+  "start.agentRules": "How this agent decides",
+  "start.escalates": "Escalates to a human:",
+  "start.autonomyAuto": "Acts automatically",
+  "start.autonomyApprove": "Drafts for your approval",
 };
 
 const es: Dict = {
@@ -2889,6 +2893,10 @@ const es: Dict = {
   "start.justBook": "¿Prefieres reservar una llamada estratégica directamente?",
   "start.dialogLabel": "Crea tu automatización a medida",
   "start.close": "Cerrar",
+  "start.agentRules": "Cómo decide este agente",
+  "start.escalates": "Deriva a una persona:",
+  "start.autonomyAuto": "Actúa automáticamente",
+  "start.autonomyApprove": "Redacta para tu aprobación",
 };
 
 const fr: Dict = {
@@ -4322,6 +4330,10 @@ const fr: Dict = {
   "start.justBook": "Vous préférez simplement réserver un appel stratégique ?",
   "start.dialogLabel": "Créez votre automatisation sur mesure",
   "start.close": "Fermer",
+  "start.agentRules": "Comment cet agent décide",
+  "start.escalates": "Transmet à un humain :",
+  "start.autonomyAuto": "Agit automatiquement",
+  "start.autonomyApprove": "Rédige pour votre approbation",
 };
 
 const pt: Dict = {
@@ -5740,6 +5752,10 @@ const pt: Dict = {
   "start.justBook": "Prefere apenas agendar uma chamada estratégica?",
   "start.dialogLabel": "Crie sua automação sob medida",
   "start.close": "Fechar",
+  "start.agentRules": "Como este agente decide",
+  "start.escalates": "Encaminha para uma pessoa:",
+  "start.autonomyAuto": "Age automaticamente",
+  "start.autonomyApprove": "Redige para sua aprovação",
 };
 
 const de: Dict = {
@@ -7158,6 +7174,10 @@ const de: Dict = {
   "start.justBook": "Lieber direkt ein Strategiegespräch buchen?",
   "start.dialogLabel": "Erstelle deine maßgeschneiderte Automatisierung",
   "start.close": "Schließen",
+  "start.agentRules": "Wie dieser Agent entscheidet",
+  "start.escalates": "Übergibt an einen Menschen:",
+  "start.autonomyAuto": "Handelt automatisch",
+  "start.autonomyApprove": "Entwirft zur Freigabe",
 };
 
 export const dictionaries: Record<Locale, Dict> = { en, es, fr, pt, de };

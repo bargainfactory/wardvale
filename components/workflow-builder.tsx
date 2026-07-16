@@ -41,6 +41,9 @@ type Blueprint = {
   estimatedSavings: string;
   suggestedTier: "starter" | "growth" | "scale";
   nextStep: string;
+  decisionRules?: string[];
+  escalation?: string;
+  autonomy?: "auto" | "approve";
   roi?: { tasksPerMonth: number; minutesPerTask: number; hourlyCost: number };
 };
 type Roi = { tasksPerMonth: number; minutesPerTask: number; hourlyCost: number };
@@ -478,6 +481,37 @@ function BlueprintCard({ blueprint, businessType, industry }: { blueprint: Bluep
           savedPerRun={roi.minutesPerTask}
         />
       </div>
+
+      {/* What makes this agent sharp: the rules it follows and when it defers. */}
+      {(blueprint.decisionRules?.length || blueprint.escalation) && (
+        <div className="mt-5 rounded-2xl border border-border bg-card/40 p-4">
+          <div className="flex items-center justify-between gap-3">
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-cyan-electric">
+              {t("start.agentRules")}
+            </p>
+            {blueprint.autonomy && (
+              <span className="rounded-full border border-border bg-card/60 px-2.5 py-1 text-[11px] text-muted-foreground">
+                {t(blueprint.autonomy === "auto" ? "start.autonomyAuto" : "start.autonomyApprove")}
+              </span>
+            )}
+          </div>
+          {blueprint.decisionRules?.length ? (
+            <ul className="mt-3 space-y-1.5">
+              {blueprint.decisionRules.map((r, i) => (
+                <li key={i} className="flex gap-2 text-sm text-muted-foreground">
+                  <Check className="mt-0.5 h-3.5 w-3.5 shrink-0 text-cyan-electric" />
+                  <span>{r}</span>
+                </li>
+              ))}
+            </ul>
+          ) : null}
+          {blueprint.escalation && (
+            <p className="mt-3 border-t border-border/60 pt-3 text-xs text-muted-foreground">
+              <span className="font-medium text-foreground">{t("start.escalates")}</span> {blueprint.escalation}
+            </p>
+          )}
+        </div>
+      )}
 
       {/* Computed, adjustable ROI */}
       <RoiPanel roi={roi} suggestedTier={blueprint.suggestedTier} />

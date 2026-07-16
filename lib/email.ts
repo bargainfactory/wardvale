@@ -13,6 +13,12 @@ export type Blueprint = {
   estimatedSavings: string;
   suggestedTier: "starter" | "growth" | "scale";
   nextStep: string;
+  /** Concrete if/then rules the agent follows — drawn from the owner's own answers. */
+  decisionRules?: string[];
+  /** The specific cases this agent hands to a human. */
+  escalation?: string;
+  /** Whether the agent acts unattended or drafts for approval first. */
+  autonomy?: "auto" | "approve";
   // Structured inputs so the client can compute (and let the user adjust) ROI.
   roi?: { tasksPerMonth: number; minutesPerTask: number; hourlyCost: number };
 };
