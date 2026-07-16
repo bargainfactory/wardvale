@@ -7,11 +7,11 @@ import { seoPages } from "@/lib/seo-pages";
 import { getT } from "@/lib/i18n-server";
 
 export async function generateMetadata(): Promise<Metadata> {
-  const { t } = await getT();
+  const { t, locale } = await getT();
   return {
     title: t("msc.automationsMetaTitle"),
     description: t("msc.automationsMetaDescription"),
-    alternates: { canonical: "/automations" },
+    alternates: { canonical: locale === "en" ? "/automations" : `/${locale}/automations` },
   };
 }
 

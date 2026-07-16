@@ -28,8 +28,10 @@ export default function sitemap(): MetadataRoute.Sitemap {
     })),
   ];
 
-  // Pages whose content is fully translated get hreflang alternates.
-  const localized = new Set(["/", "/services", "/pricing", "/results", "/process"]);
+  // Every marketing route is served in all 5 locales via middleware rewrite, so
+  // emit hreflang alternates (+ x-default) for all of them — matching the on-page
+  // hreflang from app/layout.tsx. Only the auth portal is English-only.
+  const notLocalized = new Set(["/portal"]);
   const altLocales = ["es", "fr", "pt", "de"];
 
   return routes.map((r) => {
@@ -40,8 +42,8 @@ export default function sitemap(): MetadataRoute.Sitemap {
       changeFrequency: r.changeFrequency,
       priority: r.priority,
     };
-    if (localized.has(r.path)) {
-      const languages: Record<string, string> = { en: url };
+    if (!notLocalized.has(r.path)) {
+      const languages: Record<string, string> = { en: url, "x-default": url };
       for (const l of altLocales) {
         languages[l] = `${siteUrl}/${l}${r.path === "/" ? "" : r.path}`;
       }

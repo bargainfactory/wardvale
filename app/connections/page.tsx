@@ -6,11 +6,11 @@ import { getT } from "@/lib/i18n-server";
 import { connectors, isConnectorConfigured, type Category, type Connector } from "@/lib/connectors";
 
 export async function generateMetadata(): Promise<Metadata> {
-  const { t } = await getT();
+  const { t, locale } = await getT();
   return {
     title: t("conn.metaTitle"),
     description: t("conn.metaDesc"),
-    alternates: { canonical: "/connections" },
+    alternates: { canonical: locale === "en" ? "/connections" : `/${locale}/connections` },
   };
 }
 

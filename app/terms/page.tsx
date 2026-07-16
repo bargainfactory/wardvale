@@ -3,11 +3,11 @@ import { PageLayout } from "@/components/page-layout";
 import { getT } from "@/lib/i18n-server";
 
 export async function generateMetadata(): Promise<Metadata> {
-  const { t } = await getT();
+  const { t, locale } = await getT();
   return {
     title: t("legal.termsMetaTitle"),
     description: t("legal.termsMetaDescription"),
-    alternates: { canonical: "/terms" },
+    alternates: { canonical: locale === "en" ? "/terms" : `/${locale}/terms` },
   };
 }
 

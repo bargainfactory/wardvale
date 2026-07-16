@@ -11,11 +11,11 @@ import { getBenchmark } from "@/lib/benchmarks";
 import { getT } from "@/lib/i18n-server";
 
 export async function generateMetadata(): Promise<Metadata> {
-  const { t } = await getT();
+  const { t, locale } = await getT();
   return {
     title: t("sol.metaTitle"),
     description: t("sol.metaDesc"),
-    alternates: { canonical: "/solutions" },
+    alternates: { canonical: locale === "en" ? "/solutions" : `/${locale}/solutions` },
   };
 }
 

@@ -8,11 +8,11 @@ import type { InboxPreview } from "@/lib/inbox-preview";
 import { getT } from "@/lib/i18n-server";
 
 export async function generateMetadata(): Promise<Metadata> {
-  const { t } = await getT();
+  const { t, locale } = await getT();
   return {
     title: t("msc.connectMetaTitle"),
     description: t("msc.connectMetaDescription"),
-    alternates: { canonical: "/connect" },
+    alternates: { canonical: locale === "en" ? "/connect" : `/${locale}/connect` },
   };
 }
 

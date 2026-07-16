@@ -6,6 +6,12 @@ import { NextResponse, type NextRequest } from "next/server";
 // header, and x-pathname carries the locale-stripped path for hreflang.
 const PREFIXED = ["es", "fr", "pt", "de"];
 
+// Crawlers/link-unfurlers must reach the exact URL they requested — Google
+// discourages Accept-Language auto-redirects, and a bot's Accept-Language would
+// otherwise bounce it off the canonical (English) URL.
+const BOT_RE = /bot|crawl|spider|slurp|bingpreview|facebookexternalhit|embedly|whatsapp|telegram|discord|preview|lighthouse|headless/i;
+const isBot = (ua: string | null) => BOT_RE.test(ua ?? "");
+
 export function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
   const seg = pathname.split("/")[1] ?? "";
@@ -29,7 +35,7 @@ export function middleware(req: NextRequest) {
   let target: string | null = null;
   if (cookie && PREFIXED.includes(cookie)) {
     target = cookie;
-  } else if (!cookie) {
+  } else if (!cookie && !isBot(req.headers.get("user-agent"))) {
     const pref = (req.headers.get("accept-language") ?? "").split(",")[0]?.slice(0, 2).toLowerCase();
     if (pref && PREFIXED.includes(pref)) target = pref;
   }

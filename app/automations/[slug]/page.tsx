@@ -22,11 +22,11 @@ export async function generateMetadata({
   const page = seoPages.find((p) => p.slug === slug);
   if (!page) notFound();
 
-  const { t } = await getT();
+  const { t, locale } = await getT();
   return {
     title: t(page.metaTitle),
     description: t(page.metaDescription),
-    alternates: { canonical: `/automations/${slug}` },
+    alternates: { canonical: locale === "en" ? `/automations/${slug}` : `/${locale}/automations/${slug}` },
   };
 }
 

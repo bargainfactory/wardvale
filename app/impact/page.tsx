@@ -9,11 +9,11 @@ import { getServiceClient } from "@/lib/supabase-server";
 import { getT } from "@/lib/i18n-server";
 
 export async function generateMetadata(): Promise<Metadata> {
-  const { t } = await getT();
+  const { t, locale } = await getT();
   return {
     title: t("imp.metaTitle"),
     description: t("imp.metaDescription"),
-    alternates: { canonical: "/impact" },
+    alternates: { canonical: locale === "en" ? "/impact" : `/${locale}/impact` },
   };
 }
 

@@ -5,11 +5,11 @@ import { Button } from "@/components/ui/button";
 import { getT } from "@/lib/i18n-server";
 
 export async function generateMetadata(): Promise<Metadata> {
-  const { t } = await getT();
+  const { t, locale } = await getT();
   return {
     title: t("msc.mcpMetaTitle"),
     description: t("msc.mcpMetaDescription"),
-    alternates: { canonical: "/mcp" },
+    alternates: { canonical: locale === "en" ? "/mcp" : `/${locale}/mcp` },
   };
 }
 

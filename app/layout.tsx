@@ -95,7 +95,7 @@ const jsonLd = {
         "@type": "ContactPoint",
         email: "hello@flowforge.ai",
         contactType: "sales",
-        availableLanguage: ["English", "Spanish", "French"],
+        availableLanguage: ["English", "Spanish", "French", "Portuguese", "German"],
       },
       sameAs: [
         "https://twitter.com/flowforgeai",
@@ -108,7 +108,7 @@ const jsonLd = {
       url: siteUrl,
       name: "FlowForge AI",
       publisher: { "@id": `${siteUrl}/#org` },
-      inLanguage: ["en", "es", "fr"],
+      inLanguage: ["en", "es", "fr", "pt", "de"],
     },
     {
       "@type": "Service",
@@ -151,52 +151,9 @@ const jsonLd = {
           "Small business owners: restaurants, e-commerce stores, consultants, local service businesses",
       },
     },
-    {
-      "@type": "FAQPage",
-      "@id": `${siteUrl}/#faq`,
-      mainEntity: [
-        {
-          "@type": "Question",
-          name: "How fast will I see ROI?",
-          acceptedAnswer: {
-            "@type": "Answer",
-            text: "Most clients break even within 21 days of launch. Our typical Growth-tier engagement returns 4–9× the monthly retainer in hard cost savings by month 3.",
-          },
-        },
-        {
-          "@type": "Question",
-          name: "Do I need technical staff?",
-          acceptedAnswer: {
-            "@type": "Answer",
-            text: "No. We run the build, the ops, and the monitoring. You get a Loom walkthrough, a runbook, and Slack access.",
-          },
-        },
-        {
-          "@type": "Question",
-          name: "What tools do you integrate with?",
-          acceptedAnswer: {
-            "@type": "Answer",
-            text: "Anything with an API. Native expertise in Zapier, Make, HubSpot, Shopify, Stripe, Gmail/Outlook, Calendly, Notion, Airtable, Slack, Twilio, and OpenAI/Anthropic.",
-          },
-        },
-        {
-          "@type": "Question",
-          name: "Can I cancel month-to-month?",
-          acceptedAnswer: {
-            "@type": "Answer",
-            text: "Yes. All retainers are month-to-month after a 30-day onboarding. You keep every automation we build.",
-          },
-        },
-        {
-          "@type": "Question",
-          name: "Is my data safe?",
-          acceptedAnswer: {
-            "@type": "Answer",
-            text: "We run on your infrastructure (your Zapier, your OpenAI key, your DB). We never store customer PII. GDPR-ready, signed DPA on request.",
-          },
-        },
-      ],
-    },
+    // NOTE: FAQPage structured data is emitted ONLY on /pricing (where the FAQ is
+    // actually visible), in app/pricing/layout.tsx — Google requires the marked-up
+    // Q&A to be present on the page. It must not live in this global @graph.
   ],
 };
 
