@@ -44,6 +44,16 @@ export async function POST(req: Request) {
     const agency = await getAgencyFor(email);
     if (!agency) return NextResponse.json({ error: "no_agency" }, { status: 400 });
     if (!body.clientEmail) return NextResponse.json({ error: "bad_request" }, { status: 400 });
+    // Prevent tenant hijack: an agency may only provision a BRAND-NEW client, never
+    // re-parent an account that already exists (which provisionClient's "existing"
+    // branch would silently do, reassigning another tenant's agency_id + name).
+    // Joining an existing account to an agency must go through a consent/invite flow.
+    const { data: existingClient } = await svc
+      .from("clients")
+      .select("id")
+      .eq("email", body.clientEmail.toLowerCase())
+      .maybeSingle();
+    if (existingClient) return NextResponse.json({ error: "client_exists" }, { status: 409 });
     const created = await provisionClient({
       email: body.clientEmail,
       name: body.clientName,

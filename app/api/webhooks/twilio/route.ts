@@ -43,6 +43,11 @@ export async function POST(req: Request) {
     if (!sig || !isValidSignature(url, params, sig, authToken)) {
       return xml('<?xml version="1.0" encoding="UTF-8"?><Response></Response>', 403);
     }
+  } else if (process.env.NODE_ENV === "production") {
+    // Fail CLOSED: without the auth token we cannot verify the signature, so an
+    // unauthenticated caller could forge inbound SMS/voice events (which trigger
+    // LLM runs + approvals). Refuse rather than trust the payload.
+    return xml('<?xml version="1.0" encoding="UTF-8"?><Response></Response>', 503);
   }
 
   const supabase = getServiceClient();

@@ -3,6 +3,7 @@ import { callModel } from "@/lib/model";
 import { rateLimit, clientIp } from "@/lib/rate-limit";
 import { saveLead } from "@/lib/leads";
 import { verifyTurnstile } from "@/lib/turnstile";
+import { fenceUntrusted, SECURITY_PREAMBLE } from "@/lib/guardrails";
 
 const FALLBACK = {
   ok: true,
@@ -50,12 +51,11 @@ export async function POST(req: Request) {
       messages: [
         {
           role: "system",
-          content:
-            "You are a FlowForge AI automation auditor. Given quick-survey answers about a small business, generate a brief ROI summary with 2-3 bullet recommendations and estimated monthly savings. Return JSON: { message: string, recommendations: string[], estimatedSavings: string }",
+          content: `${SECURITY_PREAMBLE}\n\nYou are a FlowForge AI automation auditor. Given quick-survey answers about a small business, generate a brief ROI summary with 2-3 bullet recommendations and estimated monthly savings. Return JSON: { message: string, recommendations: string[], estimatedSavings: string }`,
         },
         {
           role: "user",
-          content: `Business type: ${biz}\nTeam size: ${size}\nBiggest pain: ${pain}\nBudget: ${budget}`,
+          content: fenceUntrusted(`Business type: ${biz}\nTeam size: ${size}\nBiggest pain: ${pain}\nBudget: ${budget}`),
         },
       ],
     });

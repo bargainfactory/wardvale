@@ -8,6 +8,7 @@ import { validateArgs } from "@/lib/mcp";
 import { startTrace } from "@/lib/trace";
 import { getServiceClient } from "@/lib/supabase-server";
 import { runConcierge, defaultDeps, type Lead } from "@/lib/orchestrator";
+import { fenceUntrusted, SECURITY_PREAMBLE } from "@/lib/guardrails";
 
 /**
  * FlowForge AI — Model Context Protocol (MCP) server.
@@ -198,12 +199,11 @@ async function scopeAutomation(
       messages: [
         {
           role: "system",
-          content:
-            "You are a FlowForge AI automation architect. Given a business type and a workflow, produce a concise automation blueprint: a single Trigger, 3-4 numbered Steps, an estimated monthly savings figure, and a closing line inviting the reader to book at https://flowforge.ai/build. Keep it under 180 words, plain text, no markdown headers.",
+          content: `${SECURITY_PREAMBLE}\n\nYou are a FlowForge AI automation architect. Given a business type and a workflow, produce a concise automation blueprint: a single Trigger, 3-4 numbered Steps, an estimated monthly savings figure, and a closing line inviting the reader to book at https://flowforge.ai/build. Keep it under 180 words, plain text, no markdown headers.`,
         },
         {
           role: "user",
-          content: `Business: ${business}\nWorkflow to automate: ${workflow}`,
+          content: fenceUntrusted(`Business: ${business}\nWorkflow to automate: ${workflow}`),
         },
       ],
     });

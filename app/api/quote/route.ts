@@ -4,6 +4,7 @@ import { rateLimit, clientIp } from "@/lib/rate-limit";
 import { saveLead } from "@/lib/leads";
 import { verifyTurnstile } from "@/lib/turnstile";
 import { sendQuoteReport } from "@/lib/email";
+import { fenceUntrusted, SECURITY_PREAMBLE } from "@/lib/guardrails";
 
 type Idea = { title: string; description: string; savingsEstimate: string };
 
@@ -66,11 +67,11 @@ async function generateIdeas(input: {
       messages: [
         {
           role: "system",
-          content: `You are a senior automation strategist at FlowForge AI. Given a small business's profile, generate exactly 3 high-impact Zapier + GPT automation ideas. Each idea must have: title (short), description (1 sentence), savingsEstimate (monthly dollar savings string like "~$800/mo"). Return ONLY valid JSON: { "ideas": [...] }`,
+          content: `${SECURITY_PREAMBLE}\n\nYou are a senior automation strategist at FlowForge AI. Given a small business's profile, generate exactly 3 high-impact Zapier + GPT automation ideas. Each idea must have: title (short), description (1 sentence), savingsEstimate (monthly dollar savings string like "~$800/mo"). Return ONLY valid JSON: { "ideas": [...] }`,
         },
         {
           role: "user",
-          content: `Business: ${input.businessType}\nContact: ${input.name} (${input.email})\nPain points: ${input.painPoints || "general admin overload"}`,
+          content: fenceUntrusted(`Business: ${input.businessType}\nContact: ${input.name} (${input.email})\nPain points: ${input.painPoints || "general admin overload"}`),
         },
       ],
     });

@@ -67,6 +67,12 @@ export async function POST(req: Request) {
 
     // Action: persist + email the finished blueprint.
     if (body.action === "email") {
+      // This sends an email to a caller-chosen address, so bound it far tighter
+      // than the general workflow limit — otherwise it's an email-amplification
+      // vector (blast blueprint emails via our sender). Reliable IP after the
+      // clientIp() hardening. Silently no-op past the cap.
+      const emailRl = await rateLimit(`wf-email:${ip}`, 5, 60 * 60_000);
+      if (!emailRl.ok) return NextResponse.json({ ok: true, throttled: true });
       const { name, email, businessType, blueprint } = body as {
         name?: string;
         email?: string;

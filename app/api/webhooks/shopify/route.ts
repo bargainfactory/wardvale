@@ -34,8 +34,14 @@ export async function POST(req: Request) {
   const raw = await req.text();
   const secret = process.env.SHOPIFY_WEBHOOK_SECRET ?? process.env.SHOPIFY_CLIENT_SECRET;
   const hmac = req.headers.get("x-shopify-hmac-sha256") ?? "";
-  if (secret && (!hmac || !hmacValid(raw, hmac, secret))) {
-    return NextResponse.json({ error: "invalid_signature" }, { status: 401 });
+  if (secret) {
+    if (!hmac || !hmacValid(raw, hmac, secret)) {
+      return NextResponse.json({ error: "invalid_signature" }, { status: 401 });
+    }
+  } else if (process.env.NODE_ENV === "production") {
+    // Fail CLOSED: no secret means we cannot verify HMAC, so a spoofed payload
+    // could drive agent runs (incl. auto-send). Refuse in production.
+    return NextResponse.json({ error: "not_configured" }, { status: 503 });
   }
 
   const topic = req.headers.get("x-shopify-topic") ?? "";

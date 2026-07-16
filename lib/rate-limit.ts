@@ -67,9 +67,20 @@ function memoryLimit(key: string, limit: number, windowMs: number): RateResult {
   return { ok: true, remaining: limit - bucket.count, retryAfter: 0 };
 }
 
-/** Best-effort client IP from proxy headers. */
+/**
+ * Client IP for rate/cost limiting. `x-real-ip` is set by the platform edge
+ * (e.g. Vercel) to the true client IP and is NOT client-forgeable — prefer it.
+ * Fall back to the RIGHT-most `x-forwarded-for` entry (the hop the platform
+ * appended), never the left-most, which the client controls and can spoof to
+ * rotate identities and defeat every limit + the daily token cap.
+ */
 export function clientIp(req: Request): string {
+  const real = req.headers.get("x-real-ip");
+  if (real?.trim()) return real.trim();
   const xff = req.headers.get("x-forwarded-for");
-  if (xff) return xff.split(",")[0]!.trim();
-  return req.headers.get("x-real-ip") || "unknown";
+  if (xff) {
+    const parts = xff.split(",").map((s) => s.trim()).filter(Boolean);
+    if (parts.length) return parts[parts.length - 1]!;
+  }
+  return "unknown";
 }
