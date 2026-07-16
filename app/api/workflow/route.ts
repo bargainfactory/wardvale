@@ -131,13 +131,24 @@ export async function POST(req: Request) {
 
     if (attachment) trace.flag("attachment", attachment.kind ?? "unknown");
     trace.mark("model.start");
-    const completion = await callModel({
-      purpose: "workflow",
-      max_tokens: 700,
-      temperature: 0.6,
-      response_format: { type: "json_object" },
-      messages: apiMessages,
-    });
+    // If the provider is unavailable (missing credits, outage, rate limit, bad
+    // key), degrade to the scripted interview rather than dead-ending the
+    // funnel — same graceful path as the no-key case.
+    let completion;
+    try {
+      completion = await callModel({
+        purpose: "workflow",
+        max_tokens: 700,
+        temperature: 0.6,
+        response_format: { type: "json_object" },
+        messages: apiMessages,
+      });
+    } catch (err) {
+      trace.flag("providerError", err instanceof Error ? err.message.slice(0, 120) : "unknown");
+      trace.setStatus("provider_error");
+      await trace.end();
+      return NextResponse.json(scriptedFallback(messages, industry));
+    }
     const tokens = completion.usage?.total_tokens ?? 0;
     recordTokens(`ai:${ip}`, tokens);
     const content = completion.choices[0]?.message?.content ?? "";
