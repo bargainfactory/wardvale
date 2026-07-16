@@ -1,4 +1,4 @@
-import { callModel } from "@/lib/model";
+import { callModel, modelConfigured } from "@/lib/model";
 
 export type InboxPreview = {
   total: number;
@@ -31,7 +31,7 @@ function heuristic(items: { subject: string }[]): InboxPreview {
  */
 export async function buildInboxPreview(items: { subject: string; from: string }[]): Promise<InboxPreview> {
   if (!items.length) return heuristic(items);
-  if (!process.env.OPENAI_API_KEY) return heuristic(items);
+  if (!modelConfigured()) return heuristic(items);
   try {
     const completion = await callModel({
       purpose: "preview",

@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { callModel } from "@/lib/model";
+import { callModel, modelConfigured } from "@/lib/model";
 import { rateLimit, clientIp } from "@/lib/rate-limit";
 import { detectInjection, SECURITY_PREAMBLE } from "@/lib/guardrails";
 import { overBudget, recordTokens, DAILY_TOKEN_CAP } from "@/lib/usage";
@@ -32,7 +32,7 @@ export async function POST(req: Request) {
 
   try {
     const body = await req.json();
-    const messages = body.messages as { role: "user" | "assistant"; content: string }[];
+    const messages = (Array.isArray(body.messages) ? body.messages : []) as { role: "user" | "assistant"; content: string }[];
 
     const trace = startTrace("chat", typeof body?.sessionId === "string" ? body.sessionId : undefined);
     // Guardrail: refuse likely prompt-injection instead of processing it.
@@ -48,7 +48,7 @@ export async function POST(req: Request) {
       });
     }
 
-    if (!process.env.OPENAI_API_KEY) {
+    if (!modelConfigured()) {
       return NextResponse.json({
         reply:
           "I'm currently in demo mode! In production I'd be powered by GPT-4o and can answer anything about FlowForge services, pricing, and integrations. Try the instant quote form below!",

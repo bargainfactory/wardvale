@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { services, tiers } from "@/lib/data";
 import { dictionaries } from "@/lib/i18n";
 import { seoPages } from "@/lib/seo-pages";
-import { callModel } from "@/lib/model";
+import { callModel, modelConfigured } from "@/lib/model";
 import { rateLimit, clientIp } from "@/lib/rate-limit";
 import { validateArgs } from "@/lib/mcp";
 import { startTrace } from "@/lib/trace";
@@ -187,7 +187,7 @@ async function scopeAutomation(
   const business = typeof args?.business === "string" ? args.business : "small business";
   const workflow = typeof args?.workflow === "string" ? args.workflow : "manual workflow";
 
-  if (!process.env.OPENAI_API_KEY) {
+  if (!modelConfigured()) {
     return text(deterministicBlueprint(business, workflow));
   }
 

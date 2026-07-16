@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { callModel } from "@/lib/model";
+import { callModel, modelConfigured } from "@/lib/model";
 import { rateLimit, clientIp } from "@/lib/rate-limit";
 import { saveLead } from "@/lib/leads";
 import { verifyTurnstile } from "@/lib/turnstile";
@@ -39,7 +39,7 @@ export async function POST(req: Request) {
       metadata: { size, budget },
     });
 
-    if (!process.env.OPENAI_API_KEY) {
+    if (!modelConfigured()) {
       return NextResponse.json(FALLBACK);
     }
 

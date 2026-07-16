@@ -430,7 +430,8 @@ function BlueprintCard({ blueprint, businessType, industry }: { blueprint: Bluep
     if (a1) params.set("a1", a1);
     params.set("a2", blueprint.title);
     const q = params.toString();
-    return q ? `${CALENDLY}?${q}` : CALENDLY;
+    if (!q) return CALENDLY;
+    return `${CALENDLY}${CALENDLY.includes("?") ? "&" : "?"}${q}`;
   })();
 
   async function emailMe() {
@@ -518,8 +519,8 @@ function BlueprintCard({ blueprint, businessType, industry }: { blueprint: Bluep
 
       {blueprint.tools.length > 0 && (
         <div className="mt-4 flex flex-wrap gap-1.5">
-          {blueprint.tools.map((tl) => (
-            <span key={tl} className="rounded-full border border-border bg-card/50 px-2.5 py-1 text-xs text-muted-foreground">
+          {blueprint.tools.map((tl, i) => (
+            <span key={`${tl}-${i}`} className="rounded-full border border-border bg-card/50 px-2.5 py-1 text-xs text-muted-foreground">
               {tl}
             </span>
           ))}

@@ -60,6 +60,18 @@ function providerFor(purpose: ModelPurpose): ModelProvider {
   return (per || glob) === "anthropic" ? "anthropic" : "openai";
 }
 
+/**
+ * Is the provider that would serve `purpose` actually configured? Feature gates
+ * must use this, NOT a bare OPENAI_API_KEY check — a Claude-only deploy
+ * (LLM_PROVIDER=anthropic + ANTHROPIC_API_KEY, no OpenAI key) is fully valid and
+ * should not fall back to demo/scripted mode everywhere.
+ */
+export function modelConfigured(purpose: ModelPurpose = "default"): boolean {
+  return providerFor(purpose) === "anthropic"
+    ? Boolean(process.env.ANTHROPIC_API_KEY)
+    : Boolean(process.env.OPENAI_API_KEY);
+}
+
 /** Resolve the model id for a provider + lane (env-overridable per lane). */
 function modelFor(provider: ModelProvider, purpose: ModelPurpose): string {
   const key = purpose.toUpperCase();

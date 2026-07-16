@@ -1,4 +1,4 @@
-import { callModel } from "@/lib/model";
+import { callModel, modelConfigured } from "@/lib/model";
 import { detectInjection, fenceUntrusted, SECURITY_PREAMBLE } from "@/lib/guardrails";
 import type { Trace } from "@/lib/trace";
 
@@ -180,7 +180,7 @@ export async function judgeDecision(
   input: { agent?: string | null; action: string; source?: string | null; draft?: string | null; businessContext?: string },
   trace?: Trace
 ): Promise<Judgement | null> {
-  if (!process.env.OPENAI_API_KEY || !input.draft?.trim()) return null;
+  if (!modelConfigured() || !input.draft?.trim()) return null;
   try {
     trace?.mark("judge.start");
     const completion = await callModel({

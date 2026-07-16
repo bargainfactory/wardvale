@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { callModel } from "@/lib/model";
+import { callModel, modelConfigured } from "@/lib/model";
 import { rateLimit, clientIp } from "@/lib/rate-limit";
 import { saveLead } from "@/lib/leads";
 import { verifyTurnstile } from "@/lib/turnstile";
@@ -57,7 +57,7 @@ async function generateIdeas(input: {
   businessType: string;
   painPoints: string;
 }): Promise<Idea[]> {
-  if (!process.env.OPENAI_API_KEY) return defaultIdeas(input.businessType);
+  if (!modelConfigured()) return defaultIdeas(input.businessType);
   try {
     const completion = await callModel({
       purpose: "quote",

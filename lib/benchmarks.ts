@@ -160,9 +160,13 @@ export function benchmarkLabelKey(vertical: string): string {
  */
 export function getBenchmark(vertical: string): Benchmark | undefined {
   const q = vertical.trim().toLowerCase();
-  if (!q) return undefined;
-  return benchmarks.find((b) => {
+  if (q.length < 3) return undefined; // avoid 1-2 char substring false matches
+  // Prefer the most specific match (longest matching vertical) over the first
+  // declared one, so "fitness studio and consulting" doesn't match "Consulting".
+  let best: Benchmark | undefined;
+  for (const b of benchmarks) {
     const v = b.vertical.toLowerCase();
-    return v.includes(q) || q.includes(v);
-  });
+    if ((v.includes(q) || q.includes(v)) && (!best || v.length > best.vertical.length)) best = b;
+  }
+  return best;
 }

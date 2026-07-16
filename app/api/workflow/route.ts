@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { callModel } from "@/lib/model";
+import { callModel, modelConfigured } from "@/lib/model";
 import { rateLimit, clientIp } from "@/lib/rate-limit";
 import { saveLead } from "@/lib/leads";
 import { sendWorkflowBlueprint, type Blueprint } from "@/lib/email";
@@ -102,7 +102,7 @@ export async function POST(req: Request) {
     const trace = startTrace("workflow", typeof body?.sessionId === "string" ? body.sessionId : undefined);
     trace.setInput([...messages].reverse().find((m) => m.role === "user")?.content ?? "");
 
-    if (!process.env.OPENAI_API_KEY) {
+    if (!modelConfigured()) {
       trace.flag("noKey", true);
       trace.setStatus("fallback");
       await trace.end();
