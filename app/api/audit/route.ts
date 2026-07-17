@@ -39,7 +39,7 @@ export async function POST(req: Request) {
       metadata: { size, budget },
     });
 
-    if (!modelConfigured()) {
+    if (!modelConfigured("audit")) {
       return NextResponse.json(FALLBACK);
     }
 

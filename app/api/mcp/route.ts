@@ -187,7 +187,7 @@ async function scopeAutomation(
   const business = typeof args?.business === "string" ? args.business : "small business";
   const workflow = typeof args?.workflow === "string" ? args.workflow : "manual workflow";
 
-  if (!modelConfigured()) {
+  if (!modelConfigured("chat")) {
     return text(deterministicBlueprint(business, workflow));
   }
 

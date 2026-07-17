@@ -136,7 +136,7 @@ export async function runInboxTriage(messages: InboxMessage[], trace?: Trace, co
   const injected = clean.some((m) => detectInjection(`${m.subject}\n${m.body}`).flagged);
   trace?.flag("injection", injected);
 
-  if (!modelConfigured()) {
+  if (!modelConfigured("triage")) {
     trace?.flag("mode", "heuristic");
     return clean.map((m) => heuristic(m));
   }
@@ -237,7 +237,7 @@ export async function runArFollowup(invoices: Invoice[], trace?: Trace, context?
   }));
   trace?.mark("tool.read", { invoices: clean.length });
 
-  if (!modelConfigured()) {
+  if (!modelConfigured("draft")) {
     trace?.flag("mode", "heuristic");
     return clean.map((v) => arHeuristic(v));
   }
@@ -293,7 +293,7 @@ function channel(email?: string, phone?: string): { action: "email.send" | "sms.
  */
 async function draftMessages(system: string, lines: string[], trace?: Trace, maxTokens = 900): Promise<Draft[]> {
   trace?.flag("injection", lines.some((l) => detectInjection(l).flagged));
-  if (!modelConfigured() || lines.length === 0) {
+  if (!modelConfigured("draft") || lines.length === 0) {
     trace?.flag("mode", "heuristic");
     return [];
   }
@@ -448,7 +448,7 @@ const SMS_AGENT = "SMS reply agent";
 /** One spoken turn: given what the caller said, return a short reply to speak. */
 export async function runVoiceTurn(said: string, context?: string, trace?: Trace): Promise<string> {
   const fallback = "Thanks for calling! I've noted that and someone from our team will get right back to you.";
-  if (!modelConfigured() || !said.trim()) return fallback;
+  if (!modelConfigured("voice") || !said.trim()) return fallback;
   try {
     trace?.mark("model.start");
     const completion = await callModel({

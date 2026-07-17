@@ -48,11 +48,14 @@ export async function POST(req: Request) {
     // re-parent an account that already exists (which provisionClient's "existing"
     // branch would silently do, reassigning another tenant's agency_id + name).
     // Joining an existing account to an agency must go through a consent/invite flow.
-    const { data: existingClient } = await svc
+    const { data: existingClient, error: lookupErr } = await svc
       .from("clients")
       .select("id")
       .eq("email", body.clientEmail.toLowerCase())
       .maybeSingle();
+    // Fail CLOSED if the existence check itself errors — a transient DB error must
+    // not bypass the guard and let provisionClient re-parent an existing account.
+    if (lookupErr) return NextResponse.json({ error: "lookup_failed" }, { status: 503 });
     if (existingClient) return NextResponse.json({ error: "client_exists" }, { status: 409 });
     const created = await provisionClient({
       email: body.clientEmail,

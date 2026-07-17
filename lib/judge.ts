@@ -180,7 +180,7 @@ export async function judgeDecision(
   input: { agent?: string | null; action: string; source?: string | null; draft?: string | null; businessContext?: string },
   trace?: Trace
 ): Promise<Judgement | null> {
-  if (!modelConfigured() || !input.draft?.trim()) return null;
+  if (!modelConfigured("judge") || !input.draft?.trim()) return null;
   try {
     trace?.mark("judge.start");
     const completion = await callModel({

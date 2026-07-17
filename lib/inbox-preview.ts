@@ -31,7 +31,7 @@ function heuristic(items: { subject: string }[]): InboxPreview {
  */
 export async function buildInboxPreview(items: { subject: string; from: string }[]): Promise<InboxPreview> {
   if (!items.length) return heuristic(items);
-  if (!modelConfigured()) return heuristic(items);
+  if (!modelConfigured("preview")) return heuristic(items);
   try {
     const completion = await callModel({
       purpose: "preview",

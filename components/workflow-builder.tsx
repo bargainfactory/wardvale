@@ -172,6 +172,12 @@ export function WorkflowBuilder({ industry = "", embedded = false }: { industry?
     try {
       if (isImage) {
         const dataUrl = await readFile(file, "dataURL");
+        // Match the server's inline-image cap (data-URL length) so oversize images
+        // get a clear rejection here instead of being silently dropped server-side.
+        if (dataUrl.length >= 1_500_000) {
+          setFileError(t("bld.fileTooLarge"));
+          return;
+        }
         setAttachment({ kind: "image", name: file.name, dataUrl });
         track("builder_attachment", { kind: "image" });
       } else if (isText) {

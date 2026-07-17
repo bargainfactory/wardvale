@@ -48,7 +48,7 @@ export async function POST(req: Request) {
       });
     }
 
-    if (!modelConfigured()) {
+    if (!modelConfigured("chat")) {
       return NextResponse.json({
         reply:
           "I'm currently in demo mode! In production I'd be powered by GPT-4o and can answer anything about FlowForge services, pricing, and integrations. Try the instant quote form below!",

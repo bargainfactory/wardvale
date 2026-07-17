@@ -7,6 +7,7 @@ import { clientScope } from "@/lib/tenant";
 import { loadContext } from "@/lib/context";
 import { sendApprovalNotification } from "@/lib/email";
 import { runLeadQualification } from "@/lib/runtime";
+import { modelConfigured } from "@/lib/model";
 import { runConcierge, defaultDeps, classifyIntent, defaultOrderSideQuest, stepsToApprovals, stepsToTouches, isImmediate, type ConciergeDeps, type Lead, type Step } from "@/lib/orchestrator";
 
 /**
@@ -58,7 +59,7 @@ export async function POST(req: Request) {
         trace,
         context
       ));
-    const deps: ConciergeDeps = process.env.OPENAI_API_KEY
+    const deps: ConciergeDeps = modelConfigured()
       ? {
           qualify: async (l) => {
             const acts = await callLeadAgent(l);

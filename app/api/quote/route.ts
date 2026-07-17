@@ -57,7 +57,7 @@ async function generateIdeas(input: {
   businessType: string;
   painPoints: string;
 }): Promise<Idea[]> {
-  if (!modelConfigured()) return defaultIdeas(input.businessType);
+  if (!modelConfigured("quote")) return defaultIdeas(input.businessType);
   try {
     const completion = await callModel({
       purpose: "quote",
