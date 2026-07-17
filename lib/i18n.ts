@@ -1474,6 +1474,12 @@ const en: Dict = {
   "pricing.annual": "Annual",
   "pricing.save2mo": "2 months free",
   "pricing.billedAnnually": "billed annually",
+  "prt.billingHeading": "Billing",
+  "prt.billingSub": "Update payment, switch plans, pause, or cancel.",
+  "prt.manageBilling": "Manage billing",
+  "prt.growHeading": "Grow your OS",
+  "prt.growSub": "Add an agent to cover more of your workflow.",
+  "prt.addToPlan": "Add to my plan",
 };
 
 const es: Dict = {
@@ -2925,6 +2931,12 @@ const es: Dict = {
   "pricing.annual": "Anual",
   "pricing.save2mo": "2 meses gratis",
   "pricing.billedAnnually": "facturado anualmente",
+  "prt.billingHeading": "Facturación",
+  "prt.billingSub": "Actualiza el pago, cambia de plan, pausa o cancela.",
+  "prt.manageBilling": "Gestionar facturación",
+  "prt.growHeading": "Amplía tu OS",
+  "prt.growSub": "Añade un agente para cubrir más de tu flujo de trabajo.",
+  "prt.addToPlan": "Añadir a mi plan",
 };
 
 const fr: Dict = {
@@ -4376,6 +4388,12 @@ const fr: Dict = {
   "pricing.annual": "Annuel",
   "pricing.save2mo": "2 mois offerts",
   "pricing.billedAnnually": "facturé annuellement",
+  "prt.billingHeading": "Facturation",
+  "prt.billingSub": "Mettez à jour le paiement, changez d'offre, mettez en pause ou résiliez.",
+  "prt.manageBilling": "Gérer la facturation",
+  "prt.growHeading": "Développez votre OS",
+  "prt.growSub": "Ajoutez un agent pour couvrir davantage de votre flux de travail.",
+  "prt.addToPlan": "Ajouter à mon offre",
 };
 
 const pt: Dict = {
@@ -5812,6 +5830,12 @@ const pt: Dict = {
   "pricing.annual": "Anual",
   "pricing.save2mo": "2 meses grátis",
   "pricing.billedAnnually": "cobrado anualmente",
+  "prt.billingHeading": "Faturamento",
+  "prt.billingSub": "Atualize o pagamento, troque de plano, pause ou cancele.",
+  "prt.manageBilling": "Gerenciar faturamento",
+  "prt.growHeading": "Expanda seu OS",
+  "prt.growSub": "Adicione um agente para cobrir mais do seu fluxo de trabalho.",
+  "prt.addToPlan": "Adicionar ao meu plano",
 };
 
 const de: Dict = {
@@ -7248,6 +7272,12 @@ const de: Dict = {
   "pricing.annual": "Jährlich",
   "pricing.save2mo": "2 Monate gratis",
   "pricing.billedAnnually": "jährlich abgerechnet",
+  "prt.billingHeading": "Abrechnung",
+  "prt.billingSub": "Zahlung aktualisieren, Plan wechseln, pausieren oder kündigen.",
+  "prt.manageBilling": "Abrechnung verwalten",
+  "prt.growHeading": "Erweitern Sie Ihr OS",
+  "prt.growSub": "Fügen Sie einen Agenten hinzu, um mehr von Ihrem Workflow abzudecken.",
+  "prt.addToPlan": "Zu meinem Plan hinzufügen",
 };
 
 export const dictionaries: Record<Locale, Dict> = { en, es, fr, pt, de };

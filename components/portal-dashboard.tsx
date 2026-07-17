@@ -36,6 +36,9 @@ import { Button } from "@/components/ui/button";
 import { createClient } from "@/lib/supabase";
 import { useLocale } from "@/lib/locale-context";
 import { entitlement, type Schedule } from "@/lib/agents-catalog";
+import { addons } from "@/lib/solutions";
+
+const CALENDLY = process.env.NEXT_PUBLIC_CALENDLY_URL ?? "https://calendly.com/flowforge/discovery";
 import type { PortalAgentConfig, PortalApproval, PortalAutomation, PortalAudit, PortalConnection, PortalKpis, PortalLog, PortalOutcome, PortalPolicy, PortalRoi, PortalRoiProof } from "@/lib/portal";
 import type { PeerBenchmarks } from "@/lib/peer-benchmarks";
 
@@ -152,6 +155,16 @@ export function PortalDashboard(props: Props) {
   const [rotating, setRotating] = useState(false);
   const mounted = useMounted();
   const { roi } = props;
+
+  async function manageBilling() {
+    try {
+      const res = await fetch("/api/stripe/portal", { method: "POST" });
+      const d = (await res.json().catch(() => ({}))) as { url?: string };
+      if (d.url) window.location.href = d.url;
+    } catch {
+      /* ignore */
+    }
+  }
 
   async function rotateKey() {
     if (!window.confirm(t("prt.rotateConfirm"))) return;
@@ -439,6 +452,33 @@ export function PortalDashboard(props: Props) {
               <KPI icon={Clock} label={t("portal.hoursSaved")} value={kpis.hours} delta={deltas?.hours} />
               <KPI icon={CheckCircle2} label={t("portal.successRate")} value={kpis.success} delta={deltas?.success} />
               <KPI icon={ArrowUpRight} label={t("portal.roiMonth")} value={kpis.roi} delta={deltas?.roi} />
+            </div>
+
+            {/* Billing + expansion */}
+            <div className="mt-6 grid gap-4 sm:grid-cols-2">
+              <div className="rounded-3xl border border-border bg-card/40 p-5">
+                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-cyan-electric">{t("prt.billingHeading")}</p>
+                <p className="mt-2 text-sm text-muted-foreground">{t("prt.billingSub")}</p>
+                <Button variant="outline" className="mt-4" onClick={manageBilling}>
+                  <CreditCard className="h-4 w-4" /> {t("prt.manageBilling")}
+                </Button>
+              </div>
+              <div className="rounded-3xl border border-cyan-electric/25 bg-cyan-electric/[0.06] p-5">
+                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-cyan-electric">{t("prt.growHeading")}</p>
+                <p className="mt-2 text-sm text-muted-foreground">{t("prt.growSub")}</p>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {addons.slice(0, 3).map((a) => (
+                    <span key={a.id} className="rounded-full border border-border bg-card/60 px-3 py-1 text-xs">
+                      {t(a.name)} <span className="text-cyan-electric tabular-nums">+${a.savings.toLocaleString()}/mo</span>
+                    </span>
+                  ))}
+                </div>
+                <a href={CALENDLY} target="_blank" rel="noopener noreferrer">
+                  <Button variant="primary" size="sm" className="mt-4">
+                    {t("prt.addToPlan")} <ArrowUpRight className="h-4 w-4" />
+                  </Button>
+                </a>
+              </div>
             </div>
             <div className="mt-6 rounded-3xl border border-border bg-card/40 backdrop-blur">
               <div className="border-b border-border px-6 py-4 font-display font-semibold">{t("prt.recentActivity")}</div>
