@@ -1480,6 +1480,7 @@ const en: Dict = {
   "prt.growHeading": "Grow your OS",
   "prt.growSub": "Add an agent to cover more of your workflow.",
   "prt.addToPlan": "Add to my plan",
+  "start.tryOnData": "Free — watch it run on your own inbox",
 };
 
 const es: Dict = {
@@ -2937,6 +2938,7 @@ const es: Dict = {
   "prt.growHeading": "Amplía tu OS",
   "prt.growSub": "Añade un agente para cubrir más de tu flujo de trabajo.",
   "prt.addToPlan": "Añadir a mi plan",
+  "start.tryOnData": "Gratis: míralo funcionar en tu propia bandeja",
 };
 
 const fr: Dict = {
@@ -4394,6 +4396,7 @@ const fr: Dict = {
   "prt.growHeading": "Développez votre OS",
   "prt.growSub": "Ajoutez un agent pour couvrir davantage de votre flux de travail.",
   "prt.addToPlan": "Ajouter à mon offre",
+  "start.tryOnData": "Gratuit — voyez-le fonctionner sur votre boîte de réception",
 };
 
 const pt: Dict = {
@@ -5836,6 +5839,7 @@ const pt: Dict = {
   "prt.growHeading": "Expanda seu OS",
   "prt.growSub": "Adicione um agente para cobrir mais do seu fluxo de trabalho.",
   "prt.addToPlan": "Adicionar ao meu plano",
+  "start.tryOnData": "Grátis — veja funcionar na sua própria caixa de entrada",
 };
 
 const de: Dict = {
@@ -7278,6 +7282,7 @@ const de: Dict = {
   "prt.growHeading": "Erweitern Sie Ihr OS",
   "prt.growSub": "Fügen Sie einen Agenten hinzu, um mehr von Ihrem Workflow abzudecken.",
   "prt.addToPlan": "Zu meinem Plan hinzufügen",
+  "start.tryOnData": "Kostenlos — sehen Sie es in Ihrem eigenen Postfach laufen",
 };
 
 export const dictionaries: Record<Locale, Dict> = { en, es, fr, pt, de };

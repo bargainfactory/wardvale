@@ -75,10 +75,12 @@ export function StartFlow({ initialIndustry = "" }: { initialIndustry?: string }
         })}
       </div>
 
-      <div className="mt-5 flex items-center justify-center gap-2 text-xs text-muted-foreground">
-        <Calendar className="h-3.5 w-3.5" />
-        <a href={CALENDLY} target="_blank" rel="noopener noreferrer" className="underline underline-offset-2 transition hover:text-foreground">
-          {t("start.justBook")}
+      <div className="mt-5 flex flex-col items-center gap-2 text-xs text-muted-foreground">
+        <a href="/connect" className="inline-flex items-center gap-1.5 font-medium text-cyan-electric underline underline-offset-2 transition hover:text-foreground">
+          <Sparkles className="h-3.5 w-3.5" /> {t("start.tryOnData")}
+        </a>
+        <a href={CALENDLY} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 underline underline-offset-2 transition hover:text-foreground">
+          <Calendar className="h-3.5 w-3.5" /> {t("start.justBook")}
         </a>
       </div>
     </div>
