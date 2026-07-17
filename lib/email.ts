@@ -65,6 +65,42 @@ function shell(inner: string): string {
   </div>`;
 }
 
+/**
+ * Monthly ROI recap for a paying client. Callers MUST pass only REAL realized
+ * outcome figures (see the roi-digest cron) — never illustrative numbers. This is
+ * the retention moat: it puts a dollar value on the service every month.
+ */
+export async function sendRoiDigest(input: {
+  to: string;
+  name?: string;
+  dollarsSaved: number;
+  hoursSaved: number;
+  runs: number;
+  periodLabel: string;
+  portalUrl: string;
+}): Promise<boolean> {
+  const first = input.name?.split(" ")[0] || "there";
+  const stat = (value: string, label: string) =>
+    `<td style="padding:10px 6px;text-align:center">
+      <div style="font-size:26px;font-weight:700;color:${BRAND}">${escapeHtml(value)}</div>
+      <div style="font-size:12px;color:#64748b;margin-top:2px">${escapeHtml(label)}</div>
+    </td>`;
+  const inner = `
+    <h1 style="font-size:22px;color:#f8fafc;margin:0 0 8px">Your automation impact, ${escapeHtml(first)}</h1>
+    <p style="color:#94a3b8;margin:0 0 16px">Here's what your FlowForge agents delivered over ${escapeHtml(input.periodLabel)}.</p>
+    <table style="width:100%;border:1px solid #1e293b;border-radius:12px;border-collapse:separate"><tr>
+      ${stat(`$${Math.round(input.dollarsSaved).toLocaleString()}`, "saved")}
+      ${stat(`${Math.round(input.hoursSaved).toLocaleString()}h`, "reclaimed")}
+      ${stat(input.runs.toLocaleString(), "actions run")}
+    </tr></table>
+    <a href="${escapeHtml(input.portalUrl)}" style="display:inline-block;margin-top:20px;background:${BRAND};color:#0b1220;font-weight:600;padding:12px 20px;border-radius:10px;text-decoration:none">View your live dashboard →</a>`;
+  return sendEmail({
+    to: input.to,
+    subject: `FlowForge saved you $${Math.round(input.dollarsSaved).toLocaleString()} this month`,
+    html: shell(inner),
+  });
+}
+
 /** Emails the lead their 3 scoped automation ideas after the quote form. */
 export async function sendQuoteReport(input: {
   to: string;
