@@ -5,6 +5,7 @@ import { ArrowRight, Check, Sparkles, TrendingDown } from "lucide-react";
 import { PageLayout } from "@/components/page-layout";
 import { Button } from "@/components/ui/button";
 import { seoPages } from "@/lib/seo-pages";
+import { StartCTA } from "@/components/start-experience/start-cta";
 import { getT } from "@/lib/i18n-server";
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://flowforge.ai";
@@ -95,12 +96,10 @@ export default async function AutomationPage({
               {t(page.metaDescription)}
             </p>
             <div className="mt-8 flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
-              <Link href="/build">
-                <Button size="lg">
-                  {t("msc.slugBuildFree")}
-                  <ArrowRight className="h-4 w-4" />
-                </Button>
-              </Link>
+              <StartCTA industry={slug} size="lg">
+                {t("msc.slugBuildFree")}
+                <ArrowRight className="h-4 w-4" />
+              </StartCTA>
               <Link href="/pricing">
                 <Button variant="outline" size="lg">
                   {t("msc.seePricing")}
@@ -228,12 +227,10 @@ export default async function AutomationPage({
               {t("msc.slugCtaBody")}
             </p>
             <div className="mt-6 flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
-              <Link href="/build">
-                <Button size="lg">
-                  {t("msc.slugBuildFree")}
-                  <ArrowRight className="h-4 w-4" />
-                </Button>
-              </Link>
+              <StartCTA industry={slug} size="lg">
+                {t("msc.slugBuildFree")}
+                <ArrowRight className="h-4 w-4" />
+              </StartCTA>
               <Link href="/pricing">
                 <Button variant="secondary" size="lg">
                   {t("msc.seePricing")}

@@ -39,6 +39,11 @@ export default function PricingPage() {
   const priceFor = (tier: { id: string; price: number }) =>
     tier.id === "growth" ? growthPriceFor(growthVariant, tier.price) : tier.price;
 
+  // Billing cycle. Annual = 2 months free (pay 10), shown as the effective /mo.
+  const [cycle, setCycle] = useState<"monthly" | "annual">("monthly");
+  const displayPrice = (tier: { id: string; price: number }) =>
+    cycle === "annual" ? Math.round((priceFor(tier) * 10) / 12) : priceFor(tier);
+
   useEffect(() => {
     if (window.location.hash === "#quote") {
       setTimeout(() => {
@@ -73,6 +78,30 @@ export default function PricingPage() {
       {/* Pricing cards */}
       <section className="pb-20">
         <div className="container">
+          {/* Monthly / annual toggle */}
+          <div className="mb-8 flex items-center justify-center">
+            <div className="inline-flex rounded-full border border-border bg-card/50 p-1 text-sm">
+              {(["monthly", "annual"] as const).map((c) => (
+                <button
+                  key={c}
+                  type="button"
+                  onClick={() => setCycle(c)}
+                  aria-pressed={cycle === c}
+                  className={cn(
+                    "rounded-full px-4 py-1.5 transition-colors",
+                    cycle === c ? "bg-cyan-electric font-medium text-navy-900" : "text-muted-foreground hover:text-foreground"
+                  )}
+                >
+                  {t(c === "monthly" ? "pricing.monthly" : "pricing.annual")}
+                  {c === "annual" && (
+                    <span className="ml-1.5 rounded-full bg-navy-900/15 px-1.5 py-0.5 text-[10px] font-semibold">
+                      {t("pricing.save2mo")}
+                    </span>
+                  )}
+                </button>
+              ))}
+            </div>
+          </div>
           <div className="mx-auto grid max-w-5xl gap-5 md:grid-cols-3">
             {tiers.map((tier, i) => (
               <motion.div
@@ -102,10 +131,13 @@ export default function PricingPage() {
 
                 <div className="mt-6 flex items-baseline gap-1">
                   <span className="font-display text-5xl font-semibold tabular-nums">
-                    ${priceFor(tier).toLocaleString()}
+                    ${displayPrice(tier).toLocaleString()}
                   </span>
                   <span className="text-sm text-muted-foreground">{t("pricing.perMonth")}</span>
                 </div>
+                {cycle === "annual" && (
+                  <p className="mt-1 text-xs text-muted-foreground">{t("pricing.billedAnnually")}</p>
+                )}
 
                 {/* Value / ROI badge */}
                 <div className="mt-4 rounded-xl border border-cyan-electric/30 bg-cyan-electric/[0.08] p-3">
@@ -135,7 +167,7 @@ export default function PricingPage() {
                   <Button
                     variant={tier.highlighted ? "primary" : "outline"}
                     className="w-full"
-                    onClick={() => startCheckout(tier.id, tier.id === "growth" ? growthVariant : undefined)}
+                    onClick={() => startCheckout(tier.id, tier.id === "growth" ? growthVariant : undefined, cycle)}
                   >
                     {t("pricing.start")} {t(`tier.${tier.id}.name`)}
                   </Button>
@@ -269,16 +301,17 @@ export default function PricingPage() {
   );
 }
 
-async function startCheckout(tierId: string, variant?: "A" | "B") {
+async function startCheckout(tierId: string, variant?: "A" | "B", cycle: "monthly" | "annual" = "monthly") {
   track("checkout_click", {
     tier: tierId,
+    cycle,
     ...(tierId === "growth" ? { growth_variant: variant, growth_price: growthPriceFor(variant ?? "A", 2000) } : {}),
   });
   try {
     const res = await fetch("/api/stripe/checkout", {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ tier: tierId, variant }),
+      body: JSON.stringify({ tier: tierId, variant, cycle }),
     });
     const data = (await res.json()) as { url?: string; error?: string };
     if (data.url) window.location.href = data.url;

@@ -1470,6 +1470,10 @@ const en: Dict = {
   "process.metaDesc": "How FlowForge ships revenue-grade automations: discovery, audit, build, launch, and scale. A clear five-step path with turnarounds at every stage.",
   "start.answerLabel": "Your answer",
   "nav.menu": "Menu",
+  "pricing.monthly": "Monthly",
+  "pricing.annual": "Annual",
+  "pricing.save2mo": "2 months free",
+  "pricing.billedAnnually": "billed annually",
 };
 
 const es: Dict = {
@@ -2917,6 +2921,10 @@ const es: Dict = {
   "process.metaDesc": "Cómo FlowForge crea automatizaciones de nivel empresarial: consultoría, auditoría, construcción, lanzamiento y escalado. Un camino claro de cinco pasos con plazos en cada etapa.",
   "start.answerLabel": "Tu respuesta",
   "nav.menu": "Menú",
+  "pricing.monthly": "Mensual",
+  "pricing.annual": "Anual",
+  "pricing.save2mo": "2 meses gratis",
+  "pricing.billedAnnually": "facturado anualmente",
 };
 
 const fr: Dict = {
@@ -4364,6 +4372,10 @@ const fr: Dict = {
   "process.metaDesc": "Comment FlowForge livre des automatisations prêtes pour le chiffre d'affaires : découverte, audit, construction, lancement et mise à l'échelle. Un parcours clair en cinq étapes avec des délais à chaque étape.",
   "start.answerLabel": "Votre réponse",
   "nav.menu": "Menu",
+  "pricing.monthly": "Mensuel",
+  "pricing.annual": "Annuel",
+  "pricing.save2mo": "2 mois offerts",
+  "pricing.billedAnnually": "facturé annuellement",
 };
 
 const pt: Dict = {
@@ -5796,6 +5808,10 @@ const pt: Dict = {
   "process.metaDesc": "Como a FlowForge cria automações de nível empresarial: descoberta, auditoria, construção, lançamento e escala. Um caminho claro de cinco etapas com prazos em cada fase.",
   "start.answerLabel": "Sua resposta",
   "nav.menu": "Menu",
+  "pricing.monthly": "Mensal",
+  "pricing.annual": "Anual",
+  "pricing.save2mo": "2 meses grátis",
+  "pricing.billedAnnually": "cobrado anualmente",
 };
 
 const de: Dict = {
@@ -7228,6 +7244,10 @@ const de: Dict = {
   "process.metaDesc": "Wie FlowForge umsatzstarke Automatisierungen liefert: Analyse, Audit, Aufbau, Launch und Skalierung. Ein klarer Fünf-Schritte-Weg mit Zeitplänen in jeder Phase.",
   "start.answerLabel": "Deine Antwort",
   "nav.menu": "Menü",
+  "pricing.monthly": "Monatlich",
+  "pricing.annual": "Jährlich",
+  "pricing.save2mo": "2 Monate gratis",
+  "pricing.billedAnnually": "jährlich abgerechnet",
 };
 
 export const dictionaries: Record<Locale, Dict> = { en, es, fr, pt, de };
