@@ -22,7 +22,10 @@ import {
 const INBOUND_REPLY_AGENTS: AgentKey[] = ["inbox-triage", "support-triage"];
 
 // Verticals where every draft must wait for a human, regardless of the answer.
-const REGULATED_VERTICALS = new Set(["clinic", "law-firm"]);
+// Health-adjacent (clinic, medspa, veterinary), legal, financial (accounting,
+// insurance) and minors-adjacent (childcare) all force approve-first + the
+// compliance guardrail line.
+const REGULATED_VERTICALS = new Set(["clinic", "law-firm", "medspa", "veterinary", "insurance", "accounting", "childcare"]);
 
 // Safe-default governance the generator MUST write whenever any agent is armed
 // for auto-send, so a novice can never leave the policy fully OPEN.

@@ -30,6 +30,14 @@ describe("catalog integrity (wave 2)", () => {
     }
   });
 
+  it("has 20 packs: 6 original + 6 gap-closers + 8 new verticals, unique ids", () => {
+    expect(PACKS.length).toBe(20);
+    expect(new Set(PACKS.map((p) => p.id)).size).toBe(20);
+    for (const id of ["medspa", "veterinary", "fitness", "auto-repair", "insurance", "property-management", "salon", "accounting", "contractor", "cleaning", "childcare", "str", "nonprofit", "photographer"]) {
+      expect(PACKS.some((p) => p.id === id), id).toBe(true);
+    }
+  });
+
   it("scale plan grows with the catalog", () => {
     expect(PLANS.scale.maxAgents).toBe(AGENTS.length);
   });
@@ -49,6 +57,19 @@ describe("studio generator — wave-2 agents are NEVER auto-armed", () => {
       expect(plan.agents.find((a) => a.key === k)?.autoSend, `${k} must never auto-send`).toBe(false);
     }
   });
+});
+
+describe("regulated verticals force approve-first", () => {
+  for (const vertical of ["medspa", "veterinary", "insurance", "accounting", "childcare", "clinic", "law-firm"]) {
+    it(`${vertical}: auto-inbound is overridden to draft-first`, () => {
+      const plan = planFromIntake(
+        { version: 1, vertical, goals: { agents: ["inbox-triage"] }, autonomy: { mode: "auto-inbound" } },
+        { plan: "scale" }
+      );
+      expect(plan.agents.some((a) => a.autoSend)).toBe(false);
+      expect(plan.profile.guardrails ?? "").toMatch(/medical or legal advice/i);
+    });
+  }
 });
 
 describe("wave-2 lanes (offline template path)", () => {

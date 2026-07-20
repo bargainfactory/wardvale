@@ -123,6 +123,71 @@ export const benchmarks: Benchmark[] = [
     replyTimeAfter: "bm.replyUnder2Min",
     topAutomation: "bm.propertyMgmtTopAutomation",
   },
+  // ── New underserved verticals (July 2026) ──
+  {
+    vertical: "Salon",
+    avgMonthlySavings: 2800,
+    avgHoursSaved: 38,
+    replyTimeBefore: "bm.reply3to6Hours",
+    replyTimeAfter: "bm.replyUnder1Min",
+    topAutomation: "bm.salonTopAutomation",
+  },
+  {
+    vertical: "Accounting",
+    avgMonthlySavings: 5400,
+    avgHoursSaved: 60,
+    replyTimeBefore: "bm.reply8to24Hours",
+    replyTimeAfter: "bm.replyUnder1Min",
+    topAutomation: "bm.accountingTopAutomation",
+  },
+  {
+    vertical: "Contractor",
+    avgMonthlySavings: 7500,
+    avgHoursSaved: 55,
+    replyTimeBefore: "bm.reply8to24Hours",
+    replyTimeAfter: "bm.replyUnder1Min",
+    topAutomation: "bm.contractorTopAutomation",
+  },
+  {
+    vertical: "Cleaning",
+    avgMonthlySavings: 3100,
+    avgHoursSaved: 44,
+    replyTimeBefore: "bm.reply3to6Hours",
+    replyTimeAfter: "bm.replyUnder1Min",
+    topAutomation: "bm.cleaningTopAutomation",
+  },
+  {
+    vertical: "Childcare",
+    avgMonthlySavings: 3600,
+    avgHoursSaved: 50,
+    replyTimeBefore: "bm.reply3to6Hours",
+    replyTimeAfter: "bm.replyUnder1Min",
+    topAutomation: "bm.childcareTopAutomation",
+  },
+  {
+    vertical: "Short-term rental",
+    avgMonthlySavings: 2600,
+    avgHoursSaved: 35,
+    replyTimeBefore: "bm.reply3to6Hours",
+    replyTimeAfter: "bm.replyInstant",
+    topAutomation: "bm.strTopAutomation",
+  },
+  {
+    vertical: "Nonprofit",
+    avgMonthlySavings: 2400,
+    avgHoursSaved: 32,
+    replyTimeBefore: "bm.reply8to24Hours",
+    replyTimeAfter: "bm.replyUnder1Min",
+    topAutomation: "bm.nonprofitTopAutomation",
+  },
+  {
+    vertical: "Photography",
+    avgMonthlySavings: 2300,
+    avgHoursSaved: 30,
+    replyTimeBefore: "bm.reply8to24Hours",
+    replyTimeAfter: "bm.replyInstant",
+    topAutomation: "bm.photographerTopAutomation",
+  },
 ];
 
 /**
@@ -144,6 +209,14 @@ const VERTICAL_LABEL_KEYS: Record<string, string> = {
   "Auto repair": "bm.verticalAutoRepair",
   Insurance: "bm.verticalInsurance",
   "Property management": "bm.verticalPropertyMgmt",
+  Salon: "bm.verticalSalon",
+  Accounting: "bm.verticalAccounting",
+  Contractor: "bm.verticalContractor",
+  Cleaning: "bm.verticalCleaning",
+  Childcare: "bm.verticalChildcare",
+  "Short-term rental": "bm.verticalStr",
+  Nonprofit: "bm.verticalNonprofit",
+  Photography: "bm.verticalPhotographer",
 };
 
 /**
