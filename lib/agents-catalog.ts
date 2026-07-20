@@ -72,7 +72,10 @@ export type Entitlement = {
 export const PLANS: Record<Plan, Entitlement> = {
   trial: { label: "Trial", maxAgents: 1, schedules: ["manual", "off"] },
   starter: { label: "Starter", maxAgents: 2, schedules: ["manual", "daily", "off"] },
-  growth: { label: "Growth", maxAgents: 4, schedules: ["manual", "daily", "hourly", "off"] },
+  // Growth = one FULL industry pack. Every pack ships exactly 6 agents, so the
+  // cap must fit a whole pack — a Growth customer installing their vertical's
+  // pack gets all of it, not 4/6ths of it (see wave2 test invariant).
+  growth: { label: "Growth", maxAgents: 6, schedules: ["manual", "daily", "hourly", "off"] },
   scale: { label: "Scale", maxAgents: AGENTS.length, schedules: ["manual", "daily", "hourly", "off"] },
 };
 

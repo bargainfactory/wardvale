@@ -41,6 +41,15 @@ describe("catalog integrity (wave 2)", () => {
   it("scale plan grows with the catalog", () => {
     expect(PLANS.scale.maxAgents).toBe(AGENTS.length);
   });
+
+  it("Growth fits a FULL industry pack — no pack may exceed the Growth cap", () => {
+    // The entitlement story: Starter = taste (2), Growth = your whole pack,
+    // Scale = everything. If a pack ever grows past Growth's cap, the tier
+    // most customers land on silently truncates their onboarding — fail here.
+    for (const p of PACKS) {
+      expect(p.agents.length, `${p.id} has ${p.agents.length} agents > Growth cap ${PLANS.growth.maxAgents}`).toBeLessThanOrEqual(PLANS.growth.maxAgents);
+    }
+  });
 });
 
 describe("studio generator — wave-2 agents are NEVER auto-armed", () => {
