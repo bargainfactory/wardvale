@@ -12,6 +12,16 @@ export const localeLabels: Record<Locale, string> = {
 type Dict = Record<string, string>;
 
 const en: Dict = {
+  "studio.goalWinback": "Bring back lapsed customers",
+  "studio.goalQuote": "Chase open quotes & estimates",
+  "studio.goalHiring": "Reply to job applicants fast",
+  "studio.goalReferral": "Ask happy customers for referrals",
+  "studio.goalNoshow": "Cut no-shows with confirmations",
+  "studio.goalRevResp": "Answer new reviews",
+  "studio.goalShift": "Fill shift call-outs",
+  "studio.goalContent": "Draft posts & newsletters",
+  "studio.goalDocs": "Chase missing client documents",
+  "studio.goalDispute": "Fight chargebacks & fee disputes",
   "results.days": "days",
   "testimonials.note": "Illustrative scenarios modeled on the workflows we automate — not client quotes. Your real results appear in your portal.",
   "imp.heroEyebrowDemo": "Modeled impact",
@@ -1589,6 +1599,16 @@ const en: Dict = {
 };
 
 const es: Dict = {
+  "studio.goalWinback": "Recuperar clientes inactivos",
+  "studio.goalQuote": "Dar seguimiento a presupuestos abiertos",
+  "studio.goalHiring": "Responder rápido a candidatos",
+  "studio.goalReferral": "Pedir referencias a clientes satisfechos",
+  "studio.goalNoshow": "Reducir ausencias con confirmaciones",
+  "studio.goalRevResp": "Responder a nuevas reseñas",
+  "studio.goalShift": "Cubrir turnos por ausencias",
+  "studio.goalContent": "Redactar publicaciones y newsletters",
+  "studio.goalDocs": "Reclamar documentos pendientes de clientes",
+  "studio.goalDispute": "Disputar contracargos y cargos indebidos",
   "results.days": "días",
   "testimonial.1.name": "Escenario: restaurante",
   "testimonial.2.name": "Escenario: e-commerce",
@@ -3164,6 +3184,16 @@ const es: Dict = {
 };
 
 const fr: Dict = {
+  "studio.goalWinback": "Faire revenir les clients inactifs",
+  "studio.goalQuote": "Relancer les devis en attente",
+  "studio.goalHiring": "Répondre vite aux candidats",
+  "studio.goalReferral": "Demander des recommandations aux clients satisfaits",
+  "studio.goalNoshow": "Réduire les no-shows par des confirmations",
+  "studio.goalRevResp": "Répondre aux nouveaux avis",
+  "studio.goalShift": "Couvrir les absences de dernière minute",
+  "studio.goalContent": "Rédiger posts et newsletters",
+  "studio.goalDocs": "Relancer les documents clients manquants",
+  "studio.goalDispute": "Contester rétrofacturations et frais indus",
   "results.days": "jours",
   "testimonial.1.name": "Scénario restaurant",
   "testimonial.2.name": "Scénario e-commerce",
@@ -4739,6 +4769,16 @@ const fr: Dict = {
 };
 
 const pt: Dict = {
+  "studio.goalWinback": "Recuperar clientes inativos",
+  "studio.goalQuote": "Acompanhar orçamentos em aberto",
+  "studio.goalHiring": "Responder rápido a candidatos",
+  "studio.goalReferral": "Pedir indicações a clientes satisfeitos",
+  "studio.goalNoshow": "Reduzir faltas com confirmações",
+  "studio.goalRevResp": "Responder a novas avaliações",
+  "studio.goalShift": "Cobrir faltas de turno",
+  "studio.goalContent": "Redigir publicações e newsletters",
+  "studio.goalDocs": "Cobrar documentos em falta de clientes",
+  "studio.goalDispute": "Contestar chargebacks e taxas indevidas",
   "results.days": "dias",
   "testimonial.1.name": "Cenário: restaurante",
   "testimonial.2.name": "Cenário: e-commerce",
@@ -6295,6 +6335,16 @@ const pt: Dict = {
 };
 
 const de: Dict = {
+  "studio.goalWinback": "Inaktive Kunden zurückholen",
+  "studio.goalQuote": "Offene Angebote nachfassen",
+  "studio.goalHiring": "Bewerbern schnell antworten",
+  "studio.goalReferral": "Zufriedene Kunden um Empfehlungen bitten",
+  "studio.goalNoshow": "No-Shows durch Bestätigungen senken",
+  "studio.goalRevResp": "Neue Bewertungen beantworten",
+  "studio.goalShift": "Schichtausfälle abdecken",
+  "studio.goalContent": "Posts & Newsletter entwerfen",
+  "studio.goalDocs": "Fehlende Kundenunterlagen nachfordern",
+  "studio.goalDispute": "Chargebacks & Gebühren anfechten",
   "results.days": "Tage",
   "testimonial.1.name": "Szenario Restaurant",
   "testimonial.2.name": "Szenario E-Commerce",

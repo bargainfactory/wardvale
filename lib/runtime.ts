@@ -1,6 +1,24 @@
 import { callModel, modelConfigured } from "@/lib/model";
 import { detectInjection, fenceUntrusted, SECURITY_PREAMBLE } from "@/lib/guardrails";
-import { SYSTEM, AR_SYSTEM, CART_SYSTEM, REVIEW_SYSTEM, LEAD_SYSTEM, SMS_SYSTEM, VOICE_SYSTEM } from "@/lib/prompts";
+import {
+  SYSTEM,
+  AR_SYSTEM,
+  CART_SYSTEM,
+  REVIEW_SYSTEM,
+  LEAD_SYSTEM,
+  SMS_SYSTEM,
+  VOICE_SYSTEM,
+  WINBACK_SYSTEM,
+  QUOTE_FOLLOWUP_SYSTEM,
+  HIRING_SYSTEM,
+  REFERRAL_SYSTEM,
+  NOSHOW_SYSTEM,
+  REVIEW_RESPONSE_SYSTEM,
+  SHIFT_COVER_SYSTEM,
+  CONTENT_SYSTEM,
+  DOC_CHASER_SYSTEM,
+  DISPUTE_SYSTEM,
+} from "@/lib/prompts";
 import type { Trace } from "@/lib/trace";
 import { reportWarning } from "@/lib/report";
 
@@ -498,4 +516,450 @@ export async function runSmsReply(messages: InboundSms[], trace?: Trace, context
       to: m.from || undefined,
     };
   });
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+// Wave 2 lanes (July 2026 SMB pain-point research). Same contract as the
+// originals: read items → draft ONE message each via draftMessages → return
+// ProposedActions with needsApproval:true. NOTHING in this wave is ever
+// eligible for auto-send (win-back/referral/quote-chasing are outreach; the
+// rest draft content or coordination messages) — the canAuto gate never
+// whitelists these lanes, and the studio never arms them.
+// ════════════════════════════════════════════════════════════════════════════
+
+// ── Win-back agent (lapsed customers) ────────────────────────────────────────
+
+export type LapsedCustomer = {
+  customer?: string;
+  email?: string;
+  phone?: string;
+  lastPurchase?: string; // what they last bought/booked
+  daysSince?: number;
+  totalSpent?: number;
+};
+
+const WINBACK_AGENT = "Win-back agent";
+
+export async function runWinback(lapsed: LapsedCustomer[], trace?: Trace, context?: string): Promise<ProposedAction[]> {
+  const clean = lapsed.slice(0, 20).map((c) => ({
+    customer: (c.customer ?? "").slice(0, 120),
+    email: (c.email ?? "").slice(0, 160),
+    phone: (c.phone ?? "").slice(0, 40),
+    lastPurchase: (c.lastPurchase ?? "").slice(0, 200),
+    daysSince: Number(c.daysSince) || 0,
+    totalSpent: Number(c.totalSpent) || 0,
+  }));
+  trace?.mark("tool.read", { lapsed: clean.length });
+  const drafts = await draftMessages(
+    sys(WINBACK_SYSTEM, context),
+    clean.map((c) => `Customer: ${c.customer || "customer"} · Last: ${c.lastPurchase || "n/a"} · ${c.daysSince} days ago · Lifetime: $${c.totalSpent}`),
+    trace
+  );
+  return clean.map((c, i) => {
+    const ch = channel(c.email, c.phone);
+    const draft =
+      drafts[i]?.draft?.slice(0, 1000) ||
+      `Hi ${c.customer || "there"} — it has been a while! We would love to see you again${c.lastPurchase ? ` (hope you enjoyed ${c.lastPurchase})` : ""}. Anything we can help with?`;
+    return {
+      action: ch.action,
+      agent: WINBACK_AGENT,
+      summary: drafts[i]?.summary?.slice(0, 200) || `Win-back · ${c.customer || "customer"} · ${c.daysSince}d lapsed`,
+      draft,
+      needsApproval: true,
+      source: `Winback ${c.customer || c.email || i + 1}`,
+      to: ch.to,
+      value: Math.round(c.totalSpent / 4) || VALUE_ESTIMATE.review,
+    };
+  });
+}
+
+// ── Quote follow-up agent (open estimates) ───────────────────────────────────
+
+export type OpenQuote = {
+  customer?: string;
+  email?: string;
+  phone?: string;
+  number?: string;
+  amount?: number;
+  service?: string;
+  daysOld?: number;
+};
+
+const QUOTE_AGENT = "Quote follow-up agent";
+
+export async function runQuoteFollowup(quotes: OpenQuote[], trace?: Trace, context?: string): Promise<ProposedAction[]> {
+  const clean = quotes.slice(0, 20).map((q) => ({
+    customer: (q.customer ?? "").slice(0, 120),
+    email: (q.email ?? "").slice(0, 160),
+    phone: (q.phone ?? "").slice(0, 40),
+    number: (q.number ?? "").slice(0, 40),
+    amount: Number(q.amount) || 0,
+    service: (q.service ?? "").slice(0, 200),
+    daysOld: Number(q.daysOld) || 0,
+  }));
+  trace?.mark("tool.read", { quotes: clean.length });
+  const drafts = await draftMessages(
+    sys(QUOTE_FOLLOWUP_SYSTEM, context),
+    clean.map((q) => `Quote ${q.number || "n/a"} · ${q.customer || "customer"} · $${q.amount} · ${q.service || "n/a"} · ${q.daysOld} days old`),
+    trace
+  );
+  return clean.map((q, i) => {
+    const ch = channel(q.email, q.phone);
+    const draft =
+      drafts[i]?.draft?.slice(0, 1200) ||
+      `Hi ${q.customer || "there"} — checking in on the estimate${q.number ? ` #${q.number}` : ""} for ${q.service || "your project"} ($${q.amount}). Happy to answer any questions or adjust the scope. Shall we get you on the schedule?`;
+    return {
+      action: ch.action,
+      agent: QUOTE_AGENT,
+      summary: drafts[i]?.summary?.slice(0, 200) || `Quote chase · ${q.customer || "customer"} · $${q.amount} · ${q.daysOld}d`,
+      draft,
+      needsApproval: true,
+      source: `Quote ${q.number || q.customer || i + 1}`,
+      to: ch.to,
+      value: q.amount,
+    };
+  });
+}
+
+// ── Hiring first-touch agent (applicants) ────────────────────────────────────
+
+export type Applicant = {
+  name?: string;
+  email?: string;
+  phone?: string;
+  role?: string;
+  summary?: string; // resume/application highlights
+  slots?: string; // interview windows the owner offers
+};
+
+const HIRING_AGENT = "Hiring first-touch agent";
+
+export async function runHiringAssist(applicants: Applicant[], trace?: Trace, context?: string): Promise<ProposedAction[]> {
+  const clean = applicants.slice(0, 20).map((a) => ({
+    name: (a.name ?? "").slice(0, 120),
+    email: (a.email ?? "").slice(0, 160),
+    phone: (a.phone ?? "").slice(0, 40),
+    role: (a.role ?? "").slice(0, 120),
+    summary: (a.summary ?? "").slice(0, 600),
+    slots: (a.slots ?? "").slice(0, 200),
+  }));
+  trace?.mark("tool.read", { applicants: clean.length });
+  const drafts = await draftMessages(
+    sys(HIRING_SYSTEM, context),
+    clean.map((a) => `Applicant: ${a.name || "unknown"} · Role: ${a.role || "n/a"} · Highlights: ${a.summary || "n/a"} · Interview windows: ${a.slots || "n/a"}`),
+    trace
+  );
+  return clean.map((a, i) => {
+    const ch = channel(a.email, a.phone);
+    const draft =
+      drafts[i]?.draft?.slice(0, 1200) ||
+      `Hi ${a.name || "there"}, thanks for applying${a.role ? ` for the ${a.role} position` : ""}! We would love to chat. What is your availability this week for a quick conversation?`;
+    return {
+      action: ch.action,
+      agent: HIRING_AGENT,
+      summary: drafts[i]?.summary?.slice(0, 200) || `Applicant reply · ${a.name || "unknown"} (${a.role || "role n/a"})`,
+      draft,
+      needsApproval: true,
+      source: `Applicant ${a.name || a.email || i + 1}`,
+      to: ch.to,
+      value: 0,
+    };
+  });
+}
+
+// ── Referral-request agent (happy-moment triggers) ───────────────────────────
+
+export type ReferralMoment = {
+  customer?: string;
+  email?: string;
+  phone?: string;
+  trigger?: string; // "5-star review" | "repeat purchase" | "job completed"
+  detail?: string;
+};
+
+const REFERRAL_AGENT = "Referral request agent";
+
+export async function runReferralAsk(moments: ReferralMoment[], trace?: Trace, context?: string): Promise<ProposedAction[]> {
+  const clean = moments.slice(0, 20).map((m) => ({
+    customer: (m.customer ?? "").slice(0, 120),
+    email: (m.email ?? "").slice(0, 160),
+    phone: (m.phone ?? "").slice(0, 40),
+    trigger: (m.trigger ?? "").slice(0, 120),
+    detail: (m.detail ?? "").slice(0, 300),
+  }));
+  trace?.mark("tool.read", { moments: clean.length });
+  const drafts = await draftMessages(
+    sys(REFERRAL_SYSTEM, context),
+    clean.map((m) => `Customer: ${m.customer || "customer"} · Moment: ${m.trigger || "n/a"} · Detail: ${m.detail || "n/a"}`),
+    trace
+  );
+  return clean.map((m, i) => {
+    const ch = channel(m.email, m.phone);
+    const draft =
+      drafts[i]?.draft?.slice(0, 1000) ||
+      `Hi ${m.customer || "there"} — thank you so much${m.trigger ? ` (${m.trigger})` : ""}! If you know anyone who could use us, we would be honored by the introduction.`;
+    return {
+      action: ch.action,
+      agent: REFERRAL_AGENT,
+      summary: drafts[i]?.summary?.slice(0, 200) || `Referral ask · ${m.customer || "customer"} · ${m.trigger || ""}`,
+      draft,
+      needsApproval: true,
+      source: `Referral ${m.customer || m.email || i + 1}`,
+      to: ch.to,
+      value: VALUE_ESTIMATE.lead,
+    };
+  });
+}
+
+// ── No-show shield agent (confirmations + backfill) ──────────────────────────
+
+export type AppointmentItem = {
+  customer?: string;
+  email?: string;
+  phone?: string;
+  when?: string;
+  service?: string;
+  kind?: "confirm" | "backfill"; // upcoming appointment vs freshly opened slot
+  risk?: string; // e.g. "new patient", "prior no-show"
+};
+
+const NOSHOW_AGENT = "No-show shield agent";
+
+export async function runNoshowShield(items: AppointmentItem[], trace?: Trace, context?: string): Promise<ProposedAction[]> {
+  const clean = items.slice(0, 20).map((a) => ({
+    customer: (a.customer ?? "").slice(0, 120),
+    email: (a.email ?? "").slice(0, 160),
+    phone: (a.phone ?? "").slice(0, 40),
+    when: (a.when ?? "").slice(0, 120),
+    service: (a.service ?? "").slice(0, 200),
+    kind: a.kind === "backfill" ? "backfill" : "confirm",
+    risk: (a.risk ?? "").slice(0, 120),
+  }));
+  trace?.mark("tool.read", { items: clean.length });
+  const drafts = await draftMessages(
+    sys(NOSHOW_SYSTEM, context),
+    clean.map((a) =>
+      a.kind === "backfill"
+        ? `OPEN SLOT ${a.when || "n/a"} (${a.service || "n/a"}) — offer to: ${a.customer || "waitlist candidate"}`
+        : `Appointment: ${a.customer || "customer"} · ${a.when || "n/a"} · ${a.service || "n/a"} · Risk: ${a.risk || "normal"}`
+    ),
+    trace
+  );
+  return clean.map((a, i) => {
+    const ch = channel(a.email, a.phone);
+    const draft =
+      drafts[i]?.draft?.slice(0, 800) ||
+      (a.kind === "backfill"
+        ? `Hi ${a.customer || "there"} — a ${a.service || "spot"} just opened up ${a.when}. Want it? Reply YES and it is yours.`
+        : `Hi ${a.customer || "there"} — confirming your ${a.service || "appointment"} on ${a.when}. Reply C to confirm or R to reschedule.`);
+    return {
+      action: ch.action,
+      agent: NOSHOW_AGENT,
+      summary: drafts[i]?.summary?.slice(0, 200) || `${a.kind === "backfill" ? "Backfill offer" : "Confirm"} · ${a.customer || "customer"} · ${a.when}`,
+      draft,
+      needsApproval: true,
+      source: `Appt ${a.customer || i + 1} ${a.when}`,
+      to: ch.to,
+      value: 0,
+    };
+  });
+}
+
+// ── Review-response agent (replies, not requests) ────────────────────────────
+// The reply text is pasted to the platform by the owner after approval —
+// posting is not wired, so the action stays a labeled draft (never a send).
+
+export type ReviewItem = {
+  reviewer?: string;
+  rating?: number;
+  text?: string;
+  platform?: string;
+};
+
+const REVIEW_RESPONSE_AGENT = "Review response agent";
+
+export async function runReviewResponse(reviews: ReviewItem[], trace?: Trace, context?: string): Promise<ProposedAction[]> {
+  const clean = reviews.slice(0, 20).map((r) => ({
+    reviewer: (r.reviewer ?? "").slice(0, 120),
+    rating: Math.min(5, Math.max(1, Number(r.rating) || 5)),
+    text: (r.text ?? "").slice(0, 800),
+    platform: (r.platform ?? "Google").slice(0, 40),
+  }));
+  trace?.mark("tool.read", { reviews: clean.length });
+  const drafts = await draftMessages(
+    sys(REVIEW_RESPONSE_SYSTEM, context),
+    clean.map((r) => `${r.rating}★ on ${r.platform} · ${r.reviewer || "reviewer"}: ${r.text || "(no text)"}`),
+    trace
+  );
+  return clean.map((r, i) => {
+    const negative = r.rating <= 3;
+    const draft =
+      drafts[i]?.draft?.slice(0, 800) ||
+      (negative
+        ? `Thank you for the honest feedback, ${r.reviewer || "friend"} — this is not the experience we want anyone to have. We would like to make it right; please reach out to us directly.`
+        : `Thank you so much, ${r.reviewer || "friend"}! It means a lot — we look forward to seeing you again.`);
+    return {
+      action: (negative ? "escalate" : "triage.label") as ProposedAction["action"],
+      agent: REVIEW_RESPONSE_AGENT,
+      summary:
+        drafts[i]?.summary?.slice(0, 200) ||
+        `${r.rating}★ ${r.platform} reply · ${r.reviewer || "reviewer"}${negative ? " · NEEDS make-good follow-up" : ""}`,
+      draft,
+      needsApproval: true,
+      source: `Review ${r.platform} ${r.reviewer || i + 1}`,
+      value: 0,
+    };
+  });
+}
+
+// ── Shift-cover agent (call-out coordination) ────────────────────────────────
+
+export type CoverCandidate = {
+  name?: string;
+  phone?: string;
+  hoursThisWeek?: number;
+  note?: string; // e.g. "covered last Saturday"
+};
+export type CallOut = { shift?: string; role?: string };
+
+const SHIFT_AGENT = "Shift cover agent";
+
+export async function runShiftCover(callout: CallOut, candidates: CoverCandidate[], trace?: Trace, context?: string): Promise<ProposedAction[]> {
+  const shift = (callout.shift ?? "").slice(0, 160);
+  const role = (callout.role ?? "").slice(0, 80);
+  const clean = candidates.slice(0, 15).map((c) => ({
+    name: (c.name ?? "").slice(0, 120),
+    phone: (c.phone ?? "").slice(0, 40),
+    hoursThisWeek: Number(c.hoursThisWeek) || 0,
+    note: (c.note ?? "").slice(0, 160),
+  }));
+  trace?.mark("tool.read", { candidates: clean.length });
+  const drafts = await draftMessages(
+    sys(SHIFT_COVER_SYSTEM, context),
+    clean.map((c) => `Call-out: ${shift} (${role || "any role"}) → Candidate: ${c.name || "staff"} · ${c.hoursThisWeek}h this week · ${c.note || ""}`),
+    trace
+  );
+  return clean.map((c, i) => ({
+    action: "sms.send" as const,
+    agent: SHIFT_AGENT,
+    summary: drafts[i]?.summary?.slice(0, 200) || `Cover ask · ${c.name || "staff"} · ${shift}`,
+    draft:
+      drafts[i]?.draft?.slice(0, 320) ||
+      `Hi ${c.name || "there"} — any chance you could cover ${shift}${role ? ` (${role})` : ""}? Totally fine if not, just let me know either way. Thanks!`,
+    needsApproval: true,
+    source: `Cover ${shift} → ${c.name || i + 1}`,
+    to: c.phone || undefined,
+    value: 0,
+  }));
+}
+
+// ── Content-drafter agent (posts/newsletter from real activity) ──────────────
+
+export type ContentRequest = {
+  channel?: string; // "gbp" | "social" | "newsletter"
+  activity?: string; // the real recent activity to ground the draft in
+};
+
+const CONTENT_AGENT = "Content drafter agent";
+
+export async function runContentDrafter(requests: ContentRequest[], trace?: Trace, context?: string): Promise<ProposedAction[]> {
+  const clean = requests.slice(0, 10).map((r) => ({
+    channel: (r.channel ?? "social").slice(0, 40),
+    activity: (r.activity ?? "").slice(0, 1200),
+  }));
+  trace?.mark("tool.read", { requests: clean.length });
+  const drafts = await draftMessages(
+    sys(CONTENT_SYSTEM, context),
+    clean.map((r) => `Channel: ${r.channel} · Recent activity: ${r.activity || "n/a"}`),
+    trace
+  );
+  return clean.map((r, i) => ({
+    action: "triage.label" as const, // ready-to-paste content, never auto-posted
+    agent: CONTENT_AGENT,
+    summary: drafts[i]?.summary?.slice(0, 200) || `Draft ${r.channel} post`,
+    draft: drafts[i]?.draft?.slice(0, 2000) || "",
+    needsApproval: true,
+    source: `Content ${r.channel} ${i + 1}`,
+    value: 0,
+  }));
+}
+
+// ── Document-chaser agent (missing items per client) ─────────────────────────
+
+export type MissingDocs = {
+  client?: string;
+  email?: string;
+  items?: string; // comma list of missing items
+  daysWaiting?: number;
+  uploadLink?: string;
+};
+
+const DOC_AGENT = "Document chaser agent";
+
+export async function runDocChaser(rows: MissingDocs[], trace?: Trace, context?: string): Promise<ProposedAction[]> {
+  const clean = rows.slice(0, 20).map((d) => ({
+    client: (d.client ?? "").slice(0, 120),
+    email: (d.email ?? "").slice(0, 160),
+    items: (d.items ?? "").slice(0, 500),
+    daysWaiting: Number(d.daysWaiting) || 0,
+    uploadLink: (d.uploadLink ?? "").slice(0, 300),
+  }));
+  trace?.mark("tool.read", { clients: clean.length });
+  const drafts = await draftMessages(
+    sys(DOC_CHASER_SYSTEM, context),
+    clean.map((d) => `Client: ${d.client || "client"} · Missing: ${d.items || "n/a"} · Waiting: ${d.daysWaiting} days · Upload: ${d.uploadLink || "n/a"}`),
+    trace
+  );
+  return clean.map((d, i) => ({
+    action: "email.send" as const,
+    agent: DOC_AGENT,
+    summary: drafts[i]?.summary?.slice(0, 200) || `Doc chase · ${d.client || "client"} · ${d.daysWaiting}d waiting`,
+    draft:
+      drafts[i]?.draft?.slice(0, 1200) ||
+      `Hi ${d.client || "there"} — quick nudge: we are still missing ${d.items || "a few items"} to keep things moving. ${d.uploadLink ? `You can upload here: ${d.uploadLink}` : "Just reply with them when you can."} Thank you!`,
+    needsApproval: true,
+    source: `Docs ${d.client || i + 1}`,
+    to: d.email || undefined,
+    value: 0,
+  }));
+}
+
+// ── Dispute-fighter agent (chargebacks + platform error charges) ─────────────
+// Drafts the filing text from supplied evidence; submission is manual (pasted
+// into the processor/platform portal by the owner after approval).
+
+export type DisputeItem = {
+  platform?: string; // "Stripe" | "Shopify" | "DoorDash" | ...
+  orderRef?: string;
+  amount?: number;
+  reason?: string; // dispute reason / reason code
+  evidence?: string; // order data, tracking, timestamps, comms — as text
+};
+
+const DISPUTE_AGENT = "Dispute fighter agent";
+
+export async function runDisputeFighter(disputes: DisputeItem[], trace?: Trace, context?: string): Promise<ProposedAction[]> {
+  const clean = disputes.slice(0, 10).map((d) => ({
+    platform: (d.platform ?? "").slice(0, 60),
+    orderRef: (d.orderRef ?? "").slice(0, 80),
+    amount: Number(d.amount) || 0,
+    reason: (d.reason ?? "").slice(0, 200),
+    evidence: (d.evidence ?? "").slice(0, 2000),
+  }));
+  trace?.mark("tool.read", { disputes: clean.length });
+  const drafts = await draftMessages(
+    sys(DISPUTE_SYSTEM, context),
+    clean.map((d) => `Dispute on ${d.platform || "platform"} · Order ${d.orderRef || "n/a"} · $${d.amount} · Reason: ${d.reason || "n/a"} · Evidence: ${d.evidence || "NONE PROVIDED"}`),
+    trace,
+    1400
+  );
+  return clean.map((d, i) => ({
+    action: "triage.label" as const, // filing text for the owner to submit
+    agent: DISPUTE_AGENT,
+    summary: drafts[i]?.summary?.slice(0, 200) || `Dispute filing · ${d.platform} · ${d.orderRef} · $${d.amount}`,
+    draft: drafts[i]?.draft?.slice(0, 3000) || "",
+    needsApproval: true,
+    source: `Dispute ${d.platform} ${d.orderRef || i + 1}`,
+    value: d.amount,
+  }));
 }

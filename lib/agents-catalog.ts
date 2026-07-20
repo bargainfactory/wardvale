@@ -8,7 +8,19 @@ export type AgentKey =
   | "cart-recovery"
   | "review-request"
   | "lead-qualification"
-  | "support-triage";
+  | "support-triage"
+  // Wave 2 — from the July 2026 cross-vertical SMB pain-point research.
+  // Every lane is approval-gated; none is ever auto-armed at onboarding.
+  | "winback"
+  | "quote-followup"
+  | "hiring-assist"
+  | "referral-ask"
+  | "noshow-shield"
+  | "review-response"
+  | "shift-cover"
+  | "content-drafter"
+  | "doc-chaser"
+  | "dispute-fighter";
 
 export type Schedule = "manual" | "hourly" | "daily" | "off";
 
@@ -26,6 +38,17 @@ export const AGENTS: AgentDef[] = [
   { key: "review-request", name: "Review requests", blurb: "Asks happy customers for Google/Yelp reviews.", connectors: ["shopify", "google-business", "twilio"] },
   { key: "lead-qualification", name: "Lead follow-up", blurb: "Qualifies new leads and sends a fast first touch.", connectors: ["hubspot", "salesforce", "twilio"] },
   { key: "support-triage", name: "Support triage", blurb: "Triages and drafts replies for support tickets.", connectors: ["zendesk", "gorgias", "intercom"] },
+  // ── Wave 2 ──
+  { key: "winback", name: "Win-back", blurb: "Spots lapsed regulars and drafts personal we-miss-you outreach.", connectors: ["shopify", "quickbooks", "twilio"] },
+  { key: "quote-followup", name: "Quote follow-up", blurb: "Chases open quotes and estimates so winnable jobs stop dying in silence.", connectors: ["quickbooks", "twilio"] },
+  { key: "hiring-assist", name: "Hiring first-touch", blurb: "Replies to job applicants same-day with screening questions and interview slots.", connectors: ["google", "microsoft", "twilio"] },
+  { key: "referral-ask", name: "Referral requests", blurb: "Catches happy moments and drafts a personal referral ask.", connectors: ["twilio"] },
+  { key: "noshow-shield", name: "No-show shield", blurb: "Confirms appointments, flags risky slots, and drafts backfill offers on cancellations.", connectors: ["google", "twilio"] },
+  { key: "review-response", name: "Review responses", blurb: "Drafts replies to new reviews — public response plus a private make-it-right note.", connectors: ["google-business"] },
+  { key: "shift-cover", name: "Shift cover", blurb: "On a call-out, drafts targeted cover-request texts to eligible staff.", connectors: ["twilio"] },
+  { key: "content-drafter", name: "Content drafter", blurb: "Turns your week's real activity into drafted posts and a newsletter.", connectors: ["google-business"] },
+  { key: "doc-chaser", name: "Document chaser", blurb: "Tracks what each client still owes you and drafts polite escalating nudges.", connectors: ["google", "microsoft"] },
+  { key: "dispute-fighter", name: "Dispute fighter", blurb: "Assembles evidence and drafts chargeback and platform-fee dispute filings.", connectors: ["shopify", "stripe"] },
 ];
 
 export const AGENT_KEYS = AGENTS.map((a) => a.key);
@@ -94,7 +117,7 @@ export const PACKS: Pack[] = [
     id: "restaurant",
     name: "Restaurant OS",
     industry: "Restaurant / hospitality",
-    agents: ["inbox-triage", "review-request", "support-triage"],
+    agents: ["inbox-triage", "review-request", "winback", "shift-cover", "hiring-assist", "review-response"],
     connectors: ["google", "google-business", "twilio", "meta"],
     tone: "warm, welcoming, and concise",
   },
@@ -102,7 +125,7 @@ export const PACKS: Pack[] = [
     id: "home-services",
     name: "Home-Services OS",
     industry: "Home & field services",
-    agents: ["inbox-triage", "lead-qualification", "review-request"],
+    agents: ["inbox-triage", "lead-qualification", "quote-followup", "noshow-shield", "referral-ask", "review-request"],
     connectors: ["twilio", "jobber", "google-business"],
     tone: "friendly, prompt, and reassuring",
   },
@@ -110,7 +133,7 @@ export const PACKS: Pack[] = [
     id: "clinic",
     name: "Clinic & Dental OS",
     industry: "Healthcare / clinics",
-    agents: ["inbox-triage", "review-request", "support-triage"],
+    agents: ["inbox-triage", "noshow-shield", "winback", "review-response", "review-request", "support-triage"],
     connectors: ["google", "microsoft", "twilio"],
     tone: "calm, professional, and clear",
   },
@@ -118,7 +141,7 @@ export const PACKS: Pack[] = [
     id: "real-estate",
     name: "Real-Estate OS",
     industry: "Real estate",
-    agents: ["lead-qualification", "inbox-triage", "review-request"],
+    agents: ["lead-qualification", "inbox-triage", "doc-chaser", "referral-ask", "review-request", "content-drafter"],
     connectors: ["hubspot", "twilio", "docusign"],
     tone: "responsive, polished, and helpful",
   },
@@ -126,7 +149,7 @@ export const PACKS: Pack[] = [
     id: "law-firm",
     name: "Law-Firm OS",
     industry: "Legal / professional services",
-    agents: ["inbox-triage", "lead-qualification", "support-triage"],
+    agents: ["inbox-triage", "lead-qualification", "doc-chaser", "quote-followup", "ar-followup", "support-triage"],
     connectors: ["microsoft", "clio", "docusign"],
     tone: "precise, discreet, and professional",
   },
@@ -134,7 +157,7 @@ export const PACKS: Pack[] = [
     id: "ecommerce",
     name: "E-commerce OS",
     industry: "E-commerce / retail",
-    agents: ["cart-recovery", "support-triage", "review-request"],
+    agents: ["cart-recovery", "winback", "dispute-fighter", "review-response", "support-triage", "review-request"],
     connectors: ["shopify", "klaviyo", "gorgias", "twilio"],
     tone: "upbeat, on-brand, and helpful",
   },

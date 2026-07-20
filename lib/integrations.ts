@@ -2,7 +2,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { getConnector } from "@/lib/connectors";
 import { getServiceClient } from "@/lib/supabase-server";
 import { encryptSecret, decryptSecret } from "@/lib/crypto";
-import type { Invoice, Cart, ReviewTarget, Lead, InboxMessage } from "@/lib/runtime";
+import type { Invoice, Cart, ReviewTarget, Lead, InboxMessage, LapsedCustomer, OpenQuote } from "@/lib/runtime";
 import type { Trace } from "@/lib/trace";
 import { reportWarning } from "@/lib/report";
 
@@ -475,4 +475,170 @@ export async function clientForInboundNumber(toNumber: string): Promise<string |
     if (parseApiKey(row.access_token)?.from === toNumber) return row.client_id;
   }
   return null;
+}
+
+// ── Wave 2 pulls ─────────────────────────────────────────────────────────────
+
+type ShopifyOrderFull = {
+  email?: string;
+  phone?: string;
+  created_at?: string;
+  total_price?: string;
+  customer?: { first_name?: string; last_name?: string; phone?: string };
+  line_items?: { title?: string }[];
+};
+
+/**
+ * Pull lapsed repeat customers from Shopify → win-back targets. A customer is
+ * "lapsed" when they've ordered 2+ times but their latest order is 45+ days
+ * old — regulars who quietly stopped, the highest-converting outreach segment
+ * from the July 2026 pain research.
+ */
+export async function pullLapsedCustomers(
+  ingestKey: string,
+  trace?: Trace
+): Promise<{ clientId: string; lapsed: LapsedCustomer[] } | null> {
+  const c = await clientId(ingestKey);
+  if (!c) return null;
+  const conn = await connectedConnection(c.supabase, c.id, "Shopify");
+  const shop = conn?.external_id || process.env.SHOPIFY_SHOP;
+  if (!conn || !shop) return { clientId: c.id, lapsed: [] };
+  const token = await ensureAccessToken(c.supabase, "shopify", conn);
+  if (!token) return { clientId: c.id, lapsed: [] };
+
+  trace?.mark("tool.shopify.lapsed.start");
+  const data = await shopifyGet<{ orders?: ShopifyOrderFull[] }>(
+    shop,
+    token,
+    "orders.json?status=any&financial_status=paid&limit=250&fields=email,phone,created_at,total_price,customer,line_items"
+  );
+  if (data === null) {
+    reportWarning("Shopify lapsed-customer pull failed", { source: "pull.shopify", clientId: c.id });
+    trace?.flag("source_error", "shopify");
+    return { clientId: c.id, lapsed: [] };
+  }
+
+  // Group by customer email → order count, last order date, lifetime spend.
+  const byCustomer = new Map<
+    string,
+    { customer: string; phone: string; orders: number; lastAt: number; lastItems: string; total: number }
+  >();
+  for (const o of data.orders ?? []) {
+    const email = (o.email ?? "").toLowerCase();
+    if (!email) continue;
+    const at = o.created_at ? new Date(o.created_at).getTime() : 0;
+    const cur = byCustomer.get(email) ?? {
+      customer: fullName(o.customer) || email,
+      phone: o.phone ?? o.customer?.phone ?? "",
+      orders: 0,
+      lastAt: 0,
+      lastItems: "",
+      total: 0,
+    };
+    cur.orders += 1;
+    cur.total += Number(o.total_price) || 0;
+    if (at > cur.lastAt) {
+      cur.lastAt = at;
+      cur.lastItems = (o.line_items ?? []).map((li) => li.title).filter(Boolean).slice(0, 3).join(", ");
+    }
+    byCustomer.set(email, cur);
+  }
+
+  const now = Date.now();
+  const LAPSE_DAYS = 45;
+  const lapsed: LapsedCustomer[] = [];
+  for (const [email, v] of byCustomer) {
+    const daysSince = Math.floor((now - v.lastAt) / 86_400_000);
+    if (v.orders >= 2 && daysSince >= LAPSE_DAYS) {
+      lapsed.push({
+        customer: v.customer,
+        email,
+        phone: v.phone,
+        lastPurchase: v.lastItems,
+        daysSince,
+        totalSpent: Math.round(v.total),
+      });
+    }
+  }
+  lapsed.sort((a, b) => (b.totalSpent ?? 0) - (a.totalSpent ?? 0));
+  trace?.mark("tool.shopify.lapsed.end", { lapsed: lapsed.length });
+  return { clientId: c.id, lapsed: lapsed.slice(0, 20) };
+}
+
+type QBEstimate = {
+  Id?: string;
+  DocNumber?: string;
+  TxnDate?: string;
+  TotalAmt?: number;
+  TxnStatus?: string;
+  CustomerRef?: { name?: string };
+  BillEmail?: { Address?: string };
+  CustomerMemo?: { value?: string };
+};
+
+async function fetchQuickBooksOpenEstimates(accessToken: string, realmId: string): Promise<OpenQuote[] | null> {
+  const base =
+    process.env.QUICKBOOKS_ENV === "production"
+      ? "https://quickbooks.api.intuit.com"
+      : "https://sandbox-quickbooks.api.intuit.com";
+  const query = encodeURIComponent("SELECT * FROM Estimate WHERE TxnStatus = 'Pending' ORDER BY TxnDate DESC MAXRESULTS 50");
+  const res = await fetch(`${base}/v3/company/${realmId}/query?query=${query}&minorversion=65`, {
+    headers: { authorization: `Bearer ${accessToken}`, accept: "application/json" },
+    cache: "no-store",
+  });
+  if (!res.ok) return null;
+  const data = (await res.json()) as { QueryResponse?: { Estimate?: QBEstimate[] } };
+  const rows = data?.QueryResponse?.Estimate ?? [];
+  const today = Date.now();
+  return rows.map((e) => {
+    const at = e?.TxnDate ? new Date(e.TxnDate).getTime() : today;
+    return {
+      number: String(e?.DocNumber ?? e?.Id ?? ""),
+      customer: e?.CustomerRef?.name ?? "",
+      email: e?.BillEmail?.Address ?? "",
+      amount: Number(e?.TotalAmt) || 0,
+      service: e?.CustomerMemo?.value ?? "",
+      daysOld: Math.max(0, Math.floor((today - at) / 86_400_000)),
+    };
+  });
+}
+
+/**
+ * Pull open (pending) estimates from a client's connected QuickBooks → quote
+ * follow-up targets. Quotes older than a couple of days are the ones dying in
+ * silence — the #1 cross-vertical revenue leak in the pain research.
+ */
+export async function pullOpenEstimates(
+  ingestKey: string,
+  trace?: Trace
+): Promise<{ clientId: string; quotes: OpenQuote[] } | null> {
+  const supabase = getServiceClient();
+  if (!supabase) return null;
+  const { data: client } = await supabase.from("clients").select("id").eq("ingest_key", ingestKey).maybeSingle();
+  if (!client) return null;
+
+  const { data: conn } = await supabase
+    .from("connections")
+    .select(CONN_COLS)
+    .eq("client_id", client.id)
+    .eq("provider", "QuickBooks Online")
+    .eq("status", "connected")
+    .maybeSingle();
+  if (!conn || !conn.external_id) return { clientId: client.id, quotes: [] };
+
+  trace?.mark("tool.quickbooks.token");
+  const token = await ensureAccessToken(supabase, "quickbooks", conn as StoredConnection);
+  if (!token) return { clientId: client.id, quotes: [] };
+
+  trace?.mark("tool.quickbooks.estimates.start");
+  const quotes = await fetchQuickBooksOpenEstimates(token, conn.external_id);
+  if (quotes === null) {
+    reportWarning("QuickBooks estimates pull failed", { source: "pull.quickbooks", clientId: client.id });
+    trace?.flag("source_error", "quickbooks");
+    return { clientId: client.id, quotes: [] };
+  }
+  // Only chase quotes that have had a beat to breathe (2+ days old).
+  const aged = quotes.filter((q) => (q.daysOld ?? 0) >= 2);
+  trace?.mark("tool.quickbooks.estimates.end", { quotes: aged.length });
+  return { clientId: client.id, quotes: aged };
 }

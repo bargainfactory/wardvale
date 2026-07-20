@@ -39,6 +39,17 @@ const GOALS: { key: AgentKey; labelKey: string }[] = [
   { key: "review-request", labelKey: "studio.goalReview" },
   { key: "cart-recovery", labelKey: "studio.goalCart" },
   { key: "ar-followup", labelKey: "studio.goalAr" },
+  // Wave 2 (July 2026 pain-point research)
+  { key: "winback", labelKey: "studio.goalWinback" },
+  { key: "quote-followup", labelKey: "studio.goalQuote" },
+  { key: "hiring-assist", labelKey: "studio.goalHiring" },
+  { key: "referral-ask", labelKey: "studio.goalReferral" },
+  { key: "noshow-shield", labelKey: "studio.goalNoshow" },
+  { key: "review-response", labelKey: "studio.goalRevResp" },
+  { key: "shift-cover", labelKey: "studio.goalShift" },
+  { key: "content-drafter", labelKey: "studio.goalContent" },
+  { key: "doc-chaser", labelKey: "studio.goalDocs" },
+  { key: "dispute-fighter", labelKey: "studio.goalDispute" },
 ];
 
 const inputCls =

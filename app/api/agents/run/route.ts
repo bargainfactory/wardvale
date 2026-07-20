@@ -7,6 +7,16 @@ import {
   runCartRecovery,
   runReviewRequest,
   runLeadQualification,
+  runWinback,
+  runQuoteFollowup,
+  runHiringAssist,
+  runReferralAsk,
+  runNoshowShield,
+  runReviewResponse,
+  runShiftCover,
+  runContentDrafter,
+  runDocChaser,
+  runDisputeFighter,
   type InboxMessage,
   type Invoice,
   type Cart,
@@ -32,6 +42,8 @@ import {
   pullRecentOrders,
   pullOpenTickets,
   pullNewLeads,
+  pullLapsedCustomers,
+  pullOpenEstimates,
 } from "@/lib/integrations";
 
 /**
@@ -61,6 +73,18 @@ export async function POST(req: Request) {
       carts?: Cart[];
       targets?: ReviewTarget[];
       leads?: Lead[];
+      // Wave 2 lane payloads
+      lapsed?: import("@/lib/runtime").LapsedCustomer[];
+      quotes?: import("@/lib/runtime").OpenQuote[];
+      applicants?: import("@/lib/runtime").Applicant[];
+      moments?: import("@/lib/runtime").ReferralMoment[];
+      appointments?: import("@/lib/runtime").AppointmentItem[];
+      reviews?: import("@/lib/runtime").ReviewItem[];
+      callout?: import("@/lib/runtime").CallOut;
+      candidates?: import("@/lib/runtime").CoverCandidate[];
+      requests?: import("@/lib/runtime").ContentRequest[];
+      docs?: import("@/lib/runtime").MissingDocs[];
+      disputes?: import("@/lib/runtime").DisputeItem[];
     };
 
     // A client's ingest key both scopes persistence and unlocks live data pulls
@@ -166,6 +190,88 @@ export async function POST(req: Request) {
         }
         trace.setInput(messages.map((m) => m?.subject ?? "").join("; "));
         actions = await runInboxTriage(messages, trace, context);
+        break;
+      }
+      // ── Wave 2 lanes ──
+      case "winback": {
+        let lapsed = Array.isArray(body.lapsed) ? body.lapsed : [];
+        if (lapsed.length === 0 && key) {
+          const pulled = await pullLapsedCustomers(key, trace);
+          if (pulled) {
+            lapsed = pulled.lapsed;
+            trace.flag("source", "shopify");
+          }
+        }
+        trace.setInput(lapsed.map((l: { customer?: string }) => l?.customer ?? "").join("; "));
+        actions = await runWinback(lapsed, trace, context);
+        break;
+      }
+      case "quote-followup": {
+        let quotes = Array.isArray(body.quotes) ? body.quotes : [];
+        if (quotes.length === 0 && key) {
+          const pulled = await pullOpenEstimates(key, trace);
+          if (pulled) {
+            quotes = pulled.quotes;
+            trace.flag("source", "quickbooks");
+            // A previously chased quote that's no longer pending → it converted.
+            const svc = getServiceClient();
+            if (svc) {
+              const won = await resolveOutcomes(svc, pulled.clientId, "quote-followup", quotes.map((q) => `Quote ${q.number ?? ""}`));
+              if (won) trace.flag("resolved", won);
+            }
+          }
+        }
+        trace.setInput(quotes.map((q: { customer?: string }) => q?.customer ?? "").join("; "));
+        actions = await runQuoteFollowup(quotes, trace, context);
+        break;
+      }
+      case "hiring-assist": {
+        const applicants = Array.isArray(body.applicants) ? body.applicants : [];
+        trace.setInput(applicants.map((a: { name?: string }) => a?.name ?? "").join("; "));
+        actions = await runHiringAssist(applicants, trace, context);
+        break;
+      }
+      case "referral-ask": {
+        const moments = Array.isArray(body.moments) ? body.moments : [];
+        trace.setInput(moments.map((m: { customer?: string }) => m?.customer ?? "").join("; "));
+        actions = await runReferralAsk(moments, trace, context);
+        break;
+      }
+      case "noshow-shield": {
+        const appointments = Array.isArray(body.appointments) ? body.appointments : [];
+        trace.setInput(appointments.map((a: { customer?: string }) => a?.customer ?? "").join("; "));
+        actions = await runNoshowShield(appointments, trace, context);
+        break;
+      }
+      case "review-response": {
+        const reviews = Array.isArray(body.reviews) ? body.reviews : [];
+        trace.setInput(reviews.map((r: { reviewer?: string }) => r?.reviewer ?? "").join("; "));
+        actions = await runReviewResponse(reviews, trace, context);
+        break;
+      }
+      case "shift-cover": {
+        const callout = body.callout && typeof body.callout === "object" ? body.callout : {};
+        const candidates = Array.isArray(body.candidates) ? body.candidates : [];
+        trace.setInput(`${callout?.shift ?? ""} → ${candidates.length} candidates`);
+        actions = await runShiftCover(callout, candidates, trace, context);
+        break;
+      }
+      case "content-drafter": {
+        const requests = Array.isArray(body.requests) ? body.requests : [];
+        trace.setInput(requests.map((r: { channel?: string }) => r?.channel ?? "").join("; "));
+        actions = await runContentDrafter(requests, trace, context);
+        break;
+      }
+      case "doc-chaser": {
+        const docs = Array.isArray(body.docs) ? body.docs : [];
+        trace.setInput(docs.map((d: { client?: string }) => d?.client ?? "").join("; "));
+        actions = await runDocChaser(docs, trace, context);
+        break;
+      }
+      case "dispute-fighter": {
+        const disputes = Array.isArray(body.disputes) ? body.disputes : [];
+        trace.setInput(disputes.map((d: { orderRef?: string }) => d?.orderRef ?? "").join("; "));
+        actions = await runDisputeFighter(disputes, trace, context);
         break;
       }
       default: {
