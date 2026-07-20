@@ -50,7 +50,7 @@ export default async function PrivacyPage() {
         <Section title={t("legal.privacyS5Heading")}>
           <p>
             {t("legal.privacyS5BodyBefore")}{" "}
-            <a href="mailto:privacy@flowforge.ai" className="text-cyan-electric">privacy@flowforge.ai</a>{" "}
+            <a href="mailto:privacy@wardvale.com" className="text-cyan-electric">privacy@wardvale.com</a>{" "}
             {t("legal.privacyS5BodyAfter")}
           </p>
         </Section>
@@ -62,7 +62,7 @@ export default async function PrivacyPage() {
         <Section title={t("legal.privacyS7Heading")}>
           <p>
             {t("legal.privacyS7BodyBefore")}{" "}
-            <a href="mailto:privacy@flowforge.ai" className="text-cyan-electric">privacy@flowforge.ai</a>.
+            <a href="mailto:privacy@wardvale.com" className="text-cyan-electric">privacy@wardvale.com</a>.
           </p>
         </Section>
       </article>

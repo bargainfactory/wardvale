@@ -89,7 +89,7 @@ export function ContactForm() {
 
   const calendlyUrl =
     typeof window !== "undefined"
-      ? `${process.env.NEXT_PUBLIC_CALENDLY_URL ?? "https://calendly.com/flowforge/discovery"}?name=${encodeURIComponent(name)}&email=${encodeURIComponent(email)}&a1=${encodeURIComponent(biz)}`
+      ? `${process.env.NEXT_PUBLIC_CALENDLY_URL ?? "https://calendly.com/wardvale/discovery"}?name=${encodeURIComponent(name)}&email=${encodeURIComponent(email)}&a1=${encodeURIComponent(biz)}`
       : "#";
 
   return (

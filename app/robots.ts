@@ -1,6 +1,6 @@
 import type { MetadataRoute } from "next";
 
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://flowforge.ai";
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://wardvale.com";
 
 export default function robots(): MetadataRoute.Robots {
   return {

@@ -28,7 +28,7 @@ export type Blueprint = {
 };
 
 const BRAND = "#22d3ee";
-const CTA_URL = process.env.NEXT_PUBLIC_CALENDLY_URL ?? "https://flowforge.ai/pricing";
+const CTA_URL = process.env.NEXT_PUBLIC_CALENDLY_URL ?? "https://wardvale.com/pricing";
 
 async function sendEmail(opts: { to: string; subject: string; html: string }): Promise<boolean> {
   const apiKey = process.env.RESEND_API_KEY;
@@ -59,11 +59,11 @@ function shell(inner: string): string {
   return `<div style="font-family:-apple-system,Segoe UI,Roboto,sans-serif;background:#050a14;color:#e2e8f0;padding:32px">
     <div style="max-width:560px;margin:0 auto;background:#0b1220;border:1px solid #1e293b;border-radius:16px;overflow:hidden">
       <div style="padding:24px 28px;border-bottom:1px solid #1e293b">
-        <span style="font-weight:700;font-size:18px;color:#f8fafc">FlowForge <span style="color:${BRAND}">AI</span></span>
+        <span style="font-weight:700;font-size:18px;color:#f8fafc">Ward<span style="color:${BRAND}">vale</span></span>
       </div>
       <div style="padding:28px">${inner}</div>
       <div style="padding:18px 28px;border-top:1px solid #1e293b;font-size:12px;color:#64748b">
-        FlowForge AI · You received this because you requested an automation audit.
+        Wardvale · You received this because you requested an automation audit.
       </div>
     </div>
   </div>`;
@@ -76,15 +76,15 @@ function shell(inner: string): string {
  * No-ops when Resend is unconfigured, so the Stripe webhook never breaks on it.
  */
 export async function sendWelcome(input: { to: string; name?: string }): Promise<boolean> {
-  const site = process.env.NEXT_PUBLIC_SITE_URL ?? "https://flowforge.ai";
+  const site = process.env.NEXT_PUBLIC_SITE_URL ?? "https://wardvale.com";
   const studioUrl = `${site}/portal/login?next=/portal/studio`;
-  const hello = input.name ? `Welcome, ${escapeHtml(input.name)}` : "Welcome to FlowForge";
+  const hello = input.name ? `Welcome, ${escapeHtml(input.name)}` : "Welcome to Wardvale";
   const inner = `
     <h1 style="font-size:22px;color:#f8fafc;margin:0 0 8px">${hello} 👋</h1>
     <p style="color:#94a3b8;margin:0 0 16px">You're all set. The next step is the <strong style="color:#e2e8f0">Agent Design Studio</strong> — a few minutes to tell your agents about your business, pick what they work on, and set how much they do on their own. Nothing sends without your approval.</p>
     <a href="${studioUrl}" style="display:inline-block;background:${BRAND};color:#0b1220;font-weight:600;padding:12px 20px;border-radius:10px;text-decoration:none">Design your agents →</a>
     <p style="color:#64748b;font-size:13px;margin:18px 0 0">We'll email you a secure sign-in link when you click through.</p>`;
-  return sendEmail({ to: input.to, subject: "Welcome to FlowForge — let's set up your agents", html: shell(inner) });
+  return sendEmail({ to: input.to, subject: "Welcome to Wardvale — let's set up your agents", html: shell(inner) });
 }
 
 /**
@@ -109,7 +109,7 @@ export async function sendRoiDigest(input: {
     </td>`;
   const inner = `
     <h1 style="font-size:22px;color:#f8fafc;margin:0 0 8px">Your automation impact, ${escapeHtml(first)}</h1>
-    <p style="color:#94a3b8;margin:0 0 16px">Here's what your FlowForge agents delivered over ${escapeHtml(input.periodLabel)}.</p>
+    <p style="color:#94a3b8;margin:0 0 16px">Here's what your Wardvale agents delivered over ${escapeHtml(input.periodLabel)}.</p>
     <table style="width:100%;border:1px solid #1e293b;border-radius:12px;border-collapse:separate"><tr>
       ${stat(`$${Math.round(input.dollarsSaved).toLocaleString()}`, "saved")}
       ${stat(`${Math.round(input.hoursSaved).toLocaleString()}h`, "reclaimed")}
@@ -118,7 +118,7 @@ export async function sendRoiDigest(input: {
     <a href="${escapeHtml(input.portalUrl)}" style="display:inline-block;margin-top:20px;background:${BRAND};color:#0b1220;font-weight:600;padding:12px 20px;border-radius:10px;text-decoration:none">View your live dashboard →</a>`;
   return sendEmail({
     to: input.to,
-    subject: `FlowForge saved you $${Math.round(input.dollarsSaved).toLocaleString()} this month`,
+    subject: `Wardvale saved you $${Math.round(input.dollarsSaved).toLocaleString()} this month`,
     html: shell(inner),
   });
 }
@@ -151,7 +151,7 @@ export async function sendQuoteReport(input: {
 
   return sendEmail({
     to: input.to,
-    subject: "Your FlowForge automation scope (3 ideas inside)",
+    subject: "Your Wardvale automation scope (3 ideas inside)",
     html: shell(inner),
   });
 }
@@ -190,14 +190,14 @@ export async function sendWorkflowBlueprint(input: {
 
   return sendEmail({
     to: input.to,
-    subject: `Your FlowForge automation blueprint: ${b.title}`,
+    subject: `Your Wardvale automation blueprint: ${b.title}`,
     html: shell(inner),
   });
 }
 
 /** Tell the owner they have agent drafts waiting for approval. */
 export async function sendApprovalNotification(to: string, count: number, agentLabel?: string): Promise<boolean> {
-  const site = process.env.NEXT_PUBLIC_SITE_URL ?? "https://flowforge.ai";
+  const site = process.env.NEXT_PUBLIC_SITE_URL ?? "https://wardvale.com";
   const s = count === 1 ? "" : "s";
   const inner = `
     <h1 style="font-size:22px;color:#f8fafc;margin:0 0 8px">You have ${count} draft${s} to review</h1>

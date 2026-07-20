@@ -44,7 +44,7 @@ async function toWebhook(level: Level, source: string, message: string): Promise
     await fetch(url, {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ text: `[FlowForge ${level}] ${source}: ${message}` }),
+      body: JSON.stringify({ text: `[Wardvale ${level}] ${source}: ${message}` }),
       cache: "no-store",
     });
   } catch {

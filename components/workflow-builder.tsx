@@ -51,7 +51,7 @@ type ApiReply = { done: boolean; progress: number; question?: string; blueprint?
 
 type Phase = "intro" | "asking" | "thinking" | "done";
 
-const CALENDLY = process.env.NEXT_PUBLIC_CALENDLY_URL ?? "https://calendly.com/flowforge/discovery";
+const CALENDLY = process.env.NEXT_PUBLIC_CALENDLY_URL ?? "https://calendly.com/wardvale/discovery";
 
 type Attachment = { kind: "image" | "text"; name: string; dataUrl?: string; text?: string };
 const MAX_FILE_BYTES = 3 * 1024 * 1024;

@@ -1,6 +1,6 @@
-# FlowForge Platform Roadmap — Floor → Loop → Ceiling
+# Wardvale Platform Roadmap — Floor → Loop → Ceiling
 
-> A design-led engineering plan to evolve FlowForge from a well-built *agent product*
+> A design-led engineering plan to evolve Wardvale from a well-built *agent product*
 > into a *self-improving agent platform* — without losing the simplicity and safety
 > that make it trustworthy today.
 >
@@ -34,7 +34,7 @@ the principle wins.
    and the sales lever. Everything we build should make that proof more rigorous and
    more visible, not just make the agents cleverer.
 6. **Ease of use is bidirectional.** "Easy" means easy for the small-business owner
-   *and* easy for the FlowForge operator to run, debug, and evolve. A feature that
+   *and* easy for the Wardvale operator to run, debug, and evolve. A feature that
    improves agent quality but makes the system unobservable is a net negative.
 
 ---
@@ -208,7 +208,7 @@ Phase 2) so this phase is additive rather than a rewrite.
   capability discovery**; **rate-limiting + cost attribution per external caller**; and
   **policy-aware exposure** (some tools only for certain callers or under human gate —
   built on the G9 data-access seam). Then *wire MCP to the actual agents* so a customer's
-  own Claude can trigger their FlowForge agents and read their approval queue,
+  own Claude can trigger their Wardvale agents and read their approval queue,
   authenticated — closing the gap where today's MCP endpoint exposes only marketing data.
 - **G5 — Split the runtime tier.** ◑ **PARTIAL (code side done; full split is ops).** On Vercel each API route already runs as its own independently-scaling serverless function, so agent/cron bursts don't share instances with page rendering; G4's QStash further offloads scheduled work off the request path. Added explicit `maxDuration` to the batch crons (run-agents/judge/touches) so the runtime tier is tuned independently. A *fully separate deployment* (own Vercel project / worker service) is an infrastructure decision — not a code change I can provision or verify here. _Original plan:_ Move the agent runtime, cron, and webhooks off the
   web/marketing deployment so agent bursts can't degrade page loads, and each tier scales

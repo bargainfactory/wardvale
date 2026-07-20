@@ -29,7 +29,7 @@ export async function POST(req: Request) {
 
     if (!priceId || !process.env.STRIPE_SECRET_KEY) {
       return NextResponse.json(
-        { error: "Checkout is not configured yet. Contact hello@flowforge.ai." },
+        { error: "Checkout is not configured yet. Contact hello@wardvale.com." },
         { status: 503 }
       );
     }

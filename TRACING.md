@@ -24,11 +24,11 @@ Set `ADMIN_TOKEN` and call the export endpoint (server-only, token-gated):
 ```bash
 # Recent workflow traces (full detail)
 curl -H "Authorization: Bearer $ADMIN_TOKEN" \
-  "https://flowforge.ai/api/admin/traces?route=workflow&limit=200"
+  "https://wardvale.com/api/admin/traces?route=workflow&limit=200"
 
 # Golden-set seed: {input, output} pairs from successful runs
 curl -H "Authorization: Bearer $ADMIN_TOKEN" \
-  "https://flowforge.ai/api/admin/traces?route=workflow&format=eval"
+  "https://wardvale.com/api/admin/traces?route=workflow&format=eval"
 ```
 
 Or in Supabase SQL:

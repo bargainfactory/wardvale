@@ -13,11 +13,11 @@ export async function generateMetadata(): Promise<Metadata> {
   };
 }
 
-const ENDPOINT = "https://flowforge.ai/api/mcp";
+const ENDPOINT = "https://wardvale.com/api/mcp";
 
 const CONFIG_SNIPPET = `{
   "mcpServers": {
-    "flowforge": {
+    "wardvale": {
       "url": "${ENDPOINT}"
     }
   }

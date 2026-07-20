@@ -34,7 +34,7 @@ export function AgencyConsole({ agency, clients }: { agency: Agency | null; clie
       <PageLayout>
         <div className="container max-w-lg pb-16">
           <p className="text-xs font-semibold uppercase tracking-[0.2em] text-cyan-electric">For agencies</p>
-          <h1 className="mt-1 font-display text-3xl font-semibold">Run FlowForge for your clients.</h1>
+          <h1 className="mt-1 font-display text-3xl font-semibold">Run Wardvale for your clients.</h1>
           <p className="mt-1 text-muted-foreground">
             Manage every client&rsquo;s agents, approvals, and ROI from one place — under your brand.
           </p>

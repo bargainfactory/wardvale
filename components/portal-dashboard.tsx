@@ -38,7 +38,7 @@ import { useLocale } from "@/lib/locale-context";
 import { entitlement, type Schedule } from "@/lib/agents-catalog";
 import { addons } from "@/lib/solutions";
 
-const CALENDLY = process.env.NEXT_PUBLIC_CALENDLY_URL ?? "https://calendly.com/flowforge/discovery";
+const CALENDLY = process.env.NEXT_PUBLIC_CALENDLY_URL ?? "https://calendly.com/wardvale/discovery";
 import type { PortalAgentConfig, PortalApproval, PortalAutomation, PortalAudit, PortalConnection, PortalKpis, PortalLog, PortalOutcome, PortalPolicy, PortalRoi, PortalRoiProof } from "@/lib/portal";
 import type { PeerBenchmarks } from "@/lib/peer-benchmarks";
 

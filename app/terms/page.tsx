@@ -44,7 +44,7 @@ export default async function TermsPage() {
         <Section title={t("legal.termsS6Heading")}>
           <p>
             {t("legal.termsS6BodyBefore")}{" "}
-            <a href="mailto:hello@flowforge.ai" className="text-cyan-electric">hello@flowforge.ai</a>.
+            <a href="mailto:hello@wardvale.com" className="text-cyan-electric">hello@wardvale.com</a>.
           </p>
         </Section>
       </article>

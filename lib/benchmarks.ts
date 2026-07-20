@@ -9,7 +9,7 @@ export type Benchmark = {
 
 /**
  * Representative automation benchmarks by vertical. Numbers reflect typical
- * outcomes across FlowForge engagements and comparable published case data —
+ * outcomes across Wardvale engagements and comparable published case data —
  * used to give prospects a realistic anchor before their own data is live.
  *
  * NOTE: `vertical` is a stable lookup key used by getBenchmark() to match

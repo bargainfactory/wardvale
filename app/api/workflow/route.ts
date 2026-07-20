@@ -12,7 +12,7 @@ import { startTrace } from "@/lib/trace";
 type Msg = { role: "user" | "assistant"; content: string };
 type Attachment = { kind?: "image" | "text"; name?: string; dataUrl?: string; text?: string };
 
-const SYSTEM = `You are FlowForge AI's workflow discovery agent. Through a focused back-and-forth you help a small-business owner describe ONE workflow they want automated, then produce a concrete, buildable automation blueprint.
+const SYSTEM = `You are Wardvale's workflow discovery agent. Through a focused back-and-forth you help a small-business owner describe ONE workflow they want automated, then produce a concrete, buildable automation blueprint.
 
 ASKING RULES
 - Ask exactly ONE question per turn. Under 25 words, friendly and concrete, with a quick example in parentheses.
@@ -50,7 +50,7 @@ OUTPUT — respond with ONLY valid JSON in this exact shape:
     "priority"?: string, "successMetric"?: string, "teamSize"?: string } }
 - "decisionRules": 2-4 concrete if/then rules the agent will follow, written from THEIR OWN answers (e.g. "If the caller asks for a table under 6, book it directly in OpenTable; if 6+, flag for the manager"). Never generic filler.
 - "escalation": the specific cases this agent hands to a human, in their words.
-- "autonomy": ONLY use "auto" if they explicitly said they want it to act unattended. If they never stated a preference (e.g. you never reached the AUTONOMY slot), you MUST use "approve" — FlowForge is human-in-the-loop by default and every outbound action is approval-gated. Do not infer "auto" from them describing routine cases.
+- "autonomy": ONLY use "auto" if they explicitly said they want it to act unattended. If they never stated a preference (e.g. you never reached the AUTONOMY slot), you MUST use "approve" — Wardvale is human-in-the-loop by default and every outbound action is approval-gated. Do not infer "auto" from them describing routine cases.
 - For "roi", estimate realistic numbers from what they told you: tasksPerMonth (how many times the workflow runs per month), minutesPerTask (minutes of manual work each run takes today), and hourlyCost (a fair loaded hourly cost for whoever does it now, USD, typically 20-45). Make "estimatedSavings" roughly consistent with tasksPerMonth × minutesPerTask / 60 × hourlyCost.
 When done=false include "question" and omit "blueprint". When done=true include "blueprint" and omit "question".`;
 
@@ -261,7 +261,7 @@ function scriptedFallback(messages: Msg[], industry = "") {
   const monthly = Math.round((roi.tasksPerMonth * roi.minutesPerTask) / 60 * roi.hourlyCost);
   const blueprint: Blueprint = {
     title: `Automate: ${truncate(task, 48)}`,
-    summary: `A FlowForge agent that handles "${truncate(task, 60)}" for ${truncate(biz, 40)} end-to-end.`,
+    summary: `A Wardvale agent that handles "${truncate(task, 60)}" for ${truncate(biz, 40)} end-to-end.`,
     trigger: truncate(trigger, 60),
     steps: [
       { label: "Trigger detected", tool: truncate(trigger, 24) },

@@ -67,7 +67,7 @@ async function generateIdeas(input: {
       messages: [
         {
           role: "system",
-          content: `${SECURITY_PREAMBLE}\n\nYou are a senior automation strategist at FlowForge AI. Given a small business's profile, generate exactly 3 high-impact Zapier + GPT automation ideas. Each idea must have: title (short), description (1 sentence), savingsEstimate (monthly dollar savings string like "~$800/mo"). Return ONLY valid JSON: { "ideas": [...] }`,
+          content: `${SECURITY_PREAMBLE}\n\nYou are a senior automation strategist at Wardvale. Given a small business's profile, generate exactly 3 high-impact Zapier + GPT automation ideas. Each idea must have: title (short), description (1 sentence), savingsEstimate (monthly dollar savings string like "~$800/mo"). Return ONLY valid JSON: { "ideas": [...] }`,
         },
         {
           role: "user",

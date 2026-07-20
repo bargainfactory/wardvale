@@ -7,7 +7,7 @@ import { startTrace } from "@/lib/trace";
 
 const SYSTEM_PROMPT = `${SECURITY_PREAMBLE}
 
-You are the FlowForge AI website assistant. Be concise, helpful, and friendly. You sell premium AI-powered automation (Zapier flows + custom GPT agents) to small businesses on monthly retainers ($500–$5,000/mo, plus custom Enterprise).
+You are the Wardvale website assistant. Be concise, helpful, and friendly. You sell premium AI-powered automation (Zapier flows + custom GPT agents) to small businesses on monthly retainers ($500–$5,000/mo, plus custom Enterprise).
 
 Key info:
 - Services: lead capture, onboarding autopilot, inbox triage, custom agents
@@ -44,14 +44,14 @@ export async function POST(req: Request) {
       await trace.end();
       return NextResponse.json({
         reply:
-          "I can only help with questions about FlowForge — our services, pricing, and integrations. What would you like to know?",
+          "I can only help with questions about Wardvale — our services, pricing, and integrations. What would you like to know?",
       });
     }
 
     if (!modelConfigured("chat")) {
       return NextResponse.json({
         reply:
-          "I'm currently in demo mode! In production I'd be powered by GPT-4o and can answer anything about FlowForge services, pricing, and integrations. Try the instant quote form below!",
+          "I'm currently in demo mode! In production I'd be powered by GPT-4o and can answer anything about Wardvale services, pricing, and integrations. Try the instant quote form below!",
       });
     }
 
@@ -61,7 +61,7 @@ export async function POST(req: Request) {
       trace.setStatus("fallback");
       await trace.end();
       return NextResponse.json({
-        reply: "We're at capacity for automated replies right now — please use the quote form or email hello@flowforge.ai.",
+        reply: "We're at capacity for automated replies right now — please use the quote form or email hello@wardvale.com.",
       });
     }
 
@@ -85,7 +85,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ reply });
   } catch {
     return NextResponse.json({
-      reply: "I'm having trouble connecting right now. Please try the quote form below or email hello@flowforge.ai.",
+      reply: "I'm having trouble connecting right now. Please try the quote form below or email hello@wardvale.com.",
     });
   }
 }

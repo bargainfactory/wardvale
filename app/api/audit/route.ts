@@ -51,7 +51,7 @@ export async function POST(req: Request) {
       messages: [
         {
           role: "system",
-          content: `${SECURITY_PREAMBLE}\n\nYou are a FlowForge AI automation auditor. Given quick-survey answers about a small business, generate a brief ROI summary with 2-3 bullet recommendations and estimated monthly savings. Return JSON: { message: string, recommendations: string[], estimatedSavings: string }`,
+          content: `${SECURITY_PREAMBLE}\n\nYou are a Wardvale automation auditor. Given quick-survey answers about a small business, generate a brief ROI summary with 2-3 bullet recommendations and estimated monthly savings. Return JSON: { message: string, recommendations: string[], estimatedSavings: string }`,
         },
         {
           role: "user",

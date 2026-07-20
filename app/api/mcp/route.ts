@@ -11,11 +11,11 @@ import { runConcierge, defaultDeps, type Lead } from "@/lib/orchestrator";
 import { fenceUntrusted, SECURITY_PREAMBLE } from "@/lib/guardrails";
 
 /**
- * FlowForge AI — Model Context Protocol (MCP) server.
+ * Wardvale — Model Context Protocol (MCP) server.
  *
  * A dependency-free JSON-RPC 2.0 over HTTP endpoint implementing the MCP wire
- * protocol so AI assistants (Claude, ChatGPT) can discover and call FlowForge
- * tools at https://flowforge.ai/api/mcp.
+ * protocol so AI assistants (Claude, ChatGPT) can discover and call Wardvale
+ * tools at https://wardvale.com/api/mcp.
  */
 
 const CORS_HEADERS: Record<string, string> = {
@@ -91,7 +91,7 @@ const TOOLS: ToolDefinition[] = [
   },
   {
     name: "list_services",
-    description: "List FlowForge's AI automation services with a short description of each.",
+    description: "List Wardvale's AI automation services with a short description of each.",
     inputSchema: {
       type: "object",
       properties: {},
@@ -101,7 +101,7 @@ const TOOLS: ToolDefinition[] = [
   {
     name: "list_playbooks",
     description:
-      "List FlowForge's industry automation playbooks (slug, vertical, workflow). Each maps to /automations/{slug}.",
+      "List Wardvale's industry automation playbooks (slug, vertical, workflow). Each maps to /automations/{slug}.",
     inputSchema: {
       type: "object",
       properties: {},
@@ -110,7 +110,7 @@ const TOOLS: ToolDefinition[] = [
   },
   {
     name: "get_pricing",
-    description: "Return FlowForge's three monthly retainer tiers with prices and a short blurb.",
+    description: "Return Wardvale's three monthly retainer tiers with prices and a short blurb.",
     inputSchema: {
       type: "object",
       properties: {},
@@ -120,11 +120,11 @@ const TOOLS: ToolDefinition[] = [
   {
     name: "run_concierge",
     description:
-      "Run FlowForge's New-Lead Concierge on a lead: qualify, route across sub-agents, and return the proposed (human-gated) actions. Gated — requires a valid client api_key.",
+      "Run Wardvale's New-Lead Concierge on a lead: qualify, route across sub-agents, and return the proposed (human-gated) actions. Gated — requires a valid client api_key.",
     inputSchema: {
       type: "object",
       properties: {
-        api_key: { type: "string", description: "Your FlowForge client ingest key (required)." },
+        api_key: { type: "string", description: "Your Wardvale client ingest key (required)." },
         name: { type: "string", description: "The lead's name." },
         email: { type: "string", description: "The lead's email." },
         message: { type: "string", description: "What the lead said / their inquiry." },
@@ -144,7 +144,7 @@ function listServices(): ToolContent {
   const body = services
     .map((s) => `• ${en(s.title)} — ${en(s.description)}`)
     .join("\n");
-  return text(`FlowForge AI services:\n\n${body}`);
+  return text(`Wardvale services:\n\n${body}`);
 }
 
 function listPlaybooks(): ToolContent {
@@ -153,14 +153,14 @@ function listPlaybooks(): ToolContent {
       (p) => `• ${p.slug} — ${en(p.vertical)}: ${en(p.workflow)} (/automations/${p.slug})`
     )
     .join("\n");
-  return text(`FlowForge industry playbooks:\n\n${body}`);
+  return text(`Wardvale industry playbooks:\n\n${body}`);
 }
 
 function getPricing(): ToolContent {
   const body = tiers
     .map((t) => `• ${en(t.name)} — $${t.price.toLocaleString()}/mo — ${en(t.blurb)}`)
     .join("\n");
-  return text(`FlowForge monthly retainer tiers:\n\n${body}`);
+  return text(`Wardvale monthly retainer tiers:\n\n${body}`);
 }
 
 function deterministicBlueprint(business: string, workflow: string): string {
@@ -177,7 +177,7 @@ function deterministicBlueprint(business: string, workflow: string): string {
     "",
     "Estimated monthly savings: $2,500–$5,000 in recovered revenue and reclaimed labor.",
     "",
-    "Ready to build it? Book a scoping call at https://flowforge.ai/build",
+    "Ready to build it? Book a scoping call at https://wardvale.com/build",
   ].join("\n");
 }
 
@@ -199,7 +199,7 @@ async function scopeAutomation(
       messages: [
         {
           role: "system",
-          content: `${SECURITY_PREAMBLE}\n\nYou are a FlowForge AI automation architect. Given a business type and a workflow, produce a concise automation blueprint: a single Trigger, 3-4 numbered Steps, an estimated monthly savings figure, and a closing line inviting the reader to book at https://flowforge.ai/build. Keep it under 180 words, plain text, no markdown headers.`,
+          content: `${SECURITY_PREAMBLE}\n\nYou are a Wardvale automation architect. Given a business type and a workflow, produce a concise automation blueprint: a single Trigger, 3-4 numbered Steps, an estimated monthly savings figure, and a closing line inviting the reader to book at https://wardvale.com/build. Keep it under 180 words, plain text, no markdown headers.`,
         },
         {
           role: "user",
@@ -225,7 +225,7 @@ async function runConciergeTool(args: Record<string, JsonValue> | undefined): Pr
 
   const supabase = getServiceClient();
   if (!supabase) {
-    return text("The FlowForge platform backend isn't configured here, so gated actions can't run. (The public marketing tools remain available.)");
+    return text("The Wardvale platform backend isn't configured here, so gated actions can't run. (The public marketing tools remain available.)");
   }
   const { data: client } = await supabase.from("clients").select("id").eq("ingest_key", apiKey).maybeSingle();
   if (!client) return { code: -32001, message: "invalid api_key" };
@@ -310,7 +310,7 @@ export async function POST(req: Request): Promise<NextResponse> {
       return ok(id, {
         protocolVersion: PROTOCOL_VERSION,
         capabilities: { tools: {} },
-        serverInfo: { name: "flowforge-ai", version: "1.1.0" },
+        serverInfo: { name: "wardvale", version: "1.1.0" },
       });
 
     case "notifications/initialized":

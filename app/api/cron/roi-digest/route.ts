@@ -33,7 +33,7 @@ async function handle(req: Request) {
   if (!svc) return NextResponse.json({ error: "not_configured" }, { status: 503 });
 
   const since = new Date(Date.now() - 30 * 24 * 60 * 60_000).toISOString();
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://flowforge.ai";
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://wardvale.com";
 
   try {
     const { data: clients } = await svc.from("clients").select("id, email, name").eq("status", "active");

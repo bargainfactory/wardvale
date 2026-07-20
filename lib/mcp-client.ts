@@ -6,7 +6,7 @@ import { validateArgs, type MCPSchema } from "@/lib/mcp";
 import { fenceUntrusted, detectInjection } from "@/lib/guardrails";
 
 // ── Guarded outbound tool client (BYOT) ──────────────────────────────────────
-// FlowForge is normally an MCP *server*; this is the ONLY place it acts as a
+// Wardvale is normally an MCP *server*; this is the ONLY place it acts as a
 // client, calling a customer-supplied MCP server / HTTPS endpoint. Every call is
 // hardened against SSRF (connect-time IP validation, HTTPS-only, no redirects),
 // DoS (timeout + size cap), and prompt-injection (output fenced + flagged). The
@@ -237,7 +237,7 @@ export async function mcpListTools(endpoint: string, token: string | null): Prom
     jsonrpc: "2.0",
     id: 1,
     method: "initialize",
-    params: { protocolVersion: PROTOCOL_VERSION, capabilities: {}, clientInfo: { name: "flowforge-ai", version: "1.0.0" } },
+    params: { protocolVersion: PROTOCOL_VERSION, capabilities: {}, clientInfo: { name: "wardvale", version: "1.0.0" } },
   });
   const listed = rpcResult(await guardedPost(endpoint, token, { jsonrpc: "2.0", id: 2, method: "tools/list" }));
   const raw = Array.isArray(listed.tools) ? listed.tools : [];

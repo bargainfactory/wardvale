@@ -30,7 +30,7 @@ export async function GET() {
   return new NextResponse(csv, {
     headers: {
       "content-type": "text/csv; charset=utf-8",
-      "content-disposition": `attachment; filename="flowforge-audit-${new Date().toISOString().slice(0, 10)}.csv"`,
+      "content-disposition": `attachment; filename="wardvale-audit-${new Date().toISOString().slice(0, 10)}.csv"`,
     },
   });
 }

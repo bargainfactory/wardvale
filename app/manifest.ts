@@ -2,8 +2,8 @@ import type { MetadataRoute } from "next";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "FlowForge AI — Automation for Small Business",
-    short_name: "FlowForge",
+    name: "Wardvale — Automation for Small Business",
+    short_name: "Wardvale",
     description: "Done-for-you Zapier flows and custom GPT agents. Scope an automation in 60 seconds.",
     start_url: "/",
     scope: "/",

@@ -1,6 +1,6 @@
 import { getServiceClient } from "@/lib/supabase-server";
 
-// White-label: an agency runs FlowForge for many clients under its own brand.
+// White-label: an agency runs Wardvale for many clients under its own brand.
 // This turns competing automation agencies into a distribution channel.
 
 export type Agency = { id: string; name: string; brandColor: string };

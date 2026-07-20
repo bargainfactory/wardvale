@@ -73,7 +73,7 @@ export const services: Service[] = [
     icon: Bot,
     flow: [
       { label: "dat.flowTriggerEvent", tone: "zap" },
-      { label: "dat.flowFlowforgeAgent", tone: "ai" },
+      { label: "dat.flowWardvaleAgent", tone: "ai" },
       { label: "dat.flowRunAction", tone: "crm" },
       { label: "dat.flowLogReport", tone: "pay" },
     ],

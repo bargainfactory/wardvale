@@ -1,4 +1,4 @@
-# FlowForge AI — Go‑Live Runbook
+# Wardvale — Go‑Live Runbook
 
 This is the end‑to‑end checklist to take the turnkey platform from "builds locally"
 to "a customer can sign up, onboard, and have agents running." Work top to bottom.
@@ -77,7 +77,7 @@ The full annotated list is in [`.env.example`](.env.example).
 | `SUPABASE_SERVICE_ROLE_KEY` | Same page. **Server‑only** — never expose. Provisioning + cron need it. |
 | `OPENAI_API_KEY` | Agent drafting. Omit → template fallback (still works). |
 | `CRON_SECRET` | Any long random string. Authenticates `/api/cron/*`. See §5. |
-| `RESEND_API_KEY` / `EMAIL_FROM` | Approval + digest emails. `EMAIL_FROM="FlowForge AI <hello@yourdomain.com>"`. |
+| `RESEND_API_KEY` / `EMAIL_FROM` | Approval + digest emails. `EMAIL_FROM="Wardvale <hello@yourdomain.com>"`. |
 
 ### Billing (to make paid plans provision)
 

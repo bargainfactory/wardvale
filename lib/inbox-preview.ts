@@ -41,7 +41,7 @@ export async function buildInboxPreview(items: { subject: string; from: string }
       messages: [
         {
           role: "system",
-          content: `For each email subject, choose the automation action a FlowForge inbox agent would take, from exactly: ${ACTIONS.join(
+          content: `For each email subject, choose the automation action a Wardvale inbox agent would take, from exactly: ${ACTIONS.join(
             ", "
           )}. Return JSON { "examples": [{ "subject": string, "action": string }] } covering the given subjects.`,
         },

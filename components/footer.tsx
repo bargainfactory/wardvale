@@ -18,7 +18,7 @@ export function Footer() {
               <span className="grid h-8 w-8 place-items-center rounded-lg bg-gradient-to-br from-cyan-electric to-indigo-400 text-navy-900">
                 <Zap className="h-4 w-4" strokeWidth={2.5} />
               </span>
-              FlowForge <span className="gradient-text">AI</span>
+              Ward<span className="gradient-text">vale</span>
             </Link>
             <p className="mt-3 max-w-sm text-sm text-muted-foreground">
               {t("footer.desc")}
@@ -58,7 +58,7 @@ export function Footer() {
         </div>
 
         <div className="mt-12 flex flex-col items-center justify-between gap-3 border-t border-border/60 pt-6 text-xs text-muted-foreground md:flex-row">
-          <p>© {new Date().getFullYear()} FlowForge AI. {t("footer.rights")}</p>
+          <p>© {new Date().getFullYear()} Wardvale. {t("footer.rights")}</p>
           <p>{t("footer.builtWith")}</p>
         </div>
       </div>

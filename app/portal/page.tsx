@@ -54,7 +54,7 @@ const DEMO: PortalData & { deltas: { runs: string; hours: string; success: strin
   audit: [
     { time: "11:40 AM", actor: "marco@nonabistro.com", action: "agent.paused", detail: "Cart recovery flow" },
     { time: "10:12 AM", actor: "system", action: "approval.sent", detail: "Draft reply to Catering inquiry" },
-    { time: "09:58 AM", actor: "flowforge", action: "config.updated", detail: "Inbox triage agent — added VIP rule" },
+    { time: "09:58 AM", actor: "wardvale", action: "config.updated", detail: "Inbox triage agent — added VIP rule" },
     { time: "Yesterday", actor: "marco@nonabistro.com", action: "connection.added", detail: "Twilio SMS (send)" },
     { time: "Yesterday", actor: "system", action: "guardrail.blocked", detail: "Outbound to unverified domain" },
   ],

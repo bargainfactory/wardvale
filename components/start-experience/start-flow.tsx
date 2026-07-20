@@ -7,7 +7,7 @@ import { bundles } from "@/lib/solutions";
 import { useLocale } from "@/lib/locale-context";
 import { WorkflowBuilder } from "@/components/workflow-builder";
 
-const CALENDLY = process.env.NEXT_PUBLIC_CALENDLY_URL ?? "https://calendly.com/flowforge/discovery";
+const CALENDLY = process.env.NEXT_PUBLIC_CALENDLY_URL ?? "https://calendly.com/wardvale/discovery";
 
 /**
  * The unified conversion experience: choose an industry, then a self-paced

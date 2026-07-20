@@ -79,7 +79,7 @@ export function Nav() {
             <span className="grid h-8 w-8 place-items-center rounded-lg bg-gradient-to-br from-cyan-electric to-indigo-400 text-navy-900 shadow-glow">
               <Zap className="h-4 w-4" strokeWidth={2.5} />
             </span>
-            <span>FlowForge <span className="gradient-text">AI</span></span>
+            <span>Ward<span className="gradient-text">vale</span></span>
           </Link>
 
           <div className="hidden items-center gap-1 md:flex">

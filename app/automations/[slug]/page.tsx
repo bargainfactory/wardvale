@@ -8,7 +8,7 @@ import { seoPages } from "@/lib/seo-pages";
 import { StartCTA } from "@/components/start-experience/start-cta";
 import { getT } from "@/lib/i18n-server";
 
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://flowforge.ai";
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://wardvale.com";
 
 export async function generateStaticParams() {
   return seoPages.map((p) => ({ slug: p.slug }));
@@ -60,7 +60,7 @@ export default async function AutomationPage({
     description: t(page.metaDescription),
     provider: {
       "@type": "Organization",
-      name: "FlowForge AI",
+      name: "Wardvale",
       url: siteUrl,
     },
     areaServed: "US",

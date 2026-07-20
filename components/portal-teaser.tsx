@@ -42,7 +42,7 @@ export function PortalTeaser() {
               <span className="grid h-6 w-6 place-items-center rounded-md bg-cyan-electric/15">
                 <Bot className="h-3.5 w-3.5 text-cyan-electric" />
               </span>
-              <span className="font-medium">FlowForge Portal</span>
+              <span className="font-medium">Wardvale Portal</span>
               <span className="text-muted-foreground">· Nona Bistro</span>
             </div>
             <div className="flex items-center gap-1 text-xs text-muted-foreground">

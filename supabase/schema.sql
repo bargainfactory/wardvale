@@ -1,4 +1,4 @@
--- FlowForge AI — Supabase schema
+-- Wardvale — Supabase schema
 -- Run in the Supabase SQL editor (or via `supabase db push`) to enable
 -- lead capture (/api/quote, /api/audit) and subscriber provisioning
 -- (/api/stripe/webhook). Both features degrade gracefully if these tables
