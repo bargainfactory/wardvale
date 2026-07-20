@@ -23,11 +23,12 @@ const DEMO: PortalData & { deltas: { runs: string; hours: string; success: strin
   roi: { realized: 12510, pipeline: 4820, won: 143, resolved: 190, winRate: 75 },
   roiProof: { monthlyCost: 2000, realized: 12510, multiple: 6.3, remaining: 0, met: true, daysActive: 34, guaranteeDays: 21 },
   policy: { dailySpendCap: 500, requireApprovalOver: 250, allowedDomains: "" },
+  feedbackCount: 214,
   outcomes: [
-    { id: "o1", agent: "AR follow-up agent", kind: "ar-followup", value: 2400, status: "pending", detail: "Reminder: Invoice 1043 · $2,400 · 21d overdue", createdAt: "12m ago" },
-    { id: "o2", agent: "Cart recovery agent", kind: "cart-recovery", value: 128, status: "won", detail: "Recovered cart · Ana Lee", createdAt: "1h ago" },
-    { id: "o3", agent: "Review request agent", kind: "review-request", value: 40, status: "pending", detail: "Review ask · Dana R.", createdAt: "2h ago" },
-    { id: "o4", agent: "Lead qualification agent", kind: "lead-qualification", value: 250, status: "won", detail: "Booked · Frank T. (Website form)", createdAt: "Yesterday" },
+    { id: "o1", agent: "AR follow-up agent", kind: "ar-followup", value: 2400, status: "pending", detail: "Reminder: Invoice 1043 · $2,400 · 21d overdue", createdAt: "12m ago", approvalId: null },
+    { id: "o2", agent: "Cart recovery agent", kind: "cart-recovery", value: 128, status: "won", detail: "Recovered cart · Ana Lee", createdAt: "1h ago", approvalId: null },
+    { id: "o3", agent: "Review request agent", kind: "review-request", value: 40, status: "pending", detail: "Review ask · Dana R.", createdAt: "2h ago", approvalId: null },
+    { id: "o4", agent: "Lead qualification agent", kind: "lead-qualification", value: 250, status: "won", detail: "Booked · Frank T. (Website form)", createdAt: "Yesterday", approvalId: null },
   ],
   automations: [
     { id: "a1", name: "Inbox triage agent", status: "active", runs: 12847, successRate: 99.3, saved: 4280, lastRun: "34s ago" },
@@ -119,6 +120,7 @@ export default async function PortalPage() {
       isDemo={isDemo}
       authEnabled={authEnabled}
       userEmail={userEmail}
+      feedbackCount={view.feedbackCount}
     />
   );
 }

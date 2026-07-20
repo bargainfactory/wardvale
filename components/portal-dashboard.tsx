@@ -63,6 +63,19 @@ type Props = {
   isDemo: boolean;
   authEnabled: boolean;
   userEmail: string | null;
+  /** Learning-loop moat surfaced: decisions that have trained this client's agents. */
+  feedbackCount: number;
+};
+
+type ReceiptDetail = {
+  id: string;
+  value: number;
+  status: string;
+  detail: string | null;
+  createdAt: string;
+  resolvedAt: string | null;
+  autoSent: boolean;
+  approval: { draft: string | null; to: string | null; decidedBy: string | null; decidedAt: string | null } | null;
 };
 
 type Tab = "overview" | "roi" | "agents" | "approvals" | "connections" | "trust" | "audit";
@@ -153,6 +166,26 @@ export function PortalDashboard(props: Props) {
   const [policySaved, setPolicySaved] = useState(false);
   const [newKey, setNewKey] = useState<string | null>(null);
   const [rotating, setRotating] = useState(false);
+  // Receipt drill-down: outcome id → fetched receipt (null while loading).
+  const [openReceiptId, setOpenReceiptId] = useState<string | null>(null);
+  const [receipts, setReceipts] = useState<Record<string, ReceiptDetail | null>>({});
+
+  async function toggleReceipt(id: string) {
+    if (openReceiptId === id) {
+      setOpenReceiptId(null);
+      return;
+    }
+    setOpenReceiptId(id);
+    if (isDemo || receipts[id] !== undefined) return;
+    setReceipts((r) => ({ ...r, [id]: null }));
+    try {
+      const res = await fetch(`/api/portal/receipts?id=${encodeURIComponent(id)}`);
+      const d = (await res.json().catch(() => ({}))) as { receipt?: ReceiptDetail };
+      setReceipts((r) => ({ ...r, [id]: d.receipt ?? null }));
+    } catch {
+      /* row shows the fallback note */
+    }
+  }
   const mounted = useMounted();
   const { roi } = props;
 
@@ -377,8 +410,26 @@ export function PortalDashboard(props: Props) {
 
   const activeCount = agents.filter((a) => a.status === "active").length;
 
+  // Screenshot provenance (banking-app pattern): a faint repeating watermark of
+  // the signed-in email over PRIVATE dashboard data. It can't stop screenshots —
+  // nothing can — but any leaked capture identifies its source. Marketing pages
+  // stay clean; this renders only for a live signed-in client.
+  const watermark =
+    !isDemo && userEmail
+      ? `url("data:image/svg+xml;utf8,${encodeURIComponent(
+          `<svg xmlns='http://www.w3.org/2000/svg' width='420' height='240'><text x='0' y='120' font-family='sans-serif' font-size='13' fill='rgba(148,163,184,0.055)' transform='rotate(-18 210 120)'>${userEmail} · Wardvale</text></svg>`
+        )}")`
+      : null;
+
   return (
     <PageLayout>
+      {watermark && (
+        <div
+          aria-hidden="true"
+          className="pointer-events-none fixed inset-0 z-40 print:block"
+          style={{ backgroundImage: watermark, backgroundRepeat: "repeat" }}
+        />
+      )}
       <div className="container pb-10">
         {/* Status bar */}
         <div className="mb-4 flex flex-wrap items-center gap-3">
@@ -566,11 +617,18 @@ export function PortalDashboard(props: Props) {
             </div>
 
             <div className="mt-6 rounded-3xl border border-border bg-card/40 backdrop-blur">
-              <div className="flex items-center justify-between border-b border-border px-6 py-4">
+              <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border px-6 py-4">
                 <h2 className="flex items-center gap-2 font-display font-semibold">
                   <DollarSign className="h-4 w-4 text-cyan-electric" /> {t("prt.attributedOutcomes")}
                 </h2>
-                <span className="text-xs text-muted-foreground">{t("prt.confirmPaidOff")}</span>
+                <div className="flex items-center gap-3">
+                  {props.feedbackCount > 0 && (
+                    <span className="rounded-full border border-cyan-electric/25 bg-cyan-electric/10 px-2.5 py-1 text-[11px] font-medium text-cyan-electric tabular-nums">
+                      {t("prt.learnedFrom")} {props.feedbackCount.toLocaleString()} {t("prt.learnedDecisions")}
+                    </span>
+                  )}
+                  <span className="text-xs text-muted-foreground">{t("prt.confirmPaidOff")}</span>
+                </div>
               </div>
               {outcomes.length === 0 ? (
                 <p className="px-6 py-10 text-center text-sm text-muted-foreground">
@@ -582,10 +640,46 @@ export function PortalDashboard(props: Props) {
                     <li key={o.id} className="flex flex-wrap items-center gap-3 px-6 py-3">
                       <div className="min-w-0 flex-1">
                         <div className="flex flex-wrap items-center gap-2">
-                          <span className="font-display font-semibold tabular-nums text-cyan-electric">${o.value.toLocaleString()}</span>
+                          {/* "Every dollar we claim, you can click" — the receipt drill-down. */}
+                          <button
+                            type="button"
+                            onClick={() => !isDemo && toggleReceipt(o.id)}
+                            className={`font-display font-semibold tabular-nums text-cyan-electric ${isDemo ? "" : "underline decoration-cyan-electric/40 decoration-dotted underline-offset-4 transition hover:decoration-cyan-electric"}`}
+                            title={isDemo ? undefined : t("prt.viewReceipt")}
+                          >
+                            ${o.value.toLocaleString()}
+                          </button>
                           <span className="text-xs text-muted-foreground">{o.agent} · {o.createdAt}</span>
                         </div>
                         <p className="mt-0.5 text-sm text-muted-foreground">{o.detail}</p>
+                        {openReceiptId === o.id && !isDemo && (
+                          <div className="mt-2 rounded-xl border border-cyan-electric/20 bg-cyan-electric/[0.04] p-3 text-xs">
+                            {receipts[o.id] === null || receipts[o.id] === undefined ? (
+                              <p className="text-muted-foreground">…</p>
+                            ) : (
+                              <>
+                                {receipts[o.id]!.approval?.draft ? (
+                                  <>
+                                    <p className="mb-1 font-medium text-cyan-electric">{t("prt.receiptApprovedMsg")}</p>
+                                    <blockquote className="whitespace-pre-line border-l-2 border-cyan-electric/30 pl-2 text-muted-foreground">
+                                      {receipts[o.id]!.approval!.draft}
+                                    </blockquote>
+                                    <p className="mt-2 text-muted-foreground">
+                                      {receipts[o.id]!.approval!.decidedBy ? `${t("prt.receiptApprovedBy")} ${receipts[o.id]!.approval!.decidedBy}` : ""}
+                                      {receipts[o.id]!.approval!.decidedAt ? ` · ${new Date(receipts[o.id]!.approval!.decidedAt!).toLocaleString()}` : ""}
+                                      {receipts[o.id]!.resolvedAt ? ` · ${t("prt.receiptResolved")} ${new Date(receipts[o.id]!.resolvedAt!).toLocaleString()}` : ""}
+                                    </p>
+                                  </>
+                                ) : (
+                                  <p className="text-muted-foreground">
+                                    {receipts[o.id]!.autoSent ? t("prt.receiptAutoSent") : t("prt.receiptNoDraft")}
+                                    {receipts[o.id]!.resolvedAt ? ` · ${t("prt.receiptResolved")} ${new Date(receipts[o.id]!.resolvedAt!).toLocaleString()}` : ""}
+                                  </p>
+                                )}
+                              </>
+                            )}
+                          </div>
+                        )}
                       </div>
                       {o.status === "pending" ? (
                         <div className="flex gap-2">

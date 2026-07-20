@@ -33,7 +33,17 @@ export type PortalRoiProof = {
   daysActive: number;
   guaranteeDays: number; // the break-even guarantee window (21)
 };
-export type PortalOutcome = { id: string; agent: string; kind: string; value: number; status: string; detail: string; createdAt: string };
+export type PortalOutcome = {
+  id: string;
+  agent: string;
+  kind: string;
+  value: number;
+  status: string;
+  detail: string;
+  createdAt: string;
+  /** Receipt drill-down: the approval that authorized this dollar (null = auto-sent within caps). */
+  approvalId: string | null;
+};
 export type PortalPolicy = { dailySpendCap: number | null; requireApprovalOver: number | null; allowedDomains: string };
 export type PortalData = {
   clientName: string;
@@ -51,6 +61,8 @@ export type PortalData = {
   agentConfigs: PortalAgentConfig[];
   outcomes: PortalOutcome[];
   policy: PortalPolicy;
+  /** Learning-loop moat, surfaced: how many approve/edit/reject decisions have trained this client's agents. */
+  feedbackCount: number;
 };
 
 function relTime(iso: string): string {
@@ -130,7 +142,7 @@ export async function getPortalData(email: string): Promise<PortalData | null> {
       supabase.from("agent_config").select("agent_key, enabled, auto_send, schedule").eq("client_id", client.id),
       supabase
         .from("outcomes")
-        .select("id, agent, kind, value, status, detail, created_at")
+        .select("id, agent, kind, value, status, detail, created_at, approval_id")
         .eq("client_id", client.id)
         .order("created_at", { ascending: false })
         .limit(100),
@@ -198,7 +210,7 @@ export async function getPortalData(email: string): Promise<PortalData | null> {
       (c) => ({ key: c.agent_key, name: agentName(c.agent_key), enabled: c.enabled, autoSend: c.auto_send, schedule: c.schedule })
     );
 
-    const outcomeRows = (outcomeData as { id: string; agent: string | null; kind: string | null; value: number; status: string; detail: string | null; created_at: string }[] | null) ?? [];
+    const outcomeRows = (outcomeData as { id: string; agent: string | null; kind: string | null; value: number; status: string; detail: string | null; created_at: string; approval_id?: string | null }[] | null) ?? [];
     const realized = outcomeRows.filter((o) => o.status === "won").reduce((s, o) => s + (Number(o.value) || 0), 0);
     const pipeline = outcomeRows.filter((o) => o.status === "pending").reduce((s, o) => s + (Number(o.value) || 0), 0);
     const won = outcomeRows.filter((o) => o.status === "won").length;
@@ -238,7 +250,14 @@ export async function getPortalData(email: string): Promise<PortalData | null> {
       status: o.status,
       detail: o.detail ?? "",
       createdAt: relTime(o.created_at),
+      approvalId: (o as { approval_id?: string | null }).approval_id ?? null,
     }));
+
+    // Learning-loop counter: every decision the owner made that trained the agents.
+    const { count: feedbackCount } = await supabase
+      .from("agent_feedback")
+      .select("id", { count: "exact", head: true })
+      .eq("client_id", client.id);
 
     const roll = rollup as { runs_this_month?: number; hours_saved?: number; success_rate?: number } | null;
     const totalSaved = Math.round(runList.reduce((s, r) => s + (Number(r.dollars_saved) || 0), 0));
@@ -265,6 +284,7 @@ export async function getPortalData(email: string): Promise<PortalData | null> {
       agentConfigs,
       outcomes,
       policy,
+      feedbackCount: feedbackCount ?? 0,
     };
   } catch {
     return null;

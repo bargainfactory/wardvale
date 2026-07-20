@@ -48,29 +48,39 @@ async function getImpactTotals(): Promise<ImpactTotals> {
     const supabase = getServiceClient();
     if (!supabase) return ILLUSTRATIVE;
 
-    const { data, error } = await supabase
-      .from("runs")
-      .select("minutes_saved, dollars_saved, status")
-      .limit(5000);
+    // Union BOTH real ledgers: the automation-run ledger (`runs`, with ingested
+    // savings) and the agent outcome ledger (`outcomes`, with resolved dollar
+    // values). The page flips live the moment either holds real rows.
+    const [{ data: runData, error: runErr }, { data: outData, error: outErr }] = await Promise.all([
+      supabase.from("runs").select("minutes_saved, dollars_saved, status").limit(5000),
+      supabase.from("outcomes").select("value, status").neq("status", "pending").limit(5000),
+    ]);
 
-    if (error || !data || data.length === 0) return ILLUSTRATIVE;
+    const rows = (runErr ? [] : ((runData ?? []) as RunRow[]));
+    const outs = (outErr ? [] : ((outData ?? []) as { value: number | null; status: string }[]));
+    if (rows.length === 0 && outs.length === 0) return ILLUSTRATIVE;
 
-    const rows = data as RunRow[];
     let minutes = 0;
     let dollars = 0;
     let successes = 0;
-
     for (const row of rows) {
       minutes += row.minutes_saved ?? 0;
       dollars += row.dollars_saved ?? 0;
       if (row.status === "success") successes += 1;
     }
+    for (const o of outs) {
+      if (o.status === "won") {
+        dollars += Number(o.value) || 0;
+        successes += 1;
+      }
+    }
 
+    const total = rows.length + outs.length;
     return {
-      runs: rows.length,
+      runs: total,
       hoursSaved: Math.round(minutes / 60),
       dollarsSaved: Math.round(dollars),
-      successRate: Math.round((successes / rows.length) * 100),
+      successRate: Math.round((successes / total) * 100),
       live: true,
     };
   } catch {

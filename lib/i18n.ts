@@ -12,6 +12,14 @@ export const localeLabels: Record<Locale, string> = {
 type Dict = Record<string, string>;
 
 const en: Dict = {
+  "prt.learnedFrom": "Your agents have learned from",
+  "prt.learnedDecisions": "of your decisions",
+  "prt.viewReceipt": "View the receipt behind this dollar",
+  "prt.receiptApprovedMsg": "The approved message behind this dollar:",
+  "prt.receiptApprovedBy": "Approved by",
+  "prt.receiptResolved": "resolved",
+  "prt.receiptAutoSent": "Auto-sent within your policy caps — no manual approval was required.",
+  "prt.receiptNoDraft": "Recorded before receipt tracking — the audit trail holds the full record.",
   "sol.bundlePhotographerName": "Studio OS",
   "sol.bundlePhotographerTagline": "Answer first, follow up always, and keep every shoot on track.",
   "sol.incPhotographer1": "Instant inquiry replies & qualification",
@@ -1767,6 +1775,14 @@ const en: Dict = {
 };
 
 const es: Dict = {
+  "prt.learnedFrom": "Tus agentes han aprendido de",
+  "prt.learnedDecisions": "de tus decisiones",
+  "prt.viewReceipt": "Ver el comprobante detrás de esta cifra",
+  "prt.receiptApprovedMsg": "El mensaje aprobado detrás de esta cifra:",
+  "prt.receiptApprovedBy": "Aprobado por",
+  "prt.receiptResolved": "resuelto",
+  "prt.receiptAutoSent": "Enviado automáticamente dentro de tus límites de política; no requirió aprobación manual.",
+  "prt.receiptNoDraft": "Registrado antes del seguimiento de comprobantes; el registro completo está en la auditoría.",
   "sol.bundlePhotographerName": "Estudio OS",
   "sol.bundlePhotographerTagline": "Responde primero, haz seguimiento siempre y llena tu agenda de sesiones.",
   "sol.incPhotographer1": "Respuesta y filtro de consultas",
@@ -3520,6 +3536,14 @@ const es: Dict = {
 };
 
 const fr: Dict = {
+  "prt.learnedFrom": "Vos agents ont appris de",
+  "prt.learnedDecisions": "de vos décisions",
+  "prt.viewReceipt": "Voir le justificatif derrière ce montant",
+  "prt.receiptApprovedMsg": "Le message approuvé derrière ce montant :",
+  "prt.receiptApprovedBy": "Approuvé par",
+  "prt.receiptResolved": "résolu",
+  "prt.receiptAutoSent": "Envoyé automatiquement dans vos plafonds de politique — aucune validation manuelle requise.",
+  "prt.receiptNoDraft": "Enregistré avant le suivi des justificatifs — la piste d'audit contient le dossier complet.",
   "sol.bundlePhotographerName": "Studio OS",
   "sol.bundlePhotographerTagline": "Répondez en premier, relancez toujours, remplissez votre agenda de séances.",
   "sol.incPhotographer1": "Réponse et qualification des demandes",
@@ -5273,6 +5297,14 @@ const fr: Dict = {
 };
 
 const pt: Dict = {
+  "prt.learnedFrom": "Os seus agentes aprenderam com",
+  "prt.learnedDecisions": "das suas decisões",
+  "prt.viewReceipt": "Ver o comprovativo por trás deste valor",
+  "prt.receiptApprovedMsg": "A mensagem aprovada por trás deste valor:",
+  "prt.receiptApprovedBy": "Aprovado por",
+  "prt.receiptResolved": "resolvido",
+  "prt.receiptAutoSent": "Enviado automaticamente dentro dos seus limites de política — não exigiu aprovação manual.",
+  "prt.receiptNoDraft": "Registado antes do rastreio de comprovativos — a trilha de auditoria tem o registo completo.",
   "sol.bundlePhotographerName": "Estúdio OS",
   "sol.bundlePhotographerTagline": "Responda primeiro, faça follow-up sempre e encha a agenda de sessões.",
   "sol.incPhotographer1": "Resposta e triagem de contatos",
@@ -7007,6 +7039,14 @@ const pt: Dict = {
 };
 
 const de: Dict = {
+  "prt.learnedFrom": "Deine Agenten haben gelernt aus",
+  "prt.learnedDecisions": "deiner Entscheidungen",
+  "prt.viewReceipt": "Den Beleg hinter diesem Betrag ansehen",
+  "prt.receiptApprovedMsg": "Die freigegebene Nachricht hinter diesem Betrag:",
+  "prt.receiptApprovedBy": "Freigegeben von",
+  "prt.receiptResolved": "abgeschlossen",
+  "prt.receiptAutoSent": "Automatisch innerhalb deiner Richtlinien-Limits gesendet — keine manuelle Freigabe nötig.",
+  "prt.receiptNoDraft": "Vor der Beleg-Nachverfolgung erfasst — das Audit-Protokoll enthält den vollständigen Vorgang.",
   "sol.bundlePhotographerName": "Studio OS",
   "sol.bundlePhotographerTagline": "Zuerst antworten, konsequent nachfassen, den Kalender mit Shootings füllen.",
   "sol.incPhotographer1": "Anfragen sofort beantworten und qualifizieren",

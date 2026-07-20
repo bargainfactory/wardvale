@@ -88,6 +88,40 @@ export async function sendWelcome(input: { to: string; name?: string }): Promise
 }
 
 /**
+ * The five-minute morning: daily digest of drafts waiting for approval, framed
+ * as a short ritual ("7 drafts — about 3 minutes"), with a peek at the top items
+ * and the learning-loop counter. This is the crank handle of the receipts moat:
+ * every approval trains the agents AND mints a verifiable outcome.
+ */
+export async function sendMorningDigest(input: {
+  to: string;
+  name?: string;
+  pending: number;
+  minutes: number;
+  summaries: string[];
+  learned: number;
+  portalUrl: string;
+}): Promise<boolean> {
+  const first = input.name?.split(" ")[0] || "there";
+  const s = input.pending === 1 ? "" : "s";
+  const items = input.summaries
+    .slice(0, 3)
+    .map((x) => `<li style="color:#94a3b8;margin:4px 0">${escapeHtml(x)}</li>`)
+    .join("");
+  const inner = `
+    <h1 style="font-size:22px;color:#f8fafc;margin:0 0 8px">Good morning, ${escapeHtml(first)} — ${input.pending} draft${s}, about ${input.minutes} minute${input.minutes === 1 ? "" : "s"}</h1>
+    <p style="color:#94a3b8;margin:0 0 12px">Your agents drafted these overnight. Nothing sends until you approve it.</p>
+    ${items ? `<ul style="margin:0 0 16px;padding-left:18px">${items}</ul>` : ""}
+    <a href="${escapeHtml(input.portalUrl)}" style="display:inline-block;background:${BRAND};color:#0b1220;font-weight:600;padding:12px 20px;border-radius:10px;text-decoration:none">Approve in the portal →</a>
+    ${input.learned > 0 ? `<p style="color:#64748b;font-size:12px;margin:18px 0 0">Every decision teaches your agents your voice — ${input.learned.toLocaleString()} so far.</p>` : ""}`;
+  return sendEmail({
+    to: input.to,
+    subject: `${input.pending} draft${s} waiting — about ${input.minutes} min`,
+    html: shell(inner),
+  });
+}
+
+/**
  * Monthly ROI recap for a paying client. Callers MUST pass only REAL realized
  * outcome figures (see the roi-digest cron) — never illustrative numbers. This is
  * the retention moat: it puts a dollar value on the service every month.

@@ -45,17 +45,20 @@ async function handle(req: Request) {
         skipped++;
         continue;
       }
-      // REAL realized outcomes only (resolved, last 30 days).
-      const { data: rows } = await svc
-        .from("outcomes")
-        .select("dollars_saved, minutes_saved, status")
-        .eq("client_id", c.id)
-        .neq("status", "pending")
-        .gte("created_at", since);
-      const outcomes = (rows ?? []) as { dollars_saved: number | null; minutes_saved: number | null }[];
-      const dollarsSaved = outcomes.reduce((s, o) => s + (Number(o.dollars_saved) || 0), 0);
-      const minutes = outcomes.reduce((s, o) => s + (Number(o.minutes_saved) || 0), 0);
-      const runs = outcomes.length;
+      // REAL realized impact only, unioned across BOTH ledgers (last 30 days):
+      // - `outcomes` (agent ledger): WON outcomes carry attributed `value`
+      // - `runs` (automation ledger): ingested dollars_saved / minutes_saved
+      // (Bug fix: this previously selected runs' columns FROM outcomes, which
+      // don't exist there — so the digest could never send.)
+      const [{ data: outRows }, { data: runRows }] = await Promise.all([
+        svc.from("outcomes").select("value").eq("client_id", c.id).eq("status", "won").gte("created_at", since),
+        svc.from("runs").select("dollars_saved, minutes_saved").eq("client_id", c.id).gte("created_at", since),
+      ]);
+      const wonValue = ((outRows ?? []) as { value: number | null }[]).reduce((s, o) => s + (Number(o.value) || 0), 0);
+      const runList = (runRows ?? []) as { dollars_saved: number | null; minutes_saved: number | null }[];
+      const dollarsSaved = wonValue + runList.reduce((s, r) => s + (Number(r.dollars_saved) || 0), 0);
+      const minutes = runList.reduce((s, r) => s + (Number(r.minutes_saved) || 0), 0);
+      const runs = (outRows?.length ?? 0) + runList.length;
 
       // No real impact this period → skip. Never send fabricated numbers.
       if (runs === 0 || (dollarsSaved <= 0 && minutes <= 0)) {
