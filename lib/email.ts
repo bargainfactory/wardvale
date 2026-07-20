@@ -21,6 +21,10 @@ export type Blueprint = {
   autonomy?: "auto" | "approve";
   // Structured inputs so the client can compute (and let the user adjust) ROI.
   roi?: { tasksPerMonth: number; minutesPerTask: number; hourlyCost: number };
+  // Optional pre-sale discovery signals — captured only if surfaced naturally.
+  priority?: string;
+  successMetric?: string;
+  teamSize?: string;
 };
 
 const BRAND = "#22d3ee";
@@ -63,6 +67,24 @@ function shell(inner: string): string {
       </div>
     </div>
   </div>`;
+}
+
+/**
+ * Welcome email for a client who just completed checkout. Gets them to sign in
+ * and configure their agents in the Design Studio. Links to the normal magic-link
+ * sign-in with a `next` back to the studio (we do NOT self-mint a login link).
+ * No-ops when Resend is unconfigured, so the Stripe webhook never breaks on it.
+ */
+export async function sendWelcome(input: { to: string; name?: string }): Promise<boolean> {
+  const site = process.env.NEXT_PUBLIC_SITE_URL ?? "https://flowforge.ai";
+  const studioUrl = `${site}/portal/login?next=/portal/studio`;
+  const hello = input.name ? `Welcome, ${escapeHtml(input.name)}` : "Welcome to FlowForge";
+  const inner = `
+    <h1 style="font-size:22px;color:#f8fafc;margin:0 0 8px">${hello} 👋</h1>
+    <p style="color:#94a3b8;margin:0 0 16px">You're all set. The next step is the <strong style="color:#e2e8f0">Agent Design Studio</strong> — a few minutes to tell your agents about your business, pick what they work on, and set how much they do on their own. Nothing sends without your approval.</p>
+    <a href="${studioUrl}" style="display:inline-block;background:${BRAND};color:#0b1220;font-weight:600;padding:12px 20px;border-radius:10px;text-decoration:none">Design your agents →</a>
+    <p style="color:#64748b;font-size:13px;margin:18px 0 0">We'll email you a secure sign-in link when you click through.</p>`;
+  return sendEmail({ to: input.to, subject: "Welcome to FlowForge — let's set up your agents", html: shell(inner) });
 }
 
 /**

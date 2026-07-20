@@ -179,6 +179,54 @@ create policy agent_audit_self_read on public.agent_audit
     client_id in (select id from public.clients where email = (auth.jwt() ->> 'email'))
   );
 
+-- Bring-Your-Own-Tool (BYOT): a client may register their own MCP server or a
+-- custom HTTPS endpoint as an agent tool. Non-secret registration is owner-
+-- readable via RLS; the bearer token lives in client_tool_secrets, which has NO
+-- read policy at all — so not even a self-read can reach it (stronger than the
+-- connections "select only non-secret cols" convention). Writes: service role only.
+create table if not exists public.client_tools (
+  id             uuid primary key default gen_random_uuid(),
+  client_id      uuid not null references public.clients (id) on delete cascade,
+  label          text not null,
+  kind           text not null check (kind in ('mcp', 'http')),
+  endpoint       text not null,
+  auth_scheme    text not null default 'bearer' check (auth_scheme in ('bearer', 'none')),
+  enabled        boolean not null default false,   -- draft-first: off until owner enables
+  status         text not null default 'pending' check (status in ('pending', 'ok', 'error')),
+  tools_cache    jsonb not null default '[]'::jsonb, -- [{name,description,inputSchema}] from tools/list
+  cache_hash     text,                              -- sha256 of tools_cache, for drift detection
+  daily_call_cap int not null default 100,
+  last_listed_at timestamptz,
+  last_error     text,
+  created_at     timestamptz not null default now(),
+  updated_at     timestamptz not null default now()
+);
+create index if not exists client_tools_client_idx on public.client_tools (client_id);
+create unique index if not exists client_tools_client_label_uidx on public.client_tools (client_id, label);
+
+drop trigger if exists client_tools_touch on public.client_tools;
+create trigger client_tools_touch
+  before update on public.client_tools
+  for each row execute function public.touch_updated_at();
+
+create table if not exists public.client_tool_secrets (
+  tool_id      uuid primary key references public.client_tools (id) on delete cascade,
+  client_id    uuid not null references public.clients (id) on delete cascade,
+  access_token text not null,                       -- encryptSecret() output; REQUIRES TOKEN_ENC_KEY
+  created_at   timestamptz not null default now()
+);
+
+alter table public.client_tools enable row level security;
+alter table public.client_tool_secrets enable row level security;
+
+drop policy if exists client_tools_self_read on public.client_tools;
+create policy client_tools_self_read on public.client_tools
+  for select using (
+    client_id in (select id from public.clients where email = (auth.jwt() ->> 'email'))
+  );
+-- client_tool_secrets: RLS enabled with NO policy → unreadable by anon/auth roles;
+-- only the service role can read the token. This is deliberate.
+
 -- Owners can pause/resume (kill switch) only their own agents from the portal.
 drop policy if exists automations_self_update on public.automations;
 create policy automations_self_update on public.automations
@@ -283,6 +331,13 @@ create table if not exists public.business_profile (
   tone        text not null default 'friendly and professional',
   updated_at  timestamptz not null default now()
 );
+
+-- Agent Design Studio (onboarding questionnaire). `intake` holds the raw,
+-- structured 7-section answers as the editable source of truth; `guardrails` is
+-- the generated "never do" block appended to the prompt context by formatContext.
+-- Row-level RLS below already covers these columns; no new policy needed.
+alter table public.business_profile add column if not exists intake     jsonb not null default '{}'::jsonb;
+alter table public.business_profile add column if not exists guardrails text;
 
 drop trigger if exists business_profile_touch on public.business_profile;
 create trigger business_profile_touch

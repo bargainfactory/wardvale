@@ -44,7 +44,7 @@ const ITEMS_SCHEMA = {
 export type InboxMessage = { from?: string; subject?: string; body?: string };
 
 export type ProposedAction = {
-  action: "email.send" | "sms.send" | "triage.label" | "archive" | "escalate";
+  action: "email.send" | "sms.send" | "triage.label" | "archive" | "escalate" | "tool.call";
   agent: string;
   summary: string;
   draft?: string;
@@ -52,7 +52,14 @@ export type ProposedAction = {
   source: string;
   to?: string;
   value?: number; // dollars at stake, for ROI attribution (0/undefined = not tracked)
+  // BYOT: a call to a client-registered MCP/HTTP tool. Always approval-gated
+  // (never eligible for auto-send), executed via the guarded lib/mcp-client.
+  tool?: { toolId: string; name: string; args: Record<string, unknown> };
 };
+
+// A poisoned run must never flood the approvals queue with tool calls; cap how
+// many tool.call proposals one run may emit.
+export const MAX_TOOL_CALLS_PER_RUN = 3;
 
 // Rough per-action value estimates for agents without a concrete dollar amount.
 // Conservative on purpose — realized ROI is what the outcome resolves to.

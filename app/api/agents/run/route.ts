@@ -274,7 +274,16 @@ export async function POST(req: Request) {
                 action: a.action,
                 summary: a.summary,
                 dedupe_key: dkey,
-                payload: { draft: a.draft ?? null, source: a.source, to: a.to ?? null, value: a.value ?? null, kind: body.agent ?? null, run_id: runId },
+                payload: {
+                  draft: a.draft ?? null,
+                  source: a.source,
+                  to: a.to ?? null,
+                  value: a.value ?? null,
+                  kind: body.agent ?? null,
+                  run_id: runId,
+                  // BYOT tool.call carries its target + args; executed only on approval.
+                  ...(a.tool ? { tool_id: a.tool.toolId, tool_name: a.tool.name, args: a.tool.args } : {}),
+                },
               });
             }
           }

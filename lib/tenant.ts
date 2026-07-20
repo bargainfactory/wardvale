@@ -17,7 +17,9 @@ export type ScopedTable =
   | "business_profile"
   | "client_policy"
   | "connections"
-  | "agent_feedback";
+  | "agent_feedback"
+  | "client_tools"
+  | "client_tool_secrets";
 
 type Row = Record<string, unknown>;
 

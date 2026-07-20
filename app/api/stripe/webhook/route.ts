@@ -4,6 +4,7 @@ import { getStripe } from "@/lib/stripe";
 import { getServiceClient } from "@/lib/supabase-server";
 import { provisionClient } from "@/lib/provisioning";
 import { planFromTier } from "@/lib/agents-catalog";
+import { sendWelcome } from "@/lib/email";
 
 export async function POST(req: Request) {
   const body = await req.text();
@@ -35,12 +36,19 @@ export async function POST(req: Request) {
         // Turnkey: a paid checkout provisions a live client (plan from the tier),
         // active immediately, with agents + profile seeded.
         if (email) {
+          // Detect first-time provisioning so we welcome each client only once
+          // (Stripe may retry; a plan change re-fires this event too).
+          const svc = getServiceClient();
+          const existing = svc
+            ? (await svc.from("clients").select("id").eq("email", email.toLowerCase()).maybeSingle()).data
+            : null;
           await provisionClient({
             email,
             plan: planFromTier(tier),
             status: "active",
             stripeCustomerId: customerId,
           });
+          if (!existing) await sendWelcome({ to: email });
         }
         console.log("New subscription provisioned:", session.id);
         break;
