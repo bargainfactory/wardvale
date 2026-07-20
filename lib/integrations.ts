@@ -2,7 +2,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { getConnector } from "@/lib/connectors";
 import { getServiceClient } from "@/lib/supabase-server";
 import { encryptSecret, decryptSecret } from "@/lib/crypto";
-import type { Invoice, Cart, ReviewTarget, Lead, InboxMessage, LapsedCustomer, OpenQuote } from "@/lib/runtime";
+import type { Invoice, Cart, ReviewTarget, Lead, InboxMessage, LapsedCustomer, OpenQuote, AppointmentItem } from "@/lib/runtime";
 import type { Trace } from "@/lib/trace";
 import { reportWarning } from "@/lib/report";
 
@@ -641,4 +641,107 @@ export async function pullOpenEstimates(
   const aged = quotes.filter((q) => (q.daysOld ?? 0) >= 2);
   trace?.mark("tool.quickbooks.estimates.end", { quotes: aged.length });
   return { clientId: client.id, quotes: aged };
+}
+
+// ── Google Calendar → no-show shield ─────────────────────────────────────────
+
+export type GCalEvent = {
+  id?: string;
+  status?: string;
+  summary?: string;
+  start?: { dateTime?: string; date?: string; timeZone?: string };
+  attendees?: { email?: string; displayName?: string; responseStatus?: string; self?: boolean; organizer?: boolean }[];
+};
+
+/**
+ * Pure mapper: upcoming calendar events → no-show-shield confirm items.
+ * Exported for tests. Rules:
+ *  - skip cancelled and all-day events (no dateTime);
+ *  - skip events with no external attendee (self/organizer excluded);
+ *  - skip attendees who DECLINED (they told us; nothing to confirm);
+ *  - risk flags an attendee who hasn't accepted the invite — the exact cohort
+ *    most likely to no-show per the July 2026 pain research;
+ *  - only events starting between nowMs+2h and nowMs+48h (don't ping someone
+ *    minutes before, don't confirm next week yet).
+ */
+export function calendarEventsToAppointments(events: GCalEvent[], nowMs: number, tz: string): AppointmentItem[] {
+  const fmt = new Intl.DateTimeFormat("en-US", {
+    weekday: "short",
+    month: "short",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+    timeZone: tz || "America/New_York",
+  });
+  const minStart = nowMs + 2 * 3_600_000;
+  const maxStart = nowMs + 48 * 3_600_000;
+
+  const out: AppointmentItem[] = [];
+  for (const ev of events) {
+    if (ev.status === "cancelled") continue; // backfill flow is a later step
+    const startIso = ev.start?.dateTime;
+    if (!startIso) continue; // all-day events aren't appointments
+    const startMs = new Date(startIso).getTime();
+    if (Number.isNaN(startMs) || startMs < minStart || startMs > maxStart) continue;
+
+    const guest = (ev.attendees ?? []).find(
+      (a) => a?.email && !a.self && !a.organizer && a.responseStatus !== "declined"
+    );
+    if (!guest) continue;
+
+    out.push({
+      customer: guest.displayName || (guest.email ?? "").split("@")[0],
+      email: guest.email ?? "",
+      when: fmt.format(new Date(startMs)),
+      service: (ev.summary ?? "").slice(0, 200),
+      kind: "confirm",
+      risk: guest.responseStatus === "accepted" ? "" : "hasn't responded to the invite",
+    });
+    if (out.length >= 20) break;
+  }
+  return out;
+}
+
+/**
+ * Pull the next 48h of appointments from a client's connected Google Calendar
+ * (provider "Google Workspace" — the connector's calendar.events scope already
+ * covers reads) → confirm items for the no-show shield.
+ */
+export async function pullUpcomingAppointments(
+  ingestKey: string,
+  trace?: Trace
+): Promise<{ clientId: string; appointments: AppointmentItem[] } | null> {
+  const c = await clientId(ingestKey);
+  if (!c) return null;
+  const conn = await connectedConnection(c.supabase, c.id, "Google Workspace");
+  if (!conn) return { clientId: c.id, appointments: [] };
+  const token = await ensureAccessToken(c.supabase, "google", conn);
+  if (!token) return { clientId: c.id, appointments: [] };
+
+  // Format times in the client's own timezone so drafts read naturally.
+  const { data: cl } = await c.supabase.from("clients").select("timezone").eq("id", c.id).maybeSingle();
+  const tz = (cl as { timezone?: string } | null)?.timezone || "America/New_York";
+
+  const now = Date.now();
+  const timeMin = encodeURIComponent(new Date(now).toISOString());
+  const timeMax = encodeURIComponent(new Date(now + 48 * 3_600_000).toISOString());
+  trace?.mark("tool.gcal.events.start");
+  try {
+    const res = await fetch(
+      `https://www.googleapis.com/calendar/v3/calendars/primary/events?timeMin=${timeMin}&timeMax=${timeMax}&singleEvents=true&orderBy=startTime&maxResults=50`,
+      { headers: { authorization: `Bearer ${token}`, accept: "application/json" }, cache: "no-store" }
+    );
+    if (!res.ok) {
+      reportWarning("Google Calendar pull failed", { source: "pull.gcal", clientId: c.id });
+      trace?.flag("source_error", "gcal");
+      return { clientId: c.id, appointments: [] };
+    }
+    const data = (await res.json()) as { items?: GCalEvent[] };
+    const appointments = calendarEventsToAppointments(data.items ?? [], now, tz);
+    trace?.mark("tool.gcal.events.end", { appointments: appointments.length });
+    return { clientId: c.id, appointments };
+  } catch {
+    trace?.flag("source_error", "gcal");
+    return { clientId: c.id, appointments: [] };
+  }
 }

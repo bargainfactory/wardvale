@@ -44,6 +44,7 @@ import {
   pullNewLeads,
   pullLapsedCustomers,
   pullOpenEstimates,
+  pullUpcomingAppointments,
 } from "@/lib/integrations";
 
 /**
@@ -238,7 +239,14 @@ export async function POST(req: Request) {
         break;
       }
       case "noshow-shield": {
-        const appointments = Array.isArray(body.appointments) ? body.appointments : [];
+        let appointments = Array.isArray(body.appointments) ? body.appointments : [];
+        if (appointments.length === 0 && key) {
+          const pulled = await pullUpcomingAppointments(key, trace);
+          if (pulled) {
+            appointments = pulled.appointments;
+            trace.flag("source", "gcal");
+          }
+        }
         trace.setInput(appointments.map((a: { customer?: string }) => a?.customer ?? "").join("; "));
         actions = await runNoshowShield(appointments, trace, context);
         break;
