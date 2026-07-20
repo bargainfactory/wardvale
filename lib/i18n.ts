@@ -313,11 +313,11 @@ const en: Dict = {
 
   // ── Hero ──
   "hero.badge": "Premium AI automation for small business",
-  "hero.title.1": "Ship revenue-grade",
-  "hero.title.2": "automations",
-  "hero.title.3": "in 14 days —",
-  "hero.title.4": "not 14 weeks.",
-  "hero.sub": "Wardvale builds done-for-you Zapier flows and custom GPT agents for restaurants, e-com stores and local service owners. Recurring retainers from",
+  "hero.title.1": "Stop losing money to",
+  "hero.title.2": "the follow-ups",
+  "hero.title.3": "you never get to",
+  "hero.title.4": "send.",
+  "hero.sub": "Wardvale's AI agents draft the quote chases, review replies, win-back messages and payment reminders your day never leaves room for — and nothing sends until you tap approve. From",
   "hero.sub.price": "$500/mo",
   "hero.ctaPrimary": "Get my free 60s audit",
   "hero.ctaSecondary": "See live results",
@@ -662,7 +662,7 @@ const en: Dict = {
   "chat.welcome": "Hey! I'm the Wardvale assistant. Ask me about our services, pricing, or how automation could work for your business.",
 
   // ── Footer ──
-  "footer.desc": "Premium AI automation for small business. Done-for-you Zapier flows and custom GPT agents, on monthly retainers from $500.",
+  "footer.desc": "The AI back office for small business. Agents draft your follow-ups; you approve every message. From $500/mo.",
   "footer.agency": "Agency",
   "footer.resources": "Resources",
   "footer.roiCalc": "2026 ROI Calculator (PDF)",
@@ -2088,11 +2088,11 @@ const es: Dict = {
 
   // ── Hero ──
   "hero.badge": "Automatización IA premium para pymes",
-  "hero.title.1": "Automatizaciones que generan",
-  "hero.title.2": "ingresos",
-  "hero.title.3": "en 14 días —",
-  "hero.title.4": "no 14 semanas.",
-  "hero.sub": "Wardvale construye flujos Zapier y agentes GPT a medida para restaurantes, e-commerce y negocios locales. Retainers desde",
+  "hero.title.1": "Deja de perder dinero por",
+  "hero.title.2": "los seguimientos",
+  "hero.title.3": "que nunca llegas a",
+  "hero.title.4": "enviar.",
+  "hero.sub": "Los agentes de IA de Wardvale redactan los seguimientos de presupuestos, respuestas a reseñas, mensajes de recuperación y recordatorios de pago para los que tu día nunca da — y nada se envía hasta que tú lo apruebas. Desde",
   "hero.sub.price": "500 $/mes",
   "hero.ctaPrimary": "Auditoría gratuita 60s",
   "hero.ctaSecondary": "Ver resultados",
@@ -2423,7 +2423,7 @@ const es: Dict = {
   "chat.welcome": "¡Hola! Soy el asistente IA de Wardvale. Pregúntame sobre nuestros servicios, precios o cómo la automatización puede funcionar para tu negocio.",
 
   // ── Footer ──
-  "footer.desc": "Automatización IA premium para pymes. Flujos Zapier y agentes GPT a medida, en retainers mensuales desde 500 $.",
+  "footer.desc": "El back office de IA para pymes. Los agentes redactan tus seguimientos; tú apruebas cada mensaje. Desde 500 $/mes.",
   "footer.agency": "Agencia",
   "footer.resources": "Recursos",
   "footer.roiCalc": "Calculadora ROI 2026 (PDF)",
@@ -3849,11 +3849,11 @@ const fr: Dict = {
 
   // ── Hero ──
   "hero.badge": "Automatisation IA premium pour PME",
-  "hero.title.1": "Des automatisations qui génèrent du",
-  "hero.title.2": "revenu",
-  "hero.title.3": "en 14 jours —",
-  "hero.title.4": "pas 14 semaines.",
-  "hero.sub": "Wardvale construit vos flux Zapier et agents GPT sur mesure pour restaurants, e-commerce et services locaux. Retainers à partir de",
+  "hero.title.1": "Arrêtez de perdre de l'argent sur",
+  "hero.title.2": "les relances",
+  "hero.title.3": "que vous n'envoyez",
+  "hero.title.4": "jamais.",
+  "hero.sub": "Les agents IA de Wardvale rédigent les relances de devis, réponses aux avis, messages de reconquête et rappels de paiement que votre journée ne permet jamais — et rien ne part sans votre validation. À partir de",
   "hero.sub.price": "500 $/mois",
   "hero.ctaPrimary": "Audit gratuit 60s",
   "hero.ctaSecondary": "Voir les résultats",
@@ -4184,7 +4184,7 @@ const fr: Dict = {
   "chat.welcome": "Bonjour ! Je suis l'assistant IA de Wardvale. Posez-moi des questions sur nos services, tarifs ou comment l'automatisation pourrait fonctionner pour votre entreprise.",
 
   // ── Footer ──
-  "footer.desc": "Automatisation IA premium pour PME. Flux Zapier et agents GPT sur mesure, en retainers mensuels à partir de 500 $.",
+  "footer.desc": "Le back-office IA des petites entreprises. Les agents rédigent vos relances ; vous validez chaque message. À partir de 500 $/mois.",
   "footer.agency": "Agence",
   "footer.resources": "Ressources",
   "footer.roiCalc": "Calculateur ROI 2026 (PDF)",
@@ -5604,11 +5604,11 @@ const pt: Dict = {
   "nav.cta": "Auditoria Grátis",
 
   "hero.badge": "Automação com IA premium para pequenos negócios",
-  "hero.title.1": "Coloque automações",
-  "hero.title.2": "de verdade",
-  "hero.title.3": "no ar em 14 dias —",
-  "hero.title.4": "não 14 semanas.",
-  "hero.sub": "A Wardvale cria fluxos Zapier e agentes GPT sob medida para restaurantes, e-commerces e negócios locais. Mensalidades a partir de",
+  "hero.title.1": "Pare de perder dinheiro com",
+  "hero.title.2": "os follow-ups",
+  "hero.title.3": "que você nunca consegue",
+  "hero.title.4": "enviar.",
+  "hero.sub": "Os agentes de IA da Wardvale redigem as cobranças de orçamentos, respostas a avaliações, mensagens de resgate e lembretes de pagamento que o seu dia nunca permite — e nada é enviado até você aprovar. A partir de",
   "hero.sub.price": "US$ 500/mês",
   "hero.ctaPrimary": "Quero minha auditoria de 60s",
   "hero.ctaSecondary": "Ver resultados reais",
@@ -5927,7 +5927,7 @@ const pt: Dict = {
   "chat.placeholder": "Pergunte sobre preços, serviços, integrações…",
   "chat.welcome": "Oi! Sou o assistente da Wardvale. Pergunte sobre nossos serviços, preços ou como a automação pode funcionar no seu negócio.",
 
-  "footer.desc": "Automação com IA premium para pequenos negócios. Fluxos Zapier e agentes GPT sob medida, em mensalidades a partir de US$ 500.",
+  "footer.desc": "O back office de IA para pequenos negócios. Os agentes redigem os seus follow-ups; você aprova cada mensagem. A partir de US$ 500/mês.",
   "footer.agency": "Agência",
   "footer.resources": "Recursos",
   "footer.roiCalc": "Calculadora de ROI 2026 (PDF)",
@@ -7346,11 +7346,11 @@ const de: Dict = {
   "nav.cta": "Gratis-Audit",
 
   "hero.badge": "Premium-KI-Automatisierung für kleine Unternehmen",
-  "hero.title.1": "Umsatzstarke",
-  "hero.title.2": "Automationen",
-  "hero.title.3": "in 14 Tagen —",
-  "hero.title.4": "nicht 14 Wochen.",
-  "hero.sub": "Wardvale baut fertige Zapier-Flows und maßgeschneiderte GPT-Agenten für Restaurants, Onlineshops und lokale Dienstleister. Monatliche Pakete ab",
+  "hero.title.1": "Schluss mit Geldverlust durch",
+  "hero.title.2": "die Nachfassnachrichten,",
+  "hero.title.3": "die du nie",
+  "hero.title.4": "abschickst.",
+  "hero.sub": "Wardvales KI-Agenten entwerfen die Angebots-Nachfassungen, Bewertungsantworten, Rückgewinnungsnachrichten und Zahlungserinnerungen, für die dein Tag nie reicht — und nichts wird gesendet, bevor du es freigibst. Ab",
   "hero.sub.price": "500 $/Monat",
   "hero.ctaPrimary": "Mein 60-Sek-Audit holen",
   "hero.ctaSecondary": "Echte Ergebnisse ansehen",
@@ -7669,7 +7669,7 @@ const de: Dict = {
   "chat.placeholder": "Fragen Sie nach Preisen, Leistungen, Integrationen…",
   "chat.welcome": "Hi! Ich bin der Wardvale-KI-Assistent. Fragen Sie mich nach Leistungen, Preisen oder wie Automatisierung für Ihr Business funktionieren kann.",
 
-  "footer.desc": "Premium-KI-Automatisierung für kleine Unternehmen. Fertige Zapier-Flows und individuelle GPT-Agenten, in Monatspaketen ab 500 $.",
+  "footer.desc": "Das KI-Backoffice für kleine Unternehmen. Agenten entwerfen deine Nachfassnachrichten; du gibst jede frei. Ab 500 $/Monat.",
   "footer.agency": "Agentur",
   "footer.resources": "Ressourcen",
   "footer.roiCalc": "ROI-Rechner 2026 (PDF)",
