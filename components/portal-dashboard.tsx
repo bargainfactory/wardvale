@@ -467,9 +467,12 @@ export function PortalDashboard(props: Props) {
                 <p className="text-xs font-semibold uppercase tracking-[0.2em] text-cyan-electric">{t("prt.growHeading")}</p>
                 <p className="mt-2 text-sm text-muted-foreground">{t("prt.growSub")}</p>
                 <div className="mt-3 flex flex-wrap gap-2">
+                  {/* Show the real PRICE; savings is a modeled estimate, labeled as such
+                      (was rendering `savings` styled like a price — misleading). */}
                   {addons.slice(0, 3).map((a) => (
                     <span key={a.id} className="rounded-full border border-border bg-card/60 px-3 py-1 text-xs">
-                      {t(a.name)} <span className="text-cyan-electric tabular-nums">+${a.savings.toLocaleString()}/mo</span>
+                      {t(a.name)} <span className="tabular-nums">${a.price.toLocaleString()}/mo</span>{" "}
+                      <span className="text-cyan-electric tabular-nums">≈${a.savings.toLocaleString()}/mo {t("prt.addonBack")}</span>
                     </span>
                   ))}
                 </div>

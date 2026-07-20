@@ -43,7 +43,7 @@ export function PortalTeaser() {
                 <Bot className="h-3.5 w-3.5 text-cyan-electric" />
               </span>
               <span className="font-medium">Wardvale Portal</span>
-              <span className="text-muted-foreground">· Nona Bistro</span>
+              <span className="text-muted-foreground">· Demo Bistro</span>
             </div>
             <div className="flex items-center gap-1 text-xs text-muted-foreground">
               <span className="relative flex h-2 w-2">

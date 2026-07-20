@@ -50,11 +50,13 @@ export default function ResultsPage() {
       <section className="pb-16">
         <div className="container">
           <div className="mx-auto grid max-w-4xl gap-4 sm:grid-cols-4">
+            {/* Modeled figures — no fabricated track record (truth pass). The
+                fourth slot states the guarantee, not an invented retention rate. */}
             {[
-              { label: t("results.avgSavings"), value: "$5,250" },
-              { label: t("results.avgHours"), value: "56h" },
-              { label: t("results.avgROI"), value: "6.4×" },
-              { label: t("results.retention"), value: "96%" },
+              { label: t("results.avgSavings"), value: "≈$5,250" },
+              { label: t("results.avgHours"), value: "≈56h" },
+              { label: t("results.avgROI"), value: "≈6.4×" },
+              { label: t("results.retention"), value: "14 " + t("results.days") },
             ].map((s) => (
               <motion.div
                 key={s.label}
@@ -180,11 +182,11 @@ export default function ResultsPage() {
                 transition={{ delay: i * 0.06 }}
                 className="glass rounded-3xl p-7"
               >
-                <p className="text-muted-foreground">&ldquo;{t(tm.quote)}&rdquo;</p>
+                <p className="text-muted-foreground">{t(tm.quote)}</p>
                 <div className="mt-4 flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-semibold">{tm.name}</p>
-                    <p className="text-xs text-muted-foreground">{t(tm.role)}, {tm.company}</p>
+                    <p className="text-sm font-semibold">{t(tm.name)}</p>
+                    <p className="text-xs text-muted-foreground">{t(tm.role)} · {t(tm.company)}</p>
                   </div>
                   <span className="rounded-full border border-cyan-electric/25 bg-cyan-electric/10 px-3 py-1 text-sm font-semibold text-cyan-electric tabular-nums">
                     {tm.metric}
@@ -193,6 +195,7 @@ export default function ResultsPage() {
               </motion.blockquote>
             ))}
           </div>
+          <p className="mx-auto mt-6 max-w-2xl text-center text-xs text-muted-foreground">{t("testimonials.note")}</p>
         </div>
       </section>
 

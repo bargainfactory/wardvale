@@ -6,7 +6,7 @@ import { loadPeerBenchmarks, type PeerBenchmarks } from "@/lib/peer-benchmarks";
 
 // Demo shown to visitors and any signed-in client without live data yet.
 const DEMO: PortalData & { deltas: { runs: string; hours: string; success: string; roi: string } } = {
-  clientName: "Nona Bistro",
+  clientName: "Demo Bistro",
   onboarded: true,
   plan: "growth",
   ingestKeyLast4: "9f2c",

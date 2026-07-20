@@ -12,7 +12,6 @@ import {
   Mail,
   Mic,
   Calendar,
-  Star,
   Phone,
   MessageCircle,
   TrendingUp,
@@ -353,22 +352,19 @@ export default function Home() {
           <div className="mx-auto mt-12 grid max-w-5xl gap-5 md:grid-cols-2">
             {testimonials.map((tm, i) => (
               <motion.blockquote key={i} initial={mounted ? { opacity: 0, y: 16 } : false} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.06 }} className="glass rounded-3xl p-7">
-                <div className="flex gap-1">
-                  {Array.from({ length: 5 }).map((_, j) => (
-                    <Star key={j} className="h-3.5 w-3.5 fill-yellow-400 text-yellow-400" />
-                  ))}
-                </div>
-                <p className="mt-3 text-muted-foreground">&ldquo;{t(`testimonial.${i + 1}.quote`)}&rdquo;</p>
+                {/* Scenario card — no star ratings, no invented people (truth pass). */}
+                <p className="text-muted-foreground">{t(`testimonial.${i + 1}.quote`)}</p>
                 <div className="mt-4 flex items-center justify-between">
                   <div>
                     <p className="text-sm font-semibold">{t(`testimonial.${i + 1}.name`)}</p>
-                    <p className="text-xs text-muted-foreground">{t(`testimonial.${i + 1}.role`)}, {t(`testimonial.${i + 1}.company`)}</p>
+                    <p className="text-xs text-muted-foreground">{t(`testimonial.${i + 1}.role`)} · {t(`testimonial.${i + 1}.company`)}</p>
                   </div>
                   <span className="rounded-full border border-cyan-electric/25 bg-cyan-electric/10 px-3 py-1 text-sm font-semibold text-cyan-electric tabular-nums">{tm.metric}</span>
                 </div>
               </motion.blockquote>
             ))}
           </div>
+          <p className="mx-auto mt-6 max-w-2xl text-center text-xs text-muted-foreground">{t("testimonials.note")}</p>
           <div className="mx-auto mt-10 flex max-w-4xl flex-wrap items-center justify-center gap-3">
             {trustBadges.map((b) => (
               <span key={b} className="rounded-full border border-border bg-card/50 px-4 py-2 text-xs font-medium text-muted-foreground">{t(b)}</span>

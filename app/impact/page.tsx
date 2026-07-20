@@ -97,19 +97,24 @@ export default async function ImpactPage() {
         <div className="pointer-events-none absolute inset-0 bg-mesh-dark" />
         <div className="container relative">
           <div className="mx-auto max-w-3xl text-center">
+            {/* Truth pass: the pulsing "live" indicator and the "aggregated from
+                real workflow runs" claim only render when the numbers ARE real.
+                Modeled fallback gets its own honest eyebrow + subtitle. */}
             <span className="inline-flex items-center gap-2 rounded-full border border-cyan-electric/25 bg-cyan-electric/10 px-4 py-1.5 text-xs font-medium text-cyan-electric">
-              <span className="relative flex h-2 w-2">
-                <span className="absolute inline-flex h-full w-full animate-pulse-ring rounded-full bg-cyan-electric" />
-                <span className="relative inline-flex h-2 w-2 rounded-full bg-cyan-electric" />
-              </span>
-              {t("imp.heroEyebrow")}
+              {totals.live && (
+                <span className="relative flex h-2 w-2">
+                  <span className="absolute inline-flex h-full w-full animate-pulse-ring rounded-full bg-cyan-electric" />
+                  <span className="relative inline-flex h-2 w-2 rounded-full bg-cyan-electric" />
+                </span>
+              )}
+              {t(totals.live ? "imp.heroEyebrow" : "imp.heroEyebrowDemo")}
             </span>
             <h1 className="mt-6 font-display text-4xl font-semibold tracking-tight sm:text-5xl lg:text-[56px] lg:leading-[1.1]">
               {t("imp.heroTitleLead")}{" "}
               <span className="gradient-text">{t("imp.heroTitleHighlight")}</span>
             </h1>
             <p className="mx-auto mt-6 max-w-2xl text-lg text-muted-foreground">
-              {t("imp.heroSubtitle")}
+              {t(totals.live ? "imp.heroSubtitle" : "imp.heroSubtitleDemo")}
             </p>
           </div>
         </div>

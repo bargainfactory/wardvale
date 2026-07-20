@@ -189,7 +189,7 @@ export const caseStudies: CaseStudy[] = [
     id: "nona-bistro",
     vertical: "dat.caseNonaVertical",
     icon: Utensils,
-    company: "Nona Bistro — 2 locations, Austin TX",
+    company: "A neighborhood bistro — 2 locations (illustrative)",
     headline: "dat.caseNonaHeadline",
     before: [
       { label: "dat.caseNonaLab1", value: "6h 12m" },
@@ -208,7 +208,7 @@ export const caseStudies: CaseStudy[] = [
     id: "terrafit",
     vertical: "dat.caseTerraVertical",
     icon: ShoppingBag,
-    company: "TerraFit Apparel — Shopify, $90k/mo",
+    company: "A Shopify apparel brand (illustrative)",
     headline: "dat.caseTerraHeadline",
     before: [
       { label: "dat.caseTerraLab1", value: "4.1%" },
@@ -227,7 +227,7 @@ export const caseStudies: CaseStudy[] = [
     id: "northline-consult",
     vertical: "dat.caseNorthVertical",
     icon: Briefcase,
-    company: "Northline Consulting — 6-person boutique",
+    company: "A 6-person consulting boutique (illustrative)",
     headline: "dat.caseNorthHeadline",
     before: [
       { label: "dat.caseNorthLab1", value: "3 days" },
@@ -246,7 +246,7 @@ export const caseStudies: CaseStudy[] = [
     id: "pacific-plumb",
     vertical: "dat.casePacificVertical",
     icon: Wrench,
-    company: "Pacific Plumbing — 4-truck team, Seattle",
+    company: "A 4-truck plumbing team (illustrative)",
     headline: "dat.casePacificHeadline",
     before: [
       { label: "dat.casePacificLab1", value: "62%" },
@@ -371,34 +371,37 @@ export type Testimonial = {
   metric: string;
 };
 
+// Illustrative scenarios modeled on the workflows we automate — NOT client
+// quotes (we have no permission to fabricate people; see the truth pass).
+// name/company are i18n keys; render sites wrap them in t().
 export const testimonials: Testimonial[] = [
   {
     quote: "dat.testMarcoQuote",
-    name: "Marco Delgado",
+    name: "dat.testMarcoName",
     role: "dat.testMarcoRole",
-    company: "Nona Bistro",
-    metric: "+$3.4k/mo",
+    company: "dat.testMarcoCompany",
+    metric: "≈+$3.4k/mo",
   },
   {
     quote: "dat.testPriyaQuote",
-    name: "Priya Shah",
+    name: "dat.testPriyaName",
     role: "dat.testPriyaRole",
-    company: "TerraFit Apparel",
-    metric: "+11.8% carts",
+    company: "dat.testPriyaCompany",
+    metric: "≈+11.8% carts",
   },
   {
     quote: "dat.testDerekQuote",
-    name: "Derek Kwon",
+    name: "dat.testDerekName",
     role: "dat.testDerekRole",
-    company: "Pacific Plumbing",
+    company: "dat.testDerekCompany",
     metric: "62% → 3% leads lost",
   },
   {
     quote: "dat.testElenaQuote",
-    name: "Elena Fischer",
+    name: "dat.testElenaName",
     role: "dat.testElenaRole",
-    company: "Northline Consulting",
-    metric: "41% win rate",
+    company: "dat.testElenaCompany",
+    metric: "≈41% win rate",
   },
 ];
 
