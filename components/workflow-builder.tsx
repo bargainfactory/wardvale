@@ -288,14 +288,14 @@ export function WorkflowBuilder({
             {/* Q&A */}
             {(phase === "asking" || phase === "thinking") && (
               <motion.div key="qa" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-                <div ref={scrollRef} role="log" aria-live="polite" aria-atomic="false" className="max-h-72 space-y-3 overflow-y-auto pr-1">
+                <div ref={scrollRef} role="log" aria-live="polite" aria-atomic="false" className="max-h-80 space-y-3 overflow-y-auto pr-1">
                   {messages.map((m, i) => (
                     <div key={i} className={m.role === "user" ? "flex justify-end" : "flex justify-start"}>
                       <div
                         className={
                           m.role === "user"
-                            ? "max-w-[80%] rounded-2xl rounded-br-sm bg-cyan-electric/15 px-4 py-2.5 text-sm text-foreground"
-                            : "flex max-w-[85%] gap-2 rounded-2xl rounded-bl-sm bg-white/5 px-4 py-2.5 text-sm"
+                            ? "max-w-[85%] rounded-2xl rounded-br-sm bg-cyan-electric/15 px-4 py-2.5 text-[15px] text-foreground"
+                            : "flex w-full gap-2.5 rounded-2xl rounded-bl-sm bg-white/5 px-4 py-3 text-[15px]"
                         }
                       >
                         {m.role === "assistant" && <Bot className="mt-0.5 h-4 w-4 shrink-0 text-cyan-electric" />}
@@ -361,7 +361,7 @@ export function WorkflowBuilder({
                       e.target.value = "";
                     }}
                   />
-                  <div className={`flex items-end gap-2 rounded-2xl border bg-card/40 p-2 transition-colors ${listening ? "border-cyan-electric/50" : "border-border focus-within:border-cyan-electric/50"}`}>
+                  <div className={`flex items-end gap-1.5 rounded-2xl border bg-card/40 p-1.5 transition-colors ${listening ? "border-cyan-electric/50" : "border-border focus-within:border-cyan-electric/50"}`}>
                     <textarea
                       value={input}
                       aria-label={t("start.answerLabel")}
@@ -374,13 +374,13 @@ export function WorkflowBuilder({
                       }}
                       rows={1}
                       placeholder={listening ? t("bld.placeholderListening") : t("bld.placeholderIdle")}
-                      className="max-h-32 flex-1 resize-none bg-transparent px-2 py-1.5 text-sm placeholder:text-muted-foreground focus:outline-none"
+                      className="max-h-32 min-w-0 flex-1 resize-none bg-transparent px-2 py-1.5 text-sm placeholder:text-muted-foreground focus:outline-none"
                     />
                     <button
                       onClick={() => fileRef.current?.click()}
                       aria-label={t("bld.attachFile")}
                       title={t("bld.attachTitle")}
-                      className="grid h-10 w-10 shrink-0 place-items-center rounded-xl border border-border text-muted-foreground transition hover:text-cyan-electric"
+                      className="grid h-9 w-9 shrink-0 place-items-center rounded-xl border border-border text-muted-foreground transition hover:text-cyan-electric"
                     >
                       <Paperclip className="h-4 w-4" />
                     </button>
@@ -388,7 +388,7 @@ export function WorkflowBuilder({
                       <button
                         onClick={toggleMic}
                         aria-label={t("bld.voiceInput")}
-                        className={`grid h-10 w-10 shrink-0 place-items-center rounded-xl transition ${
+                        className={`grid h-9 w-9 shrink-0 place-items-center rounded-xl transition ${
                           listening
                             ? "animate-pulse bg-red-500/20 text-red-400"
                             : "border border-border text-muted-foreground hover:text-cyan-electric"
@@ -401,7 +401,7 @@ export function WorkflowBuilder({
                       onClick={send}
                       disabled={(!input.trim() && !attachment) || phase === "thinking"}
                       aria-label={t("bld.send")}
-                      className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-gradient-to-br from-cyan-electric to-indigo-400 text-navy-900 transition disabled:opacity-40"
+                      className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-gradient-to-br from-cyan-electric to-indigo-400 text-navy-900 transition disabled:opacity-40"
                     >
                       <Send className="h-4 w-4" />
                     </button>
