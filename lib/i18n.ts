@@ -12,6 +12,14 @@ export const localeLabels: Record<Locale, string> = {
 type Dict = Record<string, string>;
 
 const en: Dict = {
+  "prt.loadErrSetupBody": "Your sign-in worked, but this workspace isn't fully set up yet. Email hello@wardvale.com and we'll finish it for you.",
+  "prt.loginErrExpired": "That sign-in link expired or was already used. Enter your email and we'll send a fresh one.",
+  "prt.loginErrFailed": "That sign-in link didn't work. Request a fresh one below.",
+  "prt.loginAnother": "Send another link",
+  "prt.loginChangeEmail": "Use a different email",
+  "prt.loadErrTitle": "We couldn't load your workspace",
+  "prt.loadErrBody": "Your data is safe — this is a temporary problem on our side. Try again in a moment; if it keeps happening, email hello@wardvale.com.",
+  "prt.loadErrRetry": "Try again",
   "prt.autoTitle": "Custom automations",
   "prt.autoSub": "Your own scheduled instructions — each run drafts a report for your approval. Never sends anything.",
   "prt.autoNew": "New automation",
@@ -1845,6 +1853,14 @@ const en: Dict = {
 };
 
 const es: Dict = {
+  "prt.loadErrSetupBody": "Tu inicio de sesión funcionó, pero este espacio de trabajo aún no está completamente configurado. Escribe a hello@wardvale.com y lo terminaremos por ti.",
+  "prt.loginErrExpired": "Ese enlace de acceso caducó o ya se usó. Escribe tu correo y te enviaremos uno nuevo.",
+  "prt.loginErrFailed": "Ese enlace de acceso no funcionó. Solicita uno nuevo abajo.",
+  "prt.loginAnother": "Enviar otro enlace",
+  "prt.loginChangeEmail": "Usar otro correo",
+  "prt.loadErrTitle": "No pudimos cargar tu espacio de trabajo",
+  "prt.loadErrBody": "Tus datos están a salvo: es un problema temporal de nuestro lado. Inténtalo de nuevo en un momento; si persiste, escribe a hello@wardvale.com.",
+  "prt.loadErrRetry": "Reintentar",
   "prt.autoTitle": "Automatizaciones personalizadas",
   "prt.autoSub": "Tus propias instrucciones programadas: cada ejecución redacta un informe para tu aprobación. Nunca envía nada.",
   "prt.autoNew": "Nueva automatización",
@@ -3676,6 +3692,14 @@ const es: Dict = {
 };
 
 const fr: Dict = {
+  "prt.loadErrSetupBody": "Votre connexion a fonctionné, mais cet espace de travail n'est pas encore entièrement configuré. Écrivez à hello@wardvale.com et nous terminerons la configuration pour vous.",
+  "prt.loginErrExpired": "Ce lien de connexion a expiré ou a déjà été utilisé. Saisissez votre e-mail et nous vous en enverrons un nouveau.",
+  "prt.loginErrFailed": "Ce lien de connexion n'a pas fonctionné. Demandez-en un nouveau ci-dessous.",
+  "prt.loginAnother": "Envoyer un autre lien",
+  "prt.loginChangeEmail": "Utiliser un autre e-mail",
+  "prt.loadErrTitle": "Impossible de charger votre espace de travail",
+  "prt.loadErrBody": "Vos données sont en sécurité — c'est un problème temporaire de notre côté. Réessayez dans un instant ; si cela persiste, écrivez à hello@wardvale.com.",
+  "prt.loadErrRetry": "Réessayer",
   "prt.autoTitle": "Automatisations personnalisées",
   "prt.autoSub": "Vos propres instructions planifiées — chaque exécution rédige un rapport soumis à votre validation. N'envoie jamais rien.",
   "prt.autoNew": "Nouvelle automatisation",
@@ -5507,6 +5531,14 @@ const fr: Dict = {
 };
 
 const pt: Dict = {
+  "prt.loadErrSetupBody": "Seu login funcionou, mas este espaço de trabalho ainda não está totalmente configurado. Escreva para hello@wardvale.com e finalizaremos para você.",
+  "prt.loginErrExpired": "Esse link de acesso expirou ou já foi usado. Digite seu e-mail e enviaremos um novo.",
+  "prt.loginErrFailed": "Esse link de acesso não funcionou. Solicite um novo abaixo.",
+  "prt.loginAnother": "Enviar outro link",
+  "prt.loginChangeEmail": "Usar outro e-mail",
+  "prt.loadErrTitle": "Não foi possível carregar seu espaço de trabalho",
+  "prt.loadErrBody": "Seus dados estão seguros — é um problema temporário do nosso lado. Tente novamente em instantes; se persistir, escreva para hello@wardvale.com.",
+  "prt.loadErrRetry": "Tentar novamente",
   "prt.autoTitle": "Automações personalizadas",
   "prt.autoSub": "Suas próprias instruções agendadas — cada execução redige um relatório para sua aprovação. Nunca envia nada.",
   "prt.autoNew": "Nova automação",
@@ -7319,6 +7351,14 @@ const pt: Dict = {
 };
 
 const de: Dict = {
+  "prt.loadErrSetupBody": "Deine Anmeldung hat funktioniert, aber dieser Arbeitsbereich ist noch nicht vollständig eingerichtet. Schreib an hello@wardvale.com und wir schließen die Einrichtung für dich ab.",
+  "prt.loginErrExpired": "Dieser Anmeldelink ist abgelaufen oder wurde bereits verwendet. Gib deine E-Mail ein und wir senden dir einen neuen.",
+  "prt.loginErrFailed": "Dieser Anmeldelink hat nicht funktioniert. Fordere unten einen neuen an.",
+  "prt.loginAnother": "Weiteren Link senden",
+  "prt.loginChangeEmail": "Andere E-Mail verwenden",
+  "prt.loadErrTitle": "Wir konnten deinen Arbeitsbereich nicht laden",
+  "prt.loadErrBody": "Deine Daten sind sicher – das ist ein vorübergehendes Problem auf unserer Seite. Versuch es gleich noch einmal; wenn es weiter auftritt, schreib an hello@wardvale.com.",
+  "prt.loadErrRetry": "Erneut versuchen",
   "prt.autoTitle": "Eigene Automatisierungen",
   "prt.autoSub": "Deine eigenen geplanten Anweisungen – jeder Lauf entwirft einen Bericht zur Freigabe. Sendet niemals etwas.",
   "prt.autoNew": "Neue Automatisierung",

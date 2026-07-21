@@ -126,18 +126,18 @@ alter table public.runs enable row level security;
 
 drop policy if exists clients_self_read on public.clients;
 create policy clients_self_read on public.clients
-  for select using (email = (auth.jwt() ->> 'email'));
+  for select using (lower(email) = lower(auth.jwt() ->> 'email'));
 
 drop policy if exists automations_self_read on public.automations;
 create policy automations_self_read on public.automations
   for select using (
-    client_id in (select id from public.clients where email = (auth.jwt() ->> 'email'))
+    client_id in (select id from public.clients where lower(email) = lower(auth.jwt() ->> 'email'))
   );
 
 drop policy if exists runs_self_read on public.runs;
 create policy runs_self_read on public.runs
   for select using (
-    client_id in (select id from public.clients where email = (auth.jwt() ->> 'email'))
+    client_id in (select id from public.clients where lower(email) = lower(auth.jwt() ->> 'email'))
   );
 
 -- ── Agent control plane: connections + governance audit ──────────────────────
@@ -180,13 +180,13 @@ alter table public.agent_audit enable row level security;
 drop policy if exists connections_self_read on public.connections;
 create policy connections_self_read on public.connections
   for select using (
-    client_id in (select id from public.clients where email = (auth.jwt() ->> 'email'))
+    client_id in (select id from public.clients where lower(email) = lower(auth.jwt() ->> 'email'))
   );
 
 drop policy if exists agent_audit_self_read on public.agent_audit;
 create policy agent_audit_self_read on public.agent_audit
   for select using (
-    client_id in (select id from public.clients where email = (auth.jwt() ->> 'email'))
+    client_id in (select id from public.clients where lower(email) = lower(auth.jwt() ->> 'email'))
   );
 
 -- Bring-Your-Own-Tool (BYOT): a client may register their own MCP server or a
@@ -232,7 +232,7 @@ alter table public.client_tool_secrets enable row level security;
 drop policy if exists client_tools_self_read on public.client_tools;
 create policy client_tools_self_read on public.client_tools
   for select using (
-    client_id in (select id from public.clients where email = (auth.jwt() ->> 'email'))
+    client_id in (select id from public.clients where lower(email) = lower(auth.jwt() ->> 'email'))
   );
 -- client_tool_secrets: RLS enabled with NO policy → unreadable by anon/auth roles;
 -- only the service role can read the token. This is deliberate.
@@ -241,9 +241,9 @@ create policy client_tools_self_read on public.client_tools
 drop policy if exists automations_self_update on public.automations;
 create policy automations_self_update on public.automations
   for update using (
-    client_id in (select id from public.clients where email = (auth.jwt() ->> 'email'))
+    client_id in (select id from public.clients where lower(email) = lower(auth.jwt() ->> 'email'))
   ) with check (
-    client_id in (select id from public.clients where email = (auth.jwt() ->> 'email'))
+    client_id in (select id from public.clients where lower(email) = lower(auth.jwt() ->> 'email'))
   );
 
 -- Human-in-the-loop: agents queue gated actions (send, charge, publish) here
@@ -267,14 +267,14 @@ alter table public.approvals enable row level security;
 drop policy if exists approvals_self_read on public.approvals;
 create policy approvals_self_read on public.approvals
   for select using (
-    client_id in (select id from public.clients where email = (auth.jwt() ->> 'email'))
+    client_id in (select id from public.clients where lower(email) = lower(auth.jwt() ->> 'email'))
   );
 drop policy if exists approvals_self_update on public.approvals;
 create policy approvals_self_update on public.approvals
   for update using (
-    client_id in (select id from public.clients where email = (auth.jwt() ->> 'email'))
+    client_id in (select id from public.clients where lower(email) = lower(auth.jwt() ->> 'email'))
   ) with check (
-    client_id in (select id from public.clients where email = (auth.jwt() ->> 'email'))
+    client_id in (select id from public.clients where lower(email) = lower(auth.jwt() ->> 'email'))
   );
 
 -- ── First-party product analytics + A/B experiments ──────────────────────────
@@ -389,27 +389,27 @@ alter table public.agent_config enable row level security;
 drop policy if exists business_profile_self_read on public.business_profile;
 create policy business_profile_self_read on public.business_profile
   for select using (
-    client_id in (select id from public.clients where email = (auth.jwt() ->> 'email'))
+    client_id in (select id from public.clients where lower(email) = lower(auth.jwt() ->> 'email'))
   );
 drop policy if exists business_profile_self_update on public.business_profile;
 create policy business_profile_self_update on public.business_profile
   for update using (
-    client_id in (select id from public.clients where email = (auth.jwt() ->> 'email'))
+    client_id in (select id from public.clients where lower(email) = lower(auth.jwt() ->> 'email'))
   ) with check (
-    client_id in (select id from public.clients where email = (auth.jwt() ->> 'email'))
+    client_id in (select id from public.clients where lower(email) = lower(auth.jwt() ->> 'email'))
   );
 
 drop policy if exists agent_config_self_read on public.agent_config;
 create policy agent_config_self_read on public.agent_config
   for select using (
-    client_id in (select id from public.clients where email = (auth.jwt() ->> 'email'))
+    client_id in (select id from public.clients where lower(email) = lower(auth.jwt() ->> 'email'))
   );
 drop policy if exists agent_config_self_update on public.agent_config;
 create policy agent_config_self_update on public.agent_config
   for update using (
-    client_id in (select id from public.clients where email = (auth.jwt() ->> 'email'))
+    client_id in (select id from public.clients where lower(email) = lower(auth.jwt() ->> 'email'))
   ) with check (
-    client_id in (select id from public.clients where email = (auth.jwt() ->> 'email'))
+    client_id in (select id from public.clients where lower(email) = lower(auth.jwt() ->> 'email'))
   );
 
 -- ── Outcomes: closed-loop ROI attribution ────────────────────────────────────
@@ -529,7 +529,7 @@ create index if not exists clients_agency_idx on public.clients (agency_id);
 alter table public.agencies enable row level security;
 drop policy if exists agencies_self_read on public.agencies;
 create policy agencies_self_read on public.agencies
-  for select using (owner_email = (auth.jwt() ->> 'email'));
+  for select using (lower(owner_email) = lower(auth.jwt() ->> 'email'));
 
 -- ── Governance: per-client execution policies ────────────────────────────────
 -- Guardrails the owner sets: an auto-send spend cap, a per-action approval
@@ -552,14 +552,14 @@ alter table public.client_policy enable row level security;
 drop policy if exists client_policy_self_read on public.client_policy;
 create policy client_policy_self_read on public.client_policy
   for select using (
-    client_id in (select id from public.clients where email = (auth.jwt() ->> 'email'))
+    client_id in (select id from public.clients where lower(email) = lower(auth.jwt() ->> 'email'))
   );
 drop policy if exists client_policy_self_update on public.client_policy;
 create policy client_policy_self_update on public.client_policy
   for update using (
-    client_id in (select id from public.clients where email = (auth.jwt() ->> 'email'))
+    client_id in (select id from public.clients where lower(email) = lower(auth.jwt() ->> 'email'))
   ) with check (
-    client_id in (select id from public.clients where email = (auth.jwt() ->> 'email'))
+    client_id in (select id from public.clients where lower(email) = lower(auth.jwt() ->> 'email'))
   );
 
 -- ── Learning loop: approved/edited drafts become per-client few-shot exemplars ─
@@ -579,19 +579,19 @@ alter table public.agent_feedback enable row level security;
 drop policy if exists agent_feedback_self_read on public.agent_feedback;
 create policy agent_feedback_self_read on public.agent_feedback
   for select using (
-    client_id in (select id from public.clients where email = (auth.jwt() ->> 'email'))
+    client_id in (select id from public.clients where lower(email) = lower(auth.jwt() ->> 'email'))
   );
 
 alter table public.outcomes enable row level security;
 drop policy if exists outcomes_self_read on public.outcomes;
 create policy outcomes_self_read on public.outcomes
   for select using (
-    client_id in (select id from public.clients where email = (auth.jwt() ->> 'email'))
+    client_id in (select id from public.clients where lower(email) = lower(auth.jwt() ->> 'email'))
   );
 drop policy if exists outcomes_self_update on public.outcomes;
 create policy outcomes_self_update on public.outcomes
   for update using (
-    client_id in (select id from public.clients where email = (auth.jwt() ->> 'email'))
+    client_id in (select id from public.clients where lower(email) = lower(auth.jwt() ->> 'email'))
   ) with check (
-    client_id in (select id from public.clients where email = (auth.jwt() ->> 'email'))
+    client_id in (select id from public.clients where lower(email) = lower(auth.jwt() ->> 'email'))
   );

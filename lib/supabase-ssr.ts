@@ -34,13 +34,18 @@ export async function createServerSupabase(): Promise<SupabaseClient | null> {
   });
 }
 
-/** The signed-in user's email, or null (unconfigured / not signed in). */
+/**
+ * The signed-in user's email, or null (unconfigured / not signed in).
+ * Lowercased: every write path (provisioning, Stripe webhook) lowercases
+ * before storing, so this single read seam must match — a mixed-case JWT
+ * email would otherwise silently miss the client row.
+ */
 export async function getPortalUserEmail(): Promise<string | null> {
   try {
     const supabase = await createServerSupabase();
     if (!supabase) return null;
     const { data } = await supabase.auth.getUser();
-    return data.user?.email ?? null;
+    return data.user?.email?.toLowerCase() ?? null;
   } catch {
     return null;
   }

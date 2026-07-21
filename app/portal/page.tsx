@@ -1,8 +1,12 @@
+import Link from "next/link";
+import { PageLayout } from "@/components/page-layout";
 import { PortalDashboard } from "@/components/portal-dashboard";
 import { isSupabaseAuthConfigured, getPortalUserEmail } from "@/lib/supabase-ssr";
 import { getPortalData, type PortalData } from "@/lib/portal";
 import { ensureClientProvisioned } from "@/lib/provisioning";
+import { getServiceClient } from "@/lib/supabase-server";
 import { loadPeerBenchmarks, type PeerBenchmarks } from "@/lib/peer-benchmarks";
+import { getT } from "@/lib/i18n-server";
 
 // Demo shown to visitors and any signed-in client without live data yet.
 const DEMO: PortalData & { deltas: { runs: string; hours: string; success: string; roi: string } } = {
@@ -93,6 +97,36 @@ export default async function PortalPage() {
       }
       if (data) benchmarks = await loadPeerBenchmarks(userEmail);
     }
+  }
+
+  // A signed-in client whose data failed to load gets an honest error state —
+  // never the fake "Demo Bistro" (which reads as their account vanishing).
+  // Anonymous visitors still get the demo below.
+  if (userEmail && !data) {
+    const { t } = await getT();
+    // No service key → provisioning can never succeed; "try again" would be a
+    // lie and a loop. Only offer retry when the failure is plausibly transient.
+    const misconfigured = !getServiceClient();
+    return (
+      <PageLayout>
+        <div className="container flex min-h-[60vh] items-center justify-center py-16">
+          <div className="w-full max-w-md rounded-3xl gradient-border glass-strong p-8 text-center">
+            <h1 className="font-display text-2xl font-semibold">{t("prt.loadErrTitle")}</h1>
+            <p className="mt-3 text-sm text-muted-foreground">
+              {misconfigured ? t("prt.loadErrSetupBody") : t("prt.loadErrBody")}
+            </p>
+            {!misconfigured && (
+              <Link
+                href="/portal"
+                className="mt-6 inline-flex items-center justify-center rounded-xl bg-cyan-electric px-5 py-2.5 text-sm font-medium text-background transition hover:opacity-90"
+              >
+                {t("prt.loadErrRetry")}
+              </Link>
+            )}
+          </div>
+        </div>
+      </PageLayout>
+    );
   }
 
   const isDemo = !data;
