@@ -1,5 +1,6 @@
 import type { LucideIcon } from "lucide-react";
 import {
+  Clapperboard,
   Baby,
   BedDouble,
   Calculator,
@@ -260,6 +261,17 @@ export const bundles: Bundle[] = [
     basePrice: 1100,
     baseSavings: 2300,
     vertical: "Photography",
+  },
+  {
+    name: "sol.bundleCreatorName",
+    slug: "creator-brand-deal-and-sponsor-agent",
+    icon: Clapperboard,
+    tagline: "sol.bundleCreatorTagline",
+    includes: ["sol.incCreator1", "sol.incCreator2", "sol.incCreator3", "sol.incCreator4"],
+    savings: "sol.bundleCreatorSavings",
+    basePrice: 1200,
+    baseSavings: 3200,
+    vertical: "Creator",
   },
 ];
 

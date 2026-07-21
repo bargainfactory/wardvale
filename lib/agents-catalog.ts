@@ -278,6 +278,14 @@ export const PACKS: Pack[] = [
     connectors: ["google", "twilio"],
     tone: "creative, warm, and professional",
   },
+  {
+    id: "creator",
+    name: "Creator OS",
+    industry: "Content creators",
+    agents: ["inbox-triage", "lead-qualification", "quote-followup", "ar-followup", "winback", "content-drafter"],
+    connectors: ["google", "twilio"],
+    tone: "authentic, upbeat, and unmistakably you",
+  },
 ];
 
 export function getPack(id: string): Pack | undefined {

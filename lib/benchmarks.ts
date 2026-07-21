@@ -188,6 +188,14 @@ export const benchmarks: Benchmark[] = [
     replyTimeAfter: "bm.replyInstant",
     topAutomation: "bm.photographerTopAutomation",
   },
+  {
+    vertical: "Creator",
+    avgMonthlySavings: 3200,
+    avgHoursSaved: 34,
+    replyTimeBefore: "bm.reply8to24Hours",
+    replyTimeAfter: "bm.replyUnder1Min",
+    topAutomation: "bm.creatorTopAutomation",
+  },
 ];
 
 /**
@@ -215,6 +223,7 @@ const VERTICAL_LABEL_KEYS: Record<string, string> = {
   Cleaning: "bm.verticalCleaning",
   Childcare: "bm.verticalChildcare",
   "Short-term rental": "bm.verticalStr",
+  Creator: "bm.verticalCreator",
   Nonprofit: "bm.verticalNonprofit",
   Photography: "bm.verticalPhotographer",
 };

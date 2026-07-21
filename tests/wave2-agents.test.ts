@@ -30,10 +30,10 @@ describe("catalog integrity (wave 2)", () => {
     }
   });
 
-  it("has 20 packs: 6 original + 6 gap-closers + 8 new verticals, unique ids", () => {
-    expect(PACKS.length).toBe(20);
-    expect(new Set(PACKS.map((p) => p.id)).size).toBe(20);
-    for (const id of ["medspa", "veterinary", "fitness", "auto-repair", "insurance", "property-management", "salon", "accounting", "contractor", "cleaning", "childcare", "str", "nonprofit", "photographer"]) {
+  it("has 21 packs including Creator OS, unique ids", () => {
+    expect(PACKS.length).toBe(21);
+    expect(new Set(PACKS.map((p) => p.id)).size).toBe(21);
+    for (const id of ["medspa", "veterinary", "fitness", "auto-repair", "insurance", "property-management", "salon", "accounting", "contractor", "cleaning", "childcare", "str", "nonprofit", "photographer", "creator"]) {
       expect(PACKS.some((p) => p.id === id), id).toBe(true);
     }
   });

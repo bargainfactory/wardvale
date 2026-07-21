@@ -572,4 +572,22 @@ export const seoPages: SeoPage[] = [
     tools: ["GPT agent", "Calendly", "Twilio", "Gmail"],
     savings: "seo.photographerLeadAndBookingAgent.savings",
   },
+  {
+    slug: "creator-brand-deal-and-sponsor-agent",
+    vertical: "seo.creatorBrandDealAndSponsorAgent.vertical",
+    workflow: "seo.creatorBrandDealAndSponsorAgent.workflow",
+    h1: "seo.creatorBrandDealAndSponsorAgent.h1",
+    metaTitle: "seo.creatorBrandDealAndSponsorAgent.metaTitle",
+    metaDescription: "seo.creatorBrandDealAndSponsorAgent.metaDescription",
+    problem: "seo.creatorBrandDealAndSponsorAgent.problem",
+    solution: "seo.creatorBrandDealAndSponsorAgent.solution",
+    steps: [
+      { label: "seo.creatorBrandDealAndSponsorAgent.step1", tool: "Gmail" },
+      { label: "seo.creatorBrandDealAndSponsorAgent.step2", tool: "GPT agent" },
+      { label: "seo.creatorBrandDealAndSponsorAgent.step3", tool: "Twilio" },
+      { label: "seo.creatorBrandDealAndSponsorAgent.step4", tool: "Sheets" },
+    ],
+    tools: ["Gmail", "GPT agent", "Twilio", "Sheets"],
+    savings: "seo.creatorBrandDealAndSponsorAgent.savings",
+  },
 ];
