@@ -338,6 +338,13 @@ create table if not exists public.business_profile (
 -- Row-level RLS below already covers these columns; no new policy needed.
 alter table public.business_profile add column if not exists intake     jsonb not null default '{}'::jsonb;
 alter table public.business_profile add column if not exists guardrails text;
+-- Creator OS depth (rate-card-aware quoting + voice cloning at onboarding).
+-- rate_card: firm rates + quoting rules, injected so the lead-qualifier can
+-- draft real quotes and flag below-rate offers. voice_samples: a few past
+-- messages the owner wrote — seeded few-shot exemplars so draft one already
+-- sounds like them (extends the edit-time learning loop to onboarding).
+alter table public.business_profile add column if not exists rate_card     text;
+alter table public.business_profile add column if not exists voice_samples jsonb not null default '[]'::jsonb;
 
 drop trigger if exists business_profile_touch on public.business_profile;
 create trigger business_profile_touch

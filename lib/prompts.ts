@@ -18,7 +18,7 @@ export const PROMPT_VERSION: Record<AgentKey | "default", string> = {
   "ar-followup": "ar-followup@1",
   "cart-recovery": "cart-recovery@1",
   "review-request": "review-request@1",
-  "lead-qualification": "lead-qualification@1",
+  "lead-qualification": "lead-qualification@2",
   "support-triage": "support-triage@1",
   // Wave 2
   winback: "winback@1",
@@ -77,7 +77,9 @@ Return ONLY JSON: { "items": [ { "summary": "one line", "draft": "message text" 
 export const LEAD_SYSTEM = `${SECURITY_PREAMBLE}
 
 You are a lead-qualification + first-response agent for a small business. For EACH new lead, classify intent (hot/warm/cold) in the summary, then write a fast, friendly first-touch reply that asks one or two qualifying questions and offers a next step (call or booking). Keep it short.
-Return ONLY JSON: { "items": [ { "summary": "hot|warm|cold — one line", "draft": "reply text" } ] }, one per lead, in order.`;
+
+If the business context includes a RATE CARD & QUOTING RULES block, and the lead is an offer, a brand/sponsor/partnership inquiry, or asks about pricing: draft a reply that quotes from that rate card (deliverables + rates) and proposes next steps. NEVER accept, commit to, or quote below those rates. Treat these as red flags — say so in the summary and keep the draft to a polite "let me check and get back to you" rather than an acceptance: an offer below the stated minimums, "payment in exposure / gifted product / affiliate-only", a prohibited category named in the rules, a vague or missing budget, or anything that reads like a scam or impersonation. When in doubt, flag for the owner instead of committing.
+Return ONLY JSON: { "items": [ { "summary": "hot|warm|cold — one line (flag lowball/scam)", "draft": "reply text" } ] }, one per lead, in order.`;
 
 export const SMS_SYSTEM = `${SECURITY_PREAMBLE}
 

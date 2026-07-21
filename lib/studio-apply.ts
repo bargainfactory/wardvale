@@ -34,6 +34,8 @@ export async function applyConfigPlan(clientId: string, plan: ConfigPlan): Promi
       pricing: plan.profile.pricing,
       faq: plan.profile.faq,
       guardrails: plan.profile.guardrails,
+      rate_card: plan.profile.rateCard,
+      voice_samples: plan.profile.voiceSamples,
       intake: plan.intake,
     },
     { onConflict: "client_id" }

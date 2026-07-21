@@ -12,6 +12,15 @@ export const localeLabels: Record<Locale, string> = {
 type Dict = Record<string, string>;
 
 const en: Dict = {
+  "studio.fRateCard": "Rate card & quoting rules (optional)",
+  "studio.fRateCardHint": "e.g. Sponsored video $2,000 min · Story $400 · never crypto/gambling · no exclusivity under $5k",
+  "studio.fVoice": "Sound like you — paste 2-3 past messages you wrote (optional)",
+  "studio.fVoiceHint": "Separate each with a blank line. Your agents copy this style from message one.",
+  "prt.moneyPipeline": "Money pipeline",
+  "prt.pipeDrafted": "Awaiting your approval",
+  "prt.pipeSent": "Sent · awaiting result",
+  "prt.pipeWon": "Won",
+  "prt.pipeLost": "Lost",
   "sol.bundleCreatorName": "Creator OS",
   "sol.bundleCreatorTagline": "Turn sponsor inquiries into signed, paid brand deals.",
   "sol.incCreator1": "Brand-inquiry inbox triage",
@@ -1796,6 +1805,15 @@ const en: Dict = {
 };
 
 const es: Dict = {
+  "studio.fRateCard": "Tarifas y reglas de cotización (opcional)",
+  "studio.fRateCardHint": "p. ej. Vídeo patrocinado 2.000 $ mín · Story 400 $ · nunca cripto/apuestas · sin exclusividad por debajo de 5.000 $",
+  "studio.fVoice": "Suena como tú: pega 2-3 mensajes que hayas escrito (opcional)",
+  "studio.fVoiceHint": "Sepáralos con una línea en blanco. Tus agentes copian este estilo desde el primer mensaje.",
+  "prt.moneyPipeline": "Pipeline de ingresos",
+  "prt.pipeDrafted": "Esperando tu aprobación",
+  "prt.pipeSent": "Enviado · esperando resultado",
+  "prt.pipeWon": "Ganado",
+  "prt.pipeLost": "Perdido",
   "sol.bundleCreatorName": "Creador OS",
   "sol.bundleCreatorTagline": "Convierte los correos de marcas en acuerdos firmados y pagados.",
   "sol.incCreator1": "Filtrado de propuestas de marcas",
@@ -3578,6 +3596,15 @@ const es: Dict = {
 };
 
 const fr: Dict = {
+  "studio.fRateCard": "Grille tarifaire et règles de devis (facultatif)",
+  "studio.fRateCardHint": "ex. Vidéo sponsorisée 2 000 $ min · Story 400 $ · jamais crypto/paris · pas d'exclusivité sous 5 000 $",
+  "studio.fVoice": "Écrivez comme vous : collez 2-3 messages que vous avez écrits (facultatif)",
+  "studio.fVoiceHint": "Séparez chacun par une ligne vide. Vos agents copient ce style dès le premier message.",
+  "prt.moneyPipeline": "Pipeline de revenus",
+  "prt.pipeDrafted": "En attente de votre validation",
+  "prt.pipeSent": "Envoyé · en attente de résultat",
+  "prt.pipeWon": "Gagné",
+  "prt.pipeLost": "Perdu",
   "sol.bundleCreatorName": "Créateur OS",
   "sol.bundleCreatorTagline": "Transformez les e-mails de marques en contrats signés et payés.",
   "sol.incCreator1": "Tri des demandes de marques",
@@ -5360,6 +5387,15 @@ const fr: Dict = {
 };
 
 const pt: Dict = {
+  "studio.fRateCard": "Tabela de preços e regras de orçamento (opcional)",
+  "studio.fRateCardHint": "ex. Vídeo patrocinado US$ 2.000 mín · Story US$ 400 · nunca cripto/apostas · sem exclusividade abaixo de US$ 5.000",
+  "studio.fVoice": "Soe como você: cole 2-3 mensagens que você escreveu (opcional)",
+  "studio.fVoiceHint": "Separe cada um com uma linha em branco. Seus agentes copiam este estilo desde a primeira mensagem.",
+  "prt.moneyPipeline": "Pipeline de receita",
+  "prt.pipeDrafted": "Aguardando sua aprovação",
+  "prt.pipeSent": "Enviado · aguardando resultado",
+  "prt.pipeWon": "Ganho",
+  "prt.pipeLost": "Perdido",
   "sol.bundleCreatorName": "Criador OS",
   "sol.bundleCreatorTagline": "Transforme e-mails de marcas em contratos assinados e pagos.",
   "sol.incCreator1": "Triagem de propostas de marcas",
@@ -7123,6 +7159,15 @@ const pt: Dict = {
 };
 
 const de: Dict = {
+  "studio.fRateCard": "Preisliste & Angebotsregeln (optional)",
+  "studio.fRateCardHint": "z. B. Sponsored Video 2.000 $ min · Story 400 $ · nie Krypto/Glücksspiel · keine Exklusivität unter 5.000 $",
+  "studio.fVoice": "Klinge wie du – füge 2-3 selbst geschriebene Nachrichten ein (optional)",
+  "studio.fVoiceHint": "Trenne jede mit einer Leerzeile. Deine Agenten übernehmen diesen Stil ab Nachricht eins.",
+  "prt.moneyPipeline": "Umsatz-Pipeline",
+  "prt.pipeDrafted": "Wartet auf deine Freigabe",
+  "prt.pipeSent": "Gesendet · Ergebnis offen",
+  "prt.pipeWon": "Gewonnen",
+  "prt.pipeLost": "Verloren",
   "sol.bundleCreatorName": "Creator OS",
   "sol.bundleCreatorTagline": "Aus Marken-Anfragen werden unterschriebene, bezahlte Deals.",
   "sol.incCreator1": "Marken-Anfragen im Posteingang filtern",

@@ -600,6 +600,24 @@ function AdvancedSection({ intake, update, t }: SectionProps) {
             className={inputCls}
           />
         </Field>
+        <Field label={t("studio.fRateCard")}>
+          <textarea
+            value={intake.advanced?.rateCard ?? ""}
+            onChange={(e) => update((prev) => ({ ...prev, advanced: { ...prev.advanced, rateCard: e.target.value } }))}
+            rows={4}
+            placeholder={t("studio.fRateCardHint")}
+            className={inputCls}
+          />
+        </Field>
+        <Field label={t("studio.fVoice")}>
+          <textarea
+            value={intake.advanced?.voiceSamples ?? ""}
+            onChange={(e) => update((prev) => ({ ...prev, advanced: { ...prev.advanced, voiceSamples: e.target.value } }))}
+            rows={5}
+            placeholder={t("studio.fVoiceHint")}
+            className={inputCls}
+          />
+        </Field>
         <Field label={t("studio.fNotes")}>
           <textarea
             value={intake.advanced?.notes ?? ""}

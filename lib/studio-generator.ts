@@ -73,6 +73,10 @@ export type StudioIntake = {
   };
   advanced?: {
     notes?: string;
+    // Creator OS depth: firm rates the qualifier quotes from, and a few past
+    // messages the owner wrote so drafts sound like them from the start.
+    rateCard?: string;
+    voiceSamples?: string; // one message per blank-line block in the UI
   };
 };
 
@@ -91,6 +95,8 @@ export type ConfigPlan = {
     pricing: string | null;
     faq: string | null;
     guardrails: string | null;
+    rateCard: string | null;
+    voiceSamples: string[];
   };
   agents: PlannedAgent[]; // always all 6, with the enabled flag set
   policy: PlannedPolicy;
@@ -192,6 +198,14 @@ export function planFromIntake(intake: StudioIntake, ctx: { plan: Plan }): Confi
   };
 
   // 4. Profile facts + the generated guardrail block.
+  // Voice samples: split the textarea on blank lines → up to 5 examples, each capped.
+  const voiceSamples = (intake.advanced?.voiceSamples ?? "")
+    .split(/\n\s*\n/)
+    .map((s) => s.trim())
+    .filter(Boolean)
+    .slice(0, 5)
+    .map((s) => s.slice(0, 800));
+
   const profile = {
     industry: trimOrNull(c.industry ?? pack?.industry, 120),
     tone: trimOrNull(c.tone ?? pack?.tone, 200),
@@ -200,6 +214,8 @@ export function planFromIntake(intake: StudioIntake, ctx: { plan: Plan }): Confi
     pricing: trimOrNull(c.pricing, 1000),
     faq: trimOrNull(c.faq, 3000),
     guardrails: buildGuardrails(intake.constraints?.neverDo, intake.constraints?.escalateWhen, regulated),
+    rateCard: trimOrNull(intake.advanced?.rateCard, 2000),
+    voiceSamples,
   };
 
   // 5. Rationale for the review card.

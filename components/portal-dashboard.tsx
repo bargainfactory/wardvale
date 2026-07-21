@@ -616,6 +616,38 @@ export function PortalDashboard(props: Props) {
               </div>
             </div>
 
+            {/* Money pipeline (B3) — the "Money OS" money view over REAL data:
+                drafted (awaiting your approval), sent (awaiting result, $ at
+                stake), won ($ realized), lost. No fabricated stages. */}
+            {(() => {
+              const sent = outcomes.filter((o) => o.status === "pending");
+              const wonRows = outcomes.filter((o) => o.status === "won");
+              const lostRows = outcomes.filter((o) => o.status === "lost");
+              const sum = (rows: PortalOutcome[]) => rows.reduce((s, o) => s + o.value, 0);
+              const cols: { label: string; count: number; amount: number | null; accent: boolean }[] = [
+                { label: t("prt.pipeDrafted"), count: approvals.length, amount: null, accent: false },
+                { label: t("prt.pipeSent"), count: sent.length, amount: sum(sent), accent: false },
+                { label: t("prt.pipeWon"), count: wonRows.length, amount: sum(wonRows), accent: true },
+                { label: t("prt.pipeLost"), count: lostRows.length, amount: null, accent: false },
+              ];
+              return (
+                <div className="mt-6 rounded-3xl border border-border bg-card/40 p-5 backdrop-blur">
+                  <h2 className="mb-4 flex items-center gap-2 font-display font-semibold">
+                    <DollarSign className="h-4 w-4 text-cyan-electric" /> {t("prt.moneyPipeline")}
+                  </h2>
+                  <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                    {cols.map((col) => (
+                      <div key={col.label} className={`rounded-2xl border p-4 ${col.accent ? "border-cyan-electric/30 bg-cyan-electric/[0.06]" : "border-border bg-card/40"}`}>
+                        <p className="text-xs text-muted-foreground">{col.label}</p>
+                        <p className={`mt-1 font-display text-2xl font-semibold tabular-nums ${col.accent ? "gradient-text" : ""}`}>{col.count}</p>
+                        {col.amount != null && <p className="mt-0.5 text-xs tabular-nums text-muted-foreground">${col.amount.toLocaleString()}</p>}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              );
+            })()}
+
             <div className="mt-6 rounded-3xl border border-border bg-card/40 backdrop-blur">
               <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border px-6 py-4">
                 <h2 className="flex items-center gap-2 font-display font-semibold">
