@@ -37,6 +37,7 @@ import { createClient } from "@/lib/supabase";
 import { useLocale } from "@/lib/locale-context";
 import { entitlement, type Schedule } from "@/lib/agents-catalog";
 import { addons } from "@/lib/solutions";
+import { CustomAutomations } from "@/components/custom-automations";
 
 const CALENDLY = process.env.NEXT_PUBLIC_CALENDLY_URL ?? "https://calendly.com/wardvale/discovery";
 import type { PortalAgentConfig, PortalApproval, PortalAutomation, PortalAudit, PortalConnection, PortalKpis, PortalLog, PortalOutcome, PortalPolicy, PortalRoi, PortalRoiProof } from "@/lib/portal";
@@ -780,6 +781,8 @@ export function PortalDashboard(props: Props) {
         )}
 
         {tab === "agents" && (
+          <>
+          <CustomAutomations isDemo={isDemo} />
           <div className="rounded-3xl border border-border bg-card/40 backdrop-blur">
             <div className="border-b border-border px-6 py-4">
               <div className="flex items-center justify-between">
@@ -843,7 +846,7 @@ export function PortalDashboard(props: Props) {
                           onChange={(e) => updateConfig(c.key, { schedule: e.target.value as Schedule })}
                           className="rounded-lg border border-border bg-card/60 px-2 py-1 text-xs outline-none focus:border-cyan-electric"
                         >
-                          {(["manual", "daily", "hourly", "off"] as Schedule[]).map((s) => (
+                          {(["manual", "daily", "hourly", "weekly", "off"] as Schedule[]).map((s) => (
                             <option key={s} value={s} disabled={!ent.schedules.includes(s)}>
                               {t(`prt.schedule.${s}`)}
                             </option>
@@ -912,6 +915,7 @@ export function PortalDashboard(props: Props) {
               )}
             </div>
           </div>
+          </>
         )}
 
         {tab === "approvals" && (

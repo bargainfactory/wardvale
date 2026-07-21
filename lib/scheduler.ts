@@ -7,7 +7,16 @@ import { scheduleAllowed, type Schedule } from "@/lib/agents-catalog";
 // the rest. The cron route wires these to the DB and to the dispatch transport
 // (QStash when configured, in-process fetch otherwise).
 
-export const DUE_MS: Record<string, number> = { hourly: 60 * 60_000, daily: 24 * 60 * 60_000 };
+export const DUE_MS: Record<string, number> = {
+  hourly: 60 * 60_000,
+  daily: 24 * 60 * 60_000,
+  weekly: 7 * 24 * 60 * 60_000,
+};
+
+// When a preferred hour gates the run, the elapsed-interval check gets a small
+// tolerance: stamps land seconds after the tick, so a strict `>= 24h` would
+// skip the matching hour a day later and drift the run 24h at a time.
+const HOUR_GATE_TOLERANCE = 0.9;
 
 export type ConfigRow = {
   id: string;
@@ -15,9 +24,55 @@ export type ConfigRow = {
   agent_key: string;
   schedule: Schedule;
   last_run_at: string | null;
+  /** Preferred local hour (0-23) in the client's timezone; null = any tick. */
+  run_hour?: number | null;
+  /** Preferred local weekday (0=Sun..6=Sat); only meaningful for weekly. */
+  run_day?: number | null;
 };
-export type ClientLite = { id: string; ingest_key: string; plan: string };
+export type ClientLite = { id: string; ingest_key: string; plan: string; timezone?: string | null };
 export type Job = { configId: string; clientId: string; ingestKey: string; agentKey: string };
+
+/** Local {hour, day} for a timestamp in an IANA timezone (bad tz → UTC). */
+export function localParts(now: number, tz: string | null | undefined): { hour: number; day: number } {
+  try {
+    const fmt = new Intl.DateTimeFormat("en-US", {
+      timeZone: tz || "UTC",
+      hour: "numeric",
+      hour12: false,
+      weekday: "short",
+    });
+    const parts = fmt.formatToParts(new Date(now));
+    const hour = Number(parts.find((p) => p.type === "hour")?.value ?? 0) % 24;
+    const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+    const day = days.indexOf(parts.find((p) => p.type === "weekday")?.value ?? "Sun");
+    return { hour, day: day < 0 ? 0 : day };
+  } catch {
+    const d = new Date(now);
+    return { hour: d.getUTCHours(), day: d.getUTCDay() };
+  }
+}
+
+/** Shared due check: interval elapsed + (optional) local hour/day gates. */
+function isDue(
+  schedule: string,
+  lastRunAt: string | null,
+  runHour: number | null | undefined,
+  runDay: number | null | undefined,
+  tz: string | null | undefined,
+  now: number
+): boolean {
+  const interval = DUE_MS[schedule];
+  if (!interval) return false; // manual / off
+  const last = lastRunAt ? new Date(lastRunAt).getTime() : 0;
+  const gated = schedule !== "hourly" && runHour != null;
+  const needed = gated ? interval * HOUR_GATE_TOLERANCE : interval;
+  if (now - last < needed) return false;
+  if (!gated) return true;
+  const local = localParts(now, tz);
+  if (local.hour !== runHour) return false;
+  if (schedule === "weekly" && runDay != null && local.day !== runDay) return false;
+  return true;
+}
 
 /**
  * The enabled+scheduled configs that are DUE now, for an active + plan-entitled
@@ -34,15 +89,44 @@ export function dueJobs(configs: ConfigRow[], clients: Map<string, ClientLite>, 
       const client = clients.get(c.client_id);
       if (!client) return false; // inactive / suspended
       if (!scheduleAllowed(client.plan, c.schedule)) return false; // plan entitlement
-      const interval = DUE_MS[c.schedule];
-      if (!interval) return false; // manual / off
-      return now - lastRun(c) >= interval;
+      return isDue(c.schedule, c.last_run_at, c.run_hour, c.run_day, client.timezone, now);
     })
     .sort((a, b) => lastRun(a) - lastRun(b)) // oldest-due first
     .map((c) => {
       const client = clients.get(c.client_id)!;
       return { configId: c.id, clientId: c.client_id, ingestKey: client.ingest_key, agentKey: c.agent_key };
     });
+}
+
+export type CustomAutomationRow = {
+  id: string;
+  client_id: string;
+  schedule: string; // 'off' | 'daily' | 'weekly'
+  run_hour: number | null;
+  run_day: number | null;
+  last_run_at: string | null;
+};
+export type CustomJob = { automationId: string; clientId: string; ingestKey: string };
+
+/**
+ * Due custom automations (portal composer). Gated to Growth+ — the plans the
+ * Custom add-on sells against — and always hour-gated (run_hour defaults to 9).
+ */
+export function dueCustomAutomations(
+  rows: CustomAutomationRow[],
+  clients: Map<string, ClientLite>,
+  now: number
+): CustomJob[] {
+  const lastRun = (r: CustomAutomationRow) => (r.last_run_at ? new Date(r.last_run_at).getTime() : 0);
+  return rows
+    .filter((r) => {
+      const client = clients.get(r.client_id);
+      if (!client) return false;
+      if (client.plan !== "growth" && client.plan !== "scale") return false;
+      return isDue(r.schedule, r.last_run_at, r.run_hour ?? 9, r.run_day, client.timezone, now);
+    })
+    .sort((a, b) => lastRun(a) - lastRun(b))
+    .map((r) => ({ automationId: r.id, clientId: r.client_id, ingestKey: clients.get(r.client_id)!.ingest_key }));
 }
 
 export type JobResult<T> = { item: T; ok: boolean; attempts: number; error?: string };
@@ -106,7 +190,12 @@ export function qstashConfigured(): boolean {
  * with the client's bearer (via an Upstash-Forward header) and handles retry +
  * dead-letter. Returns true when QStash accepts the message.
  */
-export async function publishToQStash(destUrl: string, ingestKey: string, agentKey: string): Promise<boolean> {
+export async function publishToQStash(
+  destUrl: string,
+  ingestKey: string,
+  agentKey: string,
+  extra?: Record<string, unknown>
+): Promise<boolean> {
   const token = process.env.QSTASH_TOKEN;
   if (!token) return false;
   const res = await fetch(`https://qstash.upstash.io/v2/publish/${destUrl}`, {
@@ -117,7 +206,7 @@ export async function publishToQStash(destUrl: string, ingestKey: string, agentK
       "upstash-forward-authorization": `Bearer ${ingestKey}`,
       "upstash-retries": String(process.env.QSTASH_RETRIES ?? 3),
     },
-    body: JSON.stringify({ agent: agentKey }),
+    body: JSON.stringify({ agent: agentKey, ...(extra ?? {}) }),
     cache: "no-store",
   });
   return res.ok;

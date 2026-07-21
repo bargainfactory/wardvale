@@ -3,11 +3,13 @@ import { getServiceClient } from "@/lib/supabase-server";
 import { reportError, reportWarning } from "@/lib/report";
 import {
   dueJobs,
+  dueCustomAutomations,
   runPool,
   qstashConfigured,
   publishToQStash,
   type ConfigRow,
   type ClientLite,
+  type CustomAutomationRow,
 } from "@/lib/scheduler";
 
 // Autonomous scheduler (roadmap G4). Vercel Cron (or any authenticated caller)
@@ -49,13 +51,19 @@ async function handle(req: Request) {
   if (!supabase) return NextResponse.json({ error: "not_configured" }, { status: 503 });
 
   try {
-    const [{ data: clients }, { data: configs }] = await Promise.all([
-      supabase.from("clients").select("id, ingest_key, plan").eq("status", "active"),
+    const [{ data: clients }, { data: configs }, { data: customs }] = await Promise.all([
+      supabase.from("clients").select("id, ingest_key, plan, timezone").eq("status", "active"),
       supabase
         .from("agent_config")
-        .select("id, client_id, agent_key, schedule, last_run_at")
+        .select("id, client_id, agent_key, schedule, last_run_at, run_hour, run_day")
         .eq("enabled", true)
-        .in("schedule", ["hourly", "daily"]),
+        .in("schedule", ["hourly", "daily", "weekly"]),
+      supabase
+        .from("automations")
+        .select("id, client_id, schedule, run_hour, run_day, last_run_at")
+        .eq("kind", "custom")
+        .eq("status", "active")
+        .in("schedule", ["daily", "weekly"]),
     ]);
 
     const clientMap = new Map<string, ClientLite>();
@@ -63,12 +71,39 @@ async function handle(req: Request) {
 
     const now = Date.now();
     const jobs = dueJobs((configs ?? []) as ConfigRow[], clientMap, now);
+    const customJobs = dueCustomAutomations((customs ?? []) as CustomAutomationRow[], clientMap, now);
 
     const origin = process.env.NEXT_PUBLIC_SITE_URL ?? url.origin;
     const runUrl = `${origin}/api/agents/run`;
     const stamp = new Date(now).toISOString();
     const stampConfigs = (ids: string[]) =>
       ids.length ? supabase.from("agent_config").update({ last_run_at: stamp }).in("id", ids) : Promise.resolve();
+    const stampCustoms = (ids: string[]) =>
+      ids.length ? supabase.from("automations").update({ last_run_at: stamp }).in("id", ids) : Promise.resolve();
+
+    // Custom automations dispatch first (small, hour-gated, Growth+ only) —
+    // durable via QStash when configured, else inline with the same pool.
+    if (customJobs.length) {
+      const results = await runPool(
+        customJobs,
+        async (job) => {
+          if (qstashConfigured()) return publishToQStash(runUrl, job.ingestKey, "custom-task", { automationId: job.automationId });
+          const res = await fetch(runUrl, {
+            method: "POST",
+            headers: { "content-type": "application/json", authorization: `Bearer ${job.ingestKey}` },
+            body: JSON.stringify({ agent: "custom-task", automationId: job.automationId }),
+            cache: "no-store",
+          });
+          return res.ok;
+        },
+        { concurrency: CONCURRENCY, retries: 1 }
+      );
+      const okIds = results.filter((r) => r.ok).map((r) => r.item.automationId);
+      const failedCustom = results.length - okIds.length;
+      if (failedCustom) reportWarning(`scheduler: ${failedCustom} custom automations failed to dispatch`, { source: "scheduler", detail: { failedCustom } });
+      // Stamp all attempted so a broken automation can't hot-loop.
+      await stampCustoms(customJobs.map((j) => j.automationId));
+    }
 
     // ── Durable path: hand every job to QStash (retry + DLQ handled there). ──
     if (qstashConfigured()) {

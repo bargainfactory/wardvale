@@ -20,9 +20,12 @@ export type AgentKey =
   | "shift-cover"
   | "content-drafter"
   | "doc-chaser"
-  | "dispute-fighter";
+  | "dispute-fighter"
+  // Portal-only composer lane (Growth+/Custom add-on). Not in any pack or the
+  // Studio goals; permanently draft-first; output is a report, never a send.
+  | "custom-task";
 
-export type Schedule = "manual" | "hourly" | "daily" | "off";
+export type Schedule = "manual" | "hourly" | "daily" | "weekly" | "off";
 
 export type AgentDef = {
   key: AgentKey;
@@ -49,6 +52,7 @@ export const AGENTS: AgentDef[] = [
   { key: "content-drafter", name: "Content drafter", blurb: "Turns your week's real activity into drafted posts and a newsletter.", connectors: ["google-business"] },
   { key: "doc-chaser", name: "Document chaser", blurb: "Tracks what each client still owes you and drafts polite escalating nudges.", connectors: ["google", "microsoft"] },
   { key: "dispute-fighter", name: "Dispute fighter", blurb: "Assembles evidence and drafts chargeback and platform-fee dispute filings.", connectors: ["shopify", "stripe"] },
+  { key: "custom-task", name: "Custom automation", blurb: "Runs your own scheduled instructions and drafts a report for your approval.", connectors: ["google"] },
 ];
 
 export const AGENT_KEYS = AGENTS.map((a) => a.key);
@@ -71,12 +75,12 @@ export type Entitlement = {
 
 export const PLANS: Record<Plan, Entitlement> = {
   trial: { label: "Trial", maxAgents: 1, schedules: ["manual", "off"] },
-  starter: { label: "Starter", maxAgents: 2, schedules: ["manual", "daily", "off"] },
+  starter: { label: "Starter", maxAgents: 2, schedules: ["manual", "daily", "weekly", "off"] },
   // Growth = one FULL industry pack. Every pack ships exactly 6 agents, so the
   // cap must fit a whole pack — a Growth customer installing their vertical's
   // pack gets all of it, not 4/6ths of it (see wave2 test invariant).
-  growth: { label: "Growth", maxAgents: 6, schedules: ["manual", "daily", "hourly", "off"] },
-  scale: { label: "Scale", maxAgents: AGENTS.length, schedules: ["manual", "daily", "hourly", "off"] },
+  growth: { label: "Growth", maxAgents: 6, schedules: ["manual", "daily", "hourly", "weekly", "off"] },
+  scale: { label: "Scale", maxAgents: AGENTS.length, schedules: ["manual", "daily", "hourly", "weekly", "off"] },
 };
 
 export function planOf(plan: string | null | undefined): Plan {

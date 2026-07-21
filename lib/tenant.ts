@@ -18,6 +18,7 @@ export type ScopedTable =
   | "client_policy"
   | "connections"
   | "agent_feedback"
+  | "automations"
   | "client_tools"
   | "client_tool_secrets";
 

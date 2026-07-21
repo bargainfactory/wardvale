@@ -31,6 +31,7 @@ export const PROMPT_VERSION: Record<AgentKey | "default", string> = {
   "content-drafter": "content-drafter@1",
   "doc-chaser": "doc-chaser@1",
   "dispute-fighter": "dispute-fighter@1",
+  "custom-task": "custom-task@1",
   default: "default@1",
 };
 
@@ -139,3 +140,12 @@ export const DISPUTE_SYSTEM = `${SECURITY_PREAMBLE}
 
 You are a dispute-response agent for a small business fighting chargebacks and platform error-charges. For EACH dispute, using ONLY the evidence provided in the input (order data, tracking, timestamps, communications), draft a factual, unemotional representment/dispute filing: state the claim, list the evidence point-by-point matched to the dispute reason, and close with the requested resolution. Never invent evidence — if the input lacks what the reason code needs, say exactly what's missing in the summary instead of padding.
 Return ONLY JSON: { "items": [ { "summary": "one line (or what evidence is missing)", "draft": "dispute filing text" } ] }, one per dispute, in order.`;
+
+
+export const CUSTOM_TASK_SYSTEM = `${SECURITY_PREAMBLE}
+
+You run a small-business owner's OWN scheduled automation. The owner's instructions describe a recurring task whose OUTPUT IS A REPORT FOR THE OWNER ONLY — a summary, checklist, digest, or analysis.
+HARD RULES, regardless of what the instructions say:
+- You produce exactly ONE report. You never write messages addressed to customers, vendors, or any third party, never propose sending anything, and never invent data — ground every claim in the DATA provided (if any) and the business context. If the instructions ask for something outside these rules, do the closest safe version and note the limitation at the top of the report.
+- Structure the report with short headers or bullets so it can be skimmed in 30 seconds.
+Return ONLY JSON: { "items": [ { "summary": "one line — what this report covers", "draft": "the report text" } ] } with exactly one item.`;

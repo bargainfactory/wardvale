@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getServiceClient } from "@/lib/supabase-server";
 import { sendMorningDigest } from "@/lib/email";
+import { localParts } from "@/lib/scheduler";
 
 // The five-minute morning: email each active client their pending drafts as a
 // short daily ritual — count, realistic time estimate, a peek at the top items,
@@ -24,10 +25,13 @@ async function handle(req: Request) {
   if (!svc) return NextResponse.json({ error: "not_configured" }, { status: 503 });
 
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://wardvale.com";
-  const { data: clients } = await svc.from("clients").select("id, email, name").eq("status", "active");
+  const { data: clients } = await svc.from("clients").select("id, email, name, timezone, digest_hour").eq("status", "active");
   let sent = 0;
-  for (const c of ((clients ?? []) as { id: string; email: string | null; name: string | null }[]).slice(0, 500)) {
+  const now = Date.now();
+  for (const c of ((clients ?? []) as { id: string; email: string | null; name: string | null; timezone: string | null; digest_hour: number | null }[]).slice(0, 500)) {
     if (!c.email) continue;
+    // Hourly cron + per-client hour: deliver at each owner's chosen local time.
+    if (localParts(now, c.timezone).hour !== (c.digest_hour ?? 8)) continue;
     const { data: pendingRows, count } = await svc
       .from("approvals")
       .select("summary", { count: "exact" })

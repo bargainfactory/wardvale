@@ -2,7 +2,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { getConnector } from "@/lib/connectors";
 import { getServiceClient } from "@/lib/supabase-server";
 import { encryptSecret, decryptSecret } from "@/lib/crypto";
-import type { Invoice, Cart, ReviewTarget, Lead, InboxMessage, LapsedCustomer, OpenQuote, AppointmentItem } from "@/lib/runtime";
+import type { Invoice, Cart, ReviewTarget, Lead, InboxMessage, LapsedCustomer, OpenQuote, AppointmentItem, UnreadEmail } from "@/lib/runtime";
 import type { Trace } from "@/lib/trace";
 import { reportWarning } from "@/lib/report";
 
@@ -743,5 +743,54 @@ export async function pullUpcomingAppointments(
   } catch {
     trace?.flag("source_error", "gcal");
     return { clientId: c.id, appointments: [] };
+  }
+}
+
+
+// ── Gmail (custom-task data source) ──────────────────────────────────────────
+
+/**
+ * Read-only pull of the client's recent unread Gmail (provider "Google
+ * Workspace" — the connector's gmail.readonly scope). Feeds the custom-task
+ * lane's "summarize my inbox"-style automations. Top 8, metadata + snippet only.
+ */
+export async function pullUnreadEmails(
+  ingestKey: string,
+  trace?: Trace
+): Promise<{ clientId: string; emails: UnreadEmail[] } | null> {
+  const c = await clientId(ingestKey);
+  if (!c) return null;
+  const conn = await connectedConnection(c.supabase, c.id, "Google Workspace");
+  if (!conn) return { clientId: c.id, emails: [] };
+  const token = await ensureAccessToken(c.supabase, "google", conn);
+  if (!token) return { clientId: c.id, emails: [] };
+
+  trace?.mark("tool.gmail.unread.start");
+  try {
+    const listRes = await fetch(
+      "https://gmail.googleapis.com/gmail/v1/users/me/messages?q=is%3Aunread%20newer_than%3A3d&maxResults=8",
+      { headers: { authorization: `Bearer ${token}`, accept: "application/json" }, cache: "no-store" }
+    );
+    if (!listRes.ok) {
+      trace?.flag("source_error", "gmail");
+      return { clientId: c.id, emails: [] };
+    }
+    const list = (await listRes.json()) as { messages?: { id: string }[] };
+    const emails: UnreadEmail[] = [];
+    for (const m of (list.messages ?? []).slice(0, 8)) {
+      const msgRes = await fetch(
+        `https://gmail.googleapis.com/gmail/v1/users/me/messages/${m.id}?format=metadata&metadataHeaders=From&metadataHeaders=Subject`,
+        { headers: { authorization: `Bearer ${token}`, accept: "application/json" }, cache: "no-store" }
+      );
+      if (!msgRes.ok) continue;
+      const msg = (await msgRes.json()) as { snippet?: string; payload?: { headers?: { name: string; value: string }[] } };
+      const h = (n: string) => msg.payload?.headers?.find((x) => x.name.toLowerCase() === n)?.value ?? "";
+      emails.push({ from: h("from"), subject: h("subject"), snippet: msg.snippet ?? "" });
+    }
+    trace?.mark("tool.gmail.unread.end", { emails: emails.length });
+    return { clientId: c.id, emails };
+  } catch {
+    trace?.flag("source_error", "gmail");
+    return { clientId: c.id, emails: [] };
   }
 }

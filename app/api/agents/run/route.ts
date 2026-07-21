@@ -17,6 +17,7 @@ import {
   runContentDrafter,
   runDocChaser,
   runDisputeFighter,
+  runCustomTask,
   type InboxMessage,
   type Invoice,
   type Cart,
@@ -45,6 +46,7 @@ import {
   pullLapsedCustomers,
   pullOpenEstimates,
   pullUpcomingAppointments,
+  pullUnreadEmails,
 } from "@/lib/integrations";
 
 /**
@@ -86,6 +88,7 @@ export async function POST(req: Request) {
       requests?: import("@/lib/runtime").ContentRequest[];
       docs?: import("@/lib/runtime").MissingDocs[];
       disputes?: import("@/lib/runtime").DisputeItem[];
+      automationId?: string;
     };
 
     // A client's ingest key both scopes persistence and unlocks live data pulls
@@ -115,6 +118,7 @@ export async function POST(req: Request) {
     // ingest key is present and no data is supplied — on LIVE data pulled from
     // that client's connected tool. Outbound actions are queued for approval.
     let actions: ProposedAction[];
+    let suppressInstant = false; // custom automations on digest-notify skip the instant email
     switch (body.agent) {
       case "ar-followup": {
         let invoices = Array.isArray(body.invoices) ? body.invoices : [];
@@ -282,6 +286,36 @@ export async function POST(req: Request) {
         actions = await runDisputeFighter(disputes, trace, context);
         break;
       }
+      case "custom-task": {
+        // Portal composer (Growth+/Custom add-on). The scheduler pre-filters by
+        // plan; this re-checks for manual/API calls. Always produces a report
+        // (labeled draft) — the lane hardcodes the action, never a send.
+        actions = [];
+        const automationId = typeof body.automationId === "string" ? body.automationId : "";
+        const svcCt = getServiceClient();
+        if (!key || !automationId || !svcCt) break;
+        const { data: ctClient } = await svcCt.from("clients").select("id, plan").eq("ingest_key", key).maybeSingle();
+        const plan = (ctClient as { plan?: string } | null)?.plan ?? "trial";
+        if (!ctClient || (plan !== "growth" && plan !== "scale")) {
+          trace.flag("gated", "plan");
+          break;
+        }
+        const { data: auto } = await svcCt
+          .from("automations")
+          .select("id, name, instructions, notify")
+          .eq("client_id", (ctClient as { id: string }).id)
+          .eq("id", automationId)
+          .eq("kind", "custom")
+          .eq("status", "active")
+          .maybeSingle();
+        const autoRow = auto as { id: string; name: string; instructions: string | null; notify: string } | null;
+        if (!autoRow?.instructions) break;
+        if (autoRow.notify === "digest") suppressInstant = true; // ride the morning digest
+        const pulled = await pullUnreadEmails(key, trace);
+        trace.setInput(autoRow.name);
+        actions = await runCustomTask(autoRow.name, autoRow.instructions, pulled?.emails ?? [], trace, context);
+        break;
+      }
       default: {
         const messages = Array.isArray(body.messages) ? body.messages : [];
         trace.setInput(messages.map((m) => m?.subject ?? "").join("; "));
@@ -426,7 +460,7 @@ export async function POST(req: Request) {
 
           // Notify the owner there are drafts to review — throttled to at most
           // one email per client per ~hour so the scheduler can't spam them.
-          if (queued > 0 && client.email && firstTime(idemKey("notify", client.id), 55 * 60_000)) {
+          if (queued > 0 && client.email && !suppressInstant && firstTime(idemKey("notify", client.id), 55 * 60_000)) {
             await sendApprovalNotification(client.email, queued, agentName(body.agent ?? "inbox-triage"));
           }
         }

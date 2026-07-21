@@ -17,10 +17,17 @@ const WAVE2: AgentKey[] = [
 ];
 
 describe("catalog integrity (wave 2)", () => {
-  it("has 16 unique agents and every wave-2 key registered", () => {
-    expect(AGENTS.length).toBe(16);
-    expect(new Set(AGENT_KEYS).size).toBe(16);
+  it("has 17 unique agents (16 + custom-task) and every wave-2 key registered", () => {
+    expect(AGENTS.length).toBe(17);
+    expect(new Set(AGENT_KEYS).size).toBe(17);
+    expect(isAgentKey("custom-task")).toBe(true);
     for (const k of WAVE2) expect(isAgentKey(k), k).toBe(true);
+  });
+
+  it("custom-task never appears in a pack — portal-only, Growth+ gated", () => {
+    for (const p of PACKS) {
+      expect(p.agents.includes("custom-task" as AgentKey), p.id).toBe(false);
+    }
   });
 
   it("every pack references only valid agent keys", () => {

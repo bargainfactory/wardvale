@@ -17,6 +17,8 @@ export async function POST(req: Request) {
     enabled?: boolean;
     autoSend?: boolean;
     schedule?: Schedule;
+    runHour?: number | null;
+    runDay?: number | null;
   };
   if (!body.agentKey || !isAgentKey(body.agentKey)) {
     return NextResponse.json({ error: "bad_request" }, { status: 400 });
@@ -62,6 +64,8 @@ export async function POST(req: Request) {
   if (typeof body.enabled === "boolean") patch.enabled = body.enabled;
   if (typeof body.autoSend === "boolean") patch.auto_send = body.autoSend;
   if (body.schedule) patch.schedule = body.schedule;
+  if (body.runHour !== undefined) patch.run_hour = Number.isInteger(body.runHour) && body.runHour! >= 0 && body.runHour! <= 23 ? body.runHour : null;
+  if (body.runDay !== undefined) patch.run_day = Number.isInteger(body.runDay) && body.runDay! >= 0 && body.runDay! <= 6 ? body.runDay : null;
   if (!Object.keys(patch).length) return NextResponse.json({ error: "no_change" }, { status: 400 });
 
   await svc.from("agent_config").update(patch).eq("client_id", client.id).eq("agent_key", body.agentKey);

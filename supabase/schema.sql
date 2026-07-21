@@ -73,6 +73,16 @@ create table if not exists public.automations (
   created_at  timestamptz not null default now()
 );
 
+-- Custom Automations (portal composer, Growth+ / Custom add-on). Reuses the
+-- existing 'kind' column (added below, default 'agent'): kind='custom' rows
+-- carry owner-authored instructions and run through the custom-task lane:
+-- read-only pulls -> ONE drafted report into the approval queue. Never a send.
+alter table public.automations add column if not exists instructions text;
+alter table public.automations add column if not exists schedule     text not null default 'off' check (schedule in ('off', 'daily', 'weekly'));
+alter table public.automations add column if not exists run_hour     int not null default 9 check (run_hour between 0 and 23);
+alter table public.automations add column if not exists run_day      int check (run_day between 0 and 6);
+alter table public.automations add column if not exists notify       text not null default 'digest' check (notify in ('digest', 'instant'));
+alter table public.automations add column if not exists last_run_at  timestamptz;
 create index if not exists automations_client_idx on public.automations (client_id);
 
 -- Append-only log of every automation run. This is the ROI + benchmark dataset.
@@ -317,6 +327,7 @@ alter table public.clients add column if not exists status text not null default
 alter table public.clients add column if not exists stripe_customer_id text;
 alter table public.clients add column if not exists timezone text not null default 'America/New_York';
 alter table public.clients add column if not exists onboarded boolean not null default false;
+alter table public.clients add column if not exists digest_hour int not null default 8 check (digest_hour between 0 and 23);
 create index if not exists clients_stripe_customer_idx on public.clients (stripe_customer_id);
 
 -- The business's own context, injected into every agent's prompt so drafts are
@@ -360,11 +371,15 @@ create table if not exists public.agent_config (
   agent_key   text not null,
   enabled     boolean not null default false,
   auto_send   boolean not null default false,     -- false = queue for approval (safe default)
-  schedule    text not null default 'manual' check (schedule in ('manual', 'hourly', 'daily', 'off')),
+  schedule    text not null default 'manual' check (schedule in ('manual', 'hourly', 'daily', 'weekly', 'off')),
   last_run_at timestamptz,
   created_at  timestamptz not null default now(),
   unique (client_id, agent_key)
 );
+-- Real schedules: preferred hour (0-23) and weekday (0=Sun..6=Sat) in the
+-- client's own timezone. Null hour = legacy behavior (any tick).
+alter table public.agent_config add column if not exists run_hour int check (run_hour between 0 and 23);
+alter table public.agent_config add column if not exists run_day  int check (run_day between 0 and 6);
 create index if not exists agent_config_client_idx on public.agent_config (client_id);
 create index if not exists agent_config_schedule_idx on public.agent_config (schedule) where enabled;
 

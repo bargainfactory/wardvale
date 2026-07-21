@@ -18,6 +18,7 @@ import {
   CONTENT_SYSTEM,
   DOC_CHASER_SYSTEM,
   DISPUTE_SYSTEM,
+  CUSTOM_TASK_SYSTEM,
 } from "@/lib/prompts";
 import type { Trace } from "@/lib/trace";
 import { reportWarning } from "@/lib/report";
@@ -962,4 +963,54 @@ export async function runDisputeFighter(disputes: DisputeItem[], trace?: Trace, 
     source: `Dispute ${d.platform} ${d.orderRef || i + 1}`,
     value: d.amount,
   }));
+}
+
+
+// ── Custom-task lane (portal composer, Growth+) ──────────────────────────────
+// Owner-authored instructions run on a schedule and produce ONE report for the
+// owner — action is hardcoded to a labeled draft, so no matter what the
+// instructions or the model say, a custom automation can never send anything.
+
+export type UnreadEmail = { from?: string; subject?: string; snippet?: string };
+
+const CUSTOM_AGENT = "Custom automation";
+
+export async function runCustomTask(
+  name: string,
+  instructions: string,
+  emails: UnreadEmail[],
+  trace?: Trace,
+  context?: string
+): Promise<ProposedAction[]> {
+  const cleanName = (name ?? "").slice(0, 120) || "Custom automation";
+  const cleanInstructions = (instructions ?? "").slice(0, 2000);
+  if (!cleanInstructions.trim()) return [];
+  const data = emails
+    .slice(0, 10)
+    .map((e, i) => `#${i + 1} From: ${(e.from ?? "").slice(0, 120)} · Subject: ${(e.subject ?? "").slice(0, 160)}\n${(e.snippet ?? "").slice(0, 300)}`)
+    .join("\n\n");
+  trace?.mark("tool.read", { emails: emails.length });
+  const drafts = await draftMessages(
+    sys(CUSTOM_TASK_SYSTEM, context),
+    [
+      `OWNER INSTRUCTIONS (run: "${cleanName}"): ${cleanInstructions}` +
+        (data ? `\n\nDATA — unread emails from the owner's connected inbox:\n${data}` : "\n\nDATA: none connected — work from the business context only and say so."),
+    ],
+    trace,
+    1400
+  );
+  const report = drafts[0]?.draft?.slice(0, 4000) ?? "";
+  if (!report.trim()) return [];
+  return [
+    {
+      // Hardcoded: a labeled report. Never email.send / sms.send from here.
+      action: "triage.label",
+      agent: CUSTOM_AGENT,
+      summary: drafts[0]?.summary?.slice(0, 200) || `Report · ${cleanName}`,
+      draft: report,
+      needsApproval: true,
+      source: `Automation ${cleanName}`,
+      value: 0,
+    },
+  ];
 }

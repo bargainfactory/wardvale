@@ -551,6 +551,7 @@ function AutonomySection({ intake, update, regulated, t }: SectionProps & { regu
             className={inputCls}
           >
             <option value="manual">manual</option>
+            <option value="weekly">weekly</option>
             <option value="daily">daily</option>
             <option value="hourly">hourly</option>
             <option value="off">off</option>
