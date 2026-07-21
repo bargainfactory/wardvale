@@ -114,7 +114,7 @@ export default async function AutomationPage({
       <section className="pb-16">
         <div className="container">
           <div className="mx-auto grid max-w-5xl gap-5 md:grid-cols-2">
-            <div className="glass rounded-3xl p-8">
+            <div className="glass min-w-0 rounded-3xl p-8">
               <p className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">
                 {t("msc.slugTheProblem")}
               </p>
@@ -176,14 +176,14 @@ export default async function AutomationPage({
       <section className="pb-16">
         <div className="container">
           <div className="mx-auto grid max-w-5xl gap-5 md:grid-cols-[1fr_1.4fr]">
-            <div className="gradient-border glass-strong flex flex-col justify-center rounded-3xl p-8">
+            <div className="gradient-border glass-strong flex min-w-0 flex-col justify-center rounded-3xl p-8">
               <div className="flex items-center gap-2 text-cyan-electric">
                 <TrendingDown className="h-5 w-5" />
                 <span className="text-xs font-semibold uppercase tracking-[0.2em]">
                   {t("msc.slugEstImpact")}
                 </span>
               </div>
-              <p className="mt-4 font-display text-5xl font-semibold tabular-nums gradient-text">
+              <p className="mt-4 break-words font-display text-4xl font-semibold tabular-nums gradient-text sm:text-5xl">
                 {t(page.savings)}
               </p>
               <p className="mt-2 text-sm text-muted-foreground">

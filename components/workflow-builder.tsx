@@ -240,11 +240,12 @@ export function WorkflowBuilder({
           </div>
           <button
             onClick={toggleVoiceOut}
-            className="flex items-center gap-1.5 rounded-full border border-border px-3 py-1 text-xs text-muted-foreground transition hover:text-foreground"
+            className="flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border border-border px-3 py-1 text-xs text-muted-foreground transition hover:text-foreground"
             aria-label={t("bld.toggleVoice")}
           >
             {voiceOut ? <Volume2 className="h-3.5 w-3.5 text-cyan-electric" /> : <VolumeX className="h-3.5 w-3.5" />}
-            {voiceOut ? t("bld.voiceOn") : t("bld.voiceOff")}
+            {/* Icon-only on phones — the label clipped at 375px widths. */}
+            <span className="hidden sm:inline">{voiceOut ? t("bld.voiceOn") : t("bld.voiceOff")}</span>
           </button>
         </div>
 
