@@ -38,12 +38,14 @@ export type Bundle = {
   basePrice: number; // monthly retainer for the base OS
   baseSavings: number; // typical monthly savings
   vertical: string; // for getBenchmark()
+  packId?: string; // linked Studio pack (agents that answers tailor)
 };
 
 export const bundles: Bundle[] = [
   {
     name: "sol.bundleRestaurantName",
     slug: "restaurant-reservation-and-review-agent",
+    packId: "restaurant",
     icon: Utensils,
     tagline: "sol.bundleRestaurantTagline",
     includes: ["sol.incReservationReviewAgent", "sol.incWhatsappBookingAgent", "sol.incInboxDmTriage", "sol.incNoShowReminders"],
@@ -55,6 +57,7 @@ export const bundles: Bundle[] = [
   {
     name: "sol.bundleHomeServicesName",
     slug: "ai-phone-agent-for-home-services",
+    packId: "home-services",
     icon: Wrench,
     tagline: "sol.bundleHomeServicesTagline",
     includes: ["sol.incAiPhoneAnsweringAgent", "sol.incMissedCallBookedJob", "sol.incQuoteFollowup", "sol.incReviewRequests"],
@@ -66,6 +69,7 @@ export const bundles: Bundle[] = [
   {
     name: "sol.bundleDentalName",
     slug: "ai-voice-receptionist-for-dental-practices",
+    packId: "clinic",
     icon: Stethoscope,
     tagline: "sol.bundleDentalTagline",
     includes: ["sol.incAiVoiceReceptionist", "sol.incAppointmentReminders", "sol.incRebookingRecalls", "sol.incIntakeAutomation"],
@@ -77,6 +81,7 @@ export const bundles: Bundle[] = [
   {
     name: "sol.bundleRealEstateName",
     slug: "real-estate-lead-qualification-and-follow-up",
+    packId: "real-estate",
     icon: Building2,
     tagline: "sol.bundleRealEstateTagline",
     includes: ["sol.incLeadQualAgent", "sol.incMultiTouchFollowup", "sol.incWhatsappSmsAgent", "sol.incShowingScheduler"],
@@ -88,6 +93,7 @@ export const bundles: Bundle[] = [
   {
     name: "sol.bundleLawFirmName",
     slug: "ai-voice-agent-for-law-firms",
+    packId: "law-firm",
     icon: Scale,
     tagline: "sol.bundleLawFirmTagline",
     includes: ["sol.incAiIntakeCallAgent", "sol.incConflictIntakeQuestions", "sol.incDocCollection", "sol.incConsultScheduling"],
@@ -99,6 +105,7 @@ export const bundles: Bundle[] = [
   {
     name: "sol.bundleEcommerceName",
     slug: "shopify-store-abandoned-cart-recovery",
+    packId: "ecommerce",
     icon: ShoppingBag,
     tagline: "sol.bundleEcommerceTagline",
     includes: ["sol.incAbandonedCartRecovery", "sol.incWhatsappSalesSupport", "sol.incSupportInboxTriage", "sol.incReviewEngine"],
@@ -110,6 +117,7 @@ export const bundles: Bundle[] = [
   {
     name: "sol.bundleMedSpaName",
     slug: "med-spa-booking-and-rebooking-agent",
+    packId: "medspa",
     icon: HeartPulse,
     tagline: "sol.bundleMedSpaTagline",
     includes: ["sol.incBookingConsultAgent", "sol.incCancellationFillWaitlist", "sol.incRebookingRecalls", "sol.incReviewRequests"],
@@ -121,6 +129,7 @@ export const bundles: Bundle[] = [
   {
     name: "sol.bundleVeterinaryName",
     slug: "veterinary-appointment-reminders-and-recalls",
+    packId: "veterinary",
     icon: PawPrint,
     tagline: "sol.bundleVeterinaryTagline",
     includes: ["sol.incAppointmentReminders", "sol.incVaccineWellnessRecalls", "sol.incAfterHoursTriage", "sol.incReviewRequests"],
@@ -132,6 +141,7 @@ export const bundles: Bundle[] = [
   {
     name: "sol.bundleFitnessName",
     slug: "gym-fitness-membership-onboarding-and-winback",
+    packId: "fitness",
     icon: Dumbbell,
     tagline: "sol.bundleFitnessTagline",
     includes: ["sol.incTrialToMemberNurture", "sol.incClassBookingAgent", "sol.incNoShowWinback", "sol.incMembershipOnboarding"],
@@ -143,6 +153,7 @@ export const bundles: Bundle[] = [
   {
     name: "sol.bundleAutoName",
     slug: "auto-repair-service-scheduling-and-reviews",
+    packId: "auto-repair",
     icon: Car,
     tagline: "sol.bundleAutoTagline",
     includes: ["sol.incServiceSchedulingAgent", "sol.incMissedCallRecovery", "sol.incQuoteStatusFollowup", "sol.incReviewEngine"],
@@ -154,6 +165,7 @@ export const bundles: Bundle[] = [
   {
     name: "sol.bundleInsuranceName",
     slug: "insurance-agency-lead-qualification-and-renewals",
+    packId: "insurance",
     icon: Umbrella,
     tagline: "sol.bundleInsuranceTagline",
     includes: ["sol.incLeadQualAgent", "sol.incRenewalChasing", "sol.incDocCollection", "sol.incMeetingScheduler"],
@@ -165,6 +177,7 @@ export const bundles: Bundle[] = [
   {
     name: "sol.bundlePropertyName",
     slug: "property-management-maintenance-and-tenant-comms",
+    packId: "property-management",
     icon: Building2,
     tagline: "sol.bundlePropertyTagline",
     includes: ["sol.incMaintenanceTriageAgent", "sol.incTenantQaRentReminders", "sol.incLeadToLeaseFollowup", "sol.incReviewRequests"],
@@ -177,6 +190,7 @@ export const bundles: Bundle[] = [
   {
     name: "sol.bundleSalonName",
     slug: "salon-rebooking-and-no-show-agent",
+    packId: "salon",
     icon: Scissors,
     tagline: "sol.bundleSalonTagline",
     includes: ["sol.incSalon1", "sol.incSalon2", "sol.incSalon3", "sol.incSalon4"],
@@ -188,6 +202,7 @@ export const bundles: Bundle[] = [
   {
     name: "sol.bundleAccountingName",
     slug: "accounting-firm-client-document-chaser",
+    packId: "accounting",
     icon: Calculator,
     tagline: "sol.bundleAccountingTagline",
     includes: ["sol.incAccounting1", "sol.incAccounting2", "sol.incAccounting3", "sol.incAccounting4"],
@@ -199,6 +214,7 @@ export const bundles: Bundle[] = [
   {
     name: "sol.bundleContractorName",
     slug: "contractor-estimate-follow-up-agent",
+    packId: "contractor",
     icon: Hammer,
     tagline: "sol.bundleContractorTagline",
     includes: ["sol.incContractor1", "sol.incContractor2", "sol.incContractor3", "sol.incContractor4"],
@@ -210,6 +226,7 @@ export const bundles: Bundle[] = [
   {
     name: "sol.bundleCleaningName",
     slug: "cleaning-service-quote-and-winback-agent",
+    packId: "cleaning",
     icon: SprayCan,
     tagline: "sol.bundleCleaningTagline",
     includes: ["sol.incCleaning1", "sol.incCleaning2", "sol.incCleaning3", "sol.incCleaning4"],
@@ -221,6 +238,7 @@ export const bundles: Bundle[] = [
   {
     name: "sol.bundleChildcareName",
     slug: "childcare-enrollment-and-parent-comms-agent",
+    packId: "childcare",
     icon: Baby,
     tagline: "sol.bundleChildcareTagline",
     includes: ["sol.incChildcare1", "sol.incChildcare2", "sol.incChildcare3", "sol.incChildcare4"],
@@ -232,6 +250,7 @@ export const bundles: Bundle[] = [
   {
     name: "sol.bundleStrName",
     slug: "short-term-rental-guest-messaging-agent",
+    packId: "str",
     icon: BedDouble,
     tagline: "sol.bundleStrTagline",
     includes: ["sol.incStr1", "sol.incStr2", "sol.incStr3", "sol.incStr4"],
@@ -243,6 +262,7 @@ export const bundles: Bundle[] = [
   {
     name: "sol.bundleNonprofitName",
     slug: "nonprofit-donor-retention-agent",
+    packId: "nonprofit",
     icon: HeartHandshake,
     tagline: "sol.bundleNonprofitTagline",
     includes: ["sol.incNonprofit1", "sol.incNonprofit2", "sol.incNonprofit3", "sol.incNonprofit4"],
@@ -254,6 +274,7 @@ export const bundles: Bundle[] = [
   {
     name: "sol.bundlePhotographerName",
     slug: "photographer-lead-and-booking-agent",
+    packId: "photographer",
     icon: Camera,
     tagline: "sol.bundlePhotographerTagline",
     includes: ["sol.incPhotographer1", "sol.incPhotographer2", "sol.incPhotographer3", "sol.incPhotographer4"],
@@ -265,6 +286,7 @@ export const bundles: Bundle[] = [
   {
     name: "sol.bundleCreatorName",
     slug: "creator-brand-deal-and-sponsor-agent",
+    packId: "creator",
     icon: Clapperboard,
     tagline: "sol.bundleCreatorTagline",
     includes: ["sol.incCreator1", "sol.incCreator2", "sol.incCreator3", "sol.incCreator4"],

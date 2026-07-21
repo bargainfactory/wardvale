@@ -66,7 +66,17 @@ function readFile(file: File, as: "dataURL" | "text"): Promise<string> {
   });
 }
 
-export function WorkflowBuilder({ industry = "", embedded = false }: { industry?: string; embedded?: boolean } = {}) {
+export function WorkflowBuilder({
+  industry = "",
+  embedded = false,
+  onStep,
+}: {
+  industry?: string;
+  embedded?: boolean;
+  // Lets a parent dashboard (start-flow) mirror interview progress: how far
+  // along, how many answers given, and whether the blueprint is ready.
+  onStep?: (info: { progress: number; answered: number; done: boolean }) => void;
+} = {}) {
   const { t, locale } = useLocale();
   const [phase, setPhase] = useState<Phase>(industry ? "thinking" : "intro");
   const [messages, setMessages] = useState<Msg[]>([]);
@@ -89,6 +99,15 @@ export function WorkflowBuilder({ industry = "", embedded = false }: { industry?
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
   }, [messages, phase]);
+
+  // Report interview progress to a parent dashboard, if one is listening.
+  useEffect(() => {
+    onStep?.({
+      progress,
+      answered: messages.filter((m) => m.role === "user").length,
+      done: phase === "done",
+    });
+  }, [progress, messages, phase, onStep]);
 
   // Industry chosen up front (Start experience) → begin immediately, skip intro.
   const startedRef = useRef(false);

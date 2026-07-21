@@ -12,6 +12,15 @@ export const localeLabels: Record<Locale, string> = {
 type Dict = Record<string, string>;
 
 const en: Dict = {
+  "start.roadmapTitle": "What we'll cover",
+  "start.rm1": "What eats your time",
+  "start.rm2": "Where the work starts",
+  "start.rm3": "The tools you use",
+  "start.rm4": "Your rules & judgment",
+  "start.rm5": "When to loop you in",
+  "start.rm6": "How it should sound",
+  "start.preinstalledTitle": "Pre-installed, tailoring to you",
+  "start.preinstalledHint": "Your answers fine-tune each agent — nothing sends without your approval.",
   "studio.fRateCard": "Rate card & quoting rules (optional)",
   "studio.fRateCardHint": "e.g. Sponsored video $2,000 min · Story $400 · never crypto/gambling · no exclusivity under $5k",
   "studio.fVoice": "Sound like you — paste 2-3 past messages you wrote (optional)",
@@ -1805,6 +1814,15 @@ const en: Dict = {
 };
 
 const es: Dict = {
+  "start.roadmapTitle": "Lo que veremos",
+  "start.rm1": "Qué te quita tiempo",
+  "start.rm2": "Dónde empieza el trabajo",
+  "start.rm3": "Las herramientas que usas",
+  "start.rm4": "Tus reglas y criterio",
+  "start.rm5": "Cuándo avisarte",
+  "start.rm6": "Cómo debe sonar",
+  "start.preinstalledTitle": "Preinstalado, adaptándose a ti",
+  "start.preinstalledHint": "Tus respuestas afinan cada agente; nada se envía sin tu aprobación.",
   "studio.fRateCard": "Tarifas y reglas de cotización (opcional)",
   "studio.fRateCardHint": "p. ej. Vídeo patrocinado 2.000 $ mín · Story 400 $ · nunca cripto/apuestas · sin exclusividad por debajo de 5.000 $",
   "studio.fVoice": "Suena como tú: pega 2-3 mensajes que hayas escrito (opcional)",
@@ -3596,6 +3614,15 @@ const es: Dict = {
 };
 
 const fr: Dict = {
+  "start.roadmapTitle": "Ce que nous allons aborder",
+  "start.rm1": "Ce qui vous prend du temps",
+  "start.rm2": "Où le travail commence",
+  "start.rm3": "Les outils que vous utilisez",
+  "start.rm4": "Vos règles et votre jugement",
+  "start.rm5": "Quand vous solliciter",
+  "start.rm6": "Le ton à adopter",
+  "start.preinstalledTitle": "Préinstallé, adapté à vous",
+  "start.preinstalledHint": "Vos réponses affinent chaque agent — rien ne part sans votre validation.",
   "studio.fRateCard": "Grille tarifaire et règles de devis (facultatif)",
   "studio.fRateCardHint": "ex. Vidéo sponsorisée 2 000 $ min · Story 400 $ · jamais crypto/paris · pas d'exclusivité sous 5 000 $",
   "studio.fVoice": "Écrivez comme vous : collez 2-3 messages que vous avez écrits (facultatif)",
@@ -5387,6 +5414,15 @@ const fr: Dict = {
 };
 
 const pt: Dict = {
+  "start.roadmapTitle": "O que vamos abordar",
+  "start.rm1": "O que consome seu tempo",
+  "start.rm2": "Onde o trabalho começa",
+  "start.rm3": "As ferramentas que você usa",
+  "start.rm4": "Suas regras e critério",
+  "start.rm5": "Quando te envolver",
+  "start.rm6": "Como deve soar",
+  "start.preinstalledTitle": "Pré-instalado, adaptando a você",
+  "start.preinstalledHint": "Suas respostas ajustam cada agente — nada é enviado sem sua aprovação.",
   "studio.fRateCard": "Tabela de preços e regras de orçamento (opcional)",
   "studio.fRateCardHint": "ex. Vídeo patrocinado US$ 2.000 mín · Story US$ 400 · nunca cripto/apostas · sem exclusividade abaixo de US$ 5.000",
   "studio.fVoice": "Soe como você: cole 2-3 mensagens que você escreveu (opcional)",
@@ -7159,6 +7195,15 @@ const pt: Dict = {
 };
 
 const de: Dict = {
+  "start.roadmapTitle": "Was wir durchgehen",
+  "start.rm1": "Was deine Zeit frisst",
+  "start.rm2": "Wo die Arbeit beginnt",
+  "start.rm3": "Die Tools, die du nutzt",
+  "start.rm4": "Deine Regeln & dein Urteil",
+  "start.rm5": "Wann wir dich einbeziehen",
+  "start.rm6": "Wie es klingen soll",
+  "start.preinstalledTitle": "Vorinstalliert, auf dich zugeschnitten",
+  "start.preinstalledHint": "Deine Antworten justieren jeden Agenten – nichts wird ohne deine Freigabe gesendet.",
   "studio.fRateCard": "Preisliste & Angebotsregeln (optional)",
   "studio.fRateCardHint": "z. B. Sponsored Video 2.000 $ min · Story 400 $ · nie Krypto/Glücksspiel · keine Exklusivität unter 5.000 $",
   "studio.fVoice": "Klinge wie du – füge 2-3 selbst geschriebene Nachrichten ein (optional)",

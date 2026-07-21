@@ -2,12 +2,17 @@
 
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { ArrowLeft, Calendar, Mic, Sparkles } from "lucide-react";
+import { ArrowLeft, Calendar, Check, Mic, Sparkles } from "lucide-react";
 import { bundles } from "@/lib/solutions";
+import { getPack, agentName } from "@/lib/agents-catalog";
 import { useLocale } from "@/lib/locale-context";
 import { WorkflowBuilder } from "@/components/workflow-builder";
 
 const CALENDLY = process.env.NEXT_PUBLIC_CALENDLY_URL ?? "https://calendly.com/wardvale/discovery";
+
+// The interview roadmap the side panel previews (generic across verticals) —
+// so a customer can anticipate what's coming instead of typing into a void.
+const ROADMAP = ["start.rm1", "start.rm2", "start.rm3", "start.rm4", "start.rm5", "start.rm6"];
 
 /**
  * The unified conversion experience: choose an industry, then a self-paced
@@ -19,12 +24,16 @@ const CALENDLY = process.env.NEXT_PUBLIC_CALENDLY_URL ?? "https://calendly.com/w
 export function StartFlow({ initialIndustry = "" }: { initialIndustry?: string }) {
   const { t } = useLocale();
   const [slug, setSlug] = useState(initialIndustry);
+  const [step, setStep] = useState<{ progress: number; answered: number; done: boolean }>({ progress: 0, answered: 0, done: false });
   const chosen = bundles.find((b) => b.slug === slug);
 
   if (chosen) {
+    const pack = chosen.packId ? getPack(chosen.packId) : undefined;
+    const current = step.done ? ROADMAP.length : Math.min(ROADMAP.length - 1, step.answered);
+
     return (
       <div className="max-h-[85vh] overflow-y-auto p-6 md:p-8">
-        <div className="mb-4 flex items-center justify-between gap-3">
+        <div className="mb-4 flex items-center justify-between gap-3 pr-10">
           <button
             type="button"
             onClick={() => setSlug("")}
@@ -36,11 +45,57 @@ export function StartFlow({ initialIndustry = "" }: { initialIndustry?: string }
             {t(chosen.name)}
           </span>
         </div>
-        <p className="mb-3 flex items-center gap-1.5 text-xs text-muted-foreground">
-          <Mic className="h-3.5 w-3.5" /> {t("start.typeOrSpeak")}
-        </p>
-        {/* Industry passed as the benchmark vertical; builder auto-begins. */}
-        <WorkflowBuilder industry={chosen.vertical} embedded />
+
+        {/* Dashboard: the interview on the left, a live preview of what's coming
+            and what's being tailored on the right. */}
+        <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_300px]">
+          <div>
+            <p className="mb-3 flex items-center gap-1.5 text-xs text-muted-foreground">
+              <Mic className="h-3.5 w-3.5" /> {t("start.typeOrSpeak")}
+            </p>
+            {/* Industry passed as the benchmark vertical; builder auto-begins. */}
+            <WorkflowBuilder industry={chosen.vertical} embedded onStep={setStep} />
+          </div>
+
+          <aside className="space-y-5 lg:sticky lg:top-2 lg:self-start">
+            {/* Roadmap — anticipate the coming questions */}
+            <div className="rounded-2xl border border-border bg-card/40 p-4">
+              <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">{t("start.roadmapTitle")}</p>
+              <ol className="space-y-2.5">
+                {ROADMAP.map((key, i) => {
+                  const done = i < current;
+                  const active = i === current;
+                  return (
+                    <li key={key} className={`flex items-center gap-2.5 text-sm transition ${active ? "text-foreground" : done ? "text-muted-foreground" : "text-muted-foreground/60"}`}>
+                      <span className={`grid h-5 w-5 shrink-0 place-items-center rounded-full border text-[10px] ${done ? "border-cyan-electric/40 bg-cyan-electric/15 text-cyan-electric" : active ? "border-cyan-electric bg-cyan-electric text-background" : "border-border"}`}>
+                        {done ? <Check className="h-3 w-3" /> : i + 1}
+                      </span>
+                      {t(key)}
+                    </li>
+                  );
+                })}
+              </ol>
+            </div>
+
+            {/* Pre-installed agents — what the answers are tailoring */}
+            {pack && (
+              <div className="rounded-2xl border border-cyan-electric/20 bg-cyan-electric/[0.04] p-4">
+                <p className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-cyan-electric">
+                  <Sparkles className="h-3.5 w-3.5" /> {t("start.preinstalledTitle")}
+                </p>
+                <p className="mt-1 text-[11px] text-muted-foreground">{t("start.preinstalledHint")}</p>
+                <ul className="mt-3 space-y-1.5">
+                  {pack.agents.map((key) => (
+                    <li key={key} className="flex items-center gap-2 text-sm">
+                      <Check className="h-3.5 w-3.5 shrink-0 text-cyan-electric" />
+                      {agentName(key)}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </aside>
+        </div>
       </div>
     );
   }
