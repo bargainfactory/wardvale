@@ -48,7 +48,7 @@ export function StartFlow({ initialIndustry = "" }: { initialIndustry?: string }
 
         {/* Dashboard: the interview on the left, a live preview of what's coming
             and what's being tailored on the right. */}
-        <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_300px]">
+        <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_340px]">
           <div>
             <p className="mb-3 flex items-center gap-1.5 text-xs text-muted-foreground">
               <Mic className="h-3.5 w-3.5" /> {t("start.typeOrSpeak")}
@@ -60,13 +60,13 @@ export function StartFlow({ initialIndustry = "" }: { initialIndustry?: string }
           <aside className="space-y-5 lg:sticky lg:top-2 lg:self-start">
             {/* Roadmap — anticipate the coming questions */}
             <div className="rounded-2xl border border-border bg-card/40 p-4">
-              <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">{t("start.roadmapTitle")}</p>
+              <p className="mb-3 text-[13px] font-semibold uppercase tracking-wide text-muted-foreground">{t("start.roadmapTitle")}</p>
               <ol className="space-y-2.5">
                 {ROADMAP.map((key, i) => {
                   const done = i < current;
                   const active = i === current;
                   return (
-                    <li key={key} className={`flex items-center gap-2.5 text-sm transition ${active ? "text-foreground" : done ? "text-muted-foreground" : "text-muted-foreground/60"}`}>
+                    <li key={key} className={`flex items-center gap-2.5 text-[15px] transition ${active ? "text-foreground" : done ? "text-muted-foreground" : "text-muted-foreground/60"}`}>
                       <span className={`grid h-5 w-5 shrink-0 place-items-center rounded-full border text-[10px] ${done ? "border-cyan-electric/40 bg-cyan-electric/15 text-cyan-electric" : active ? "border-cyan-electric bg-cyan-electric text-background" : "border-border"}`}>
                         {done ? <Check className="h-3 w-3" /> : i + 1}
                       </span>
@@ -80,13 +80,13 @@ export function StartFlow({ initialIndustry = "" }: { initialIndustry?: string }
             {/* Pre-installed agents — what the answers are tailoring */}
             {pack && (
               <div className="rounded-2xl border border-cyan-electric/20 bg-cyan-electric/[0.04] p-4">
-                <p className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-cyan-electric">
+                <p className="flex items-center gap-1.5 text-[13px] font-semibold uppercase tracking-wide text-cyan-electric">
                   <Sparkles className="h-3.5 w-3.5" /> {t("start.preinstalledTitle")}
                 </p>
-                <p className="mt-1 text-[11px] text-muted-foreground">{t("start.preinstalledHint")}</p>
+                <p className="mt-1 text-xs text-muted-foreground">{t("start.preinstalledHint")}</p>
                 <ul className="mt-3 space-y-1.5">
                   {pack.agents.map((key) => (
-                    <li key={key} className="flex items-center gap-2 text-sm">
+                    <li key={key} className="flex items-center gap-2 text-[15px]">
                       <Check className="h-3.5 w-3.5 shrink-0 text-cyan-electric" />
                       {agentName(key)}
                     </li>
@@ -110,7 +110,7 @@ export function StartFlow({ initialIndustry = "" }: { initialIndustry?: string }
         <p className="mx-auto mt-2 max-w-md text-sm text-muted-foreground">{t("start.pickIndustrySub")}</p>
       </div>
 
-      <div className="mt-6 grid grid-cols-2 gap-2.5 sm:grid-cols-3">
+      <div className="mt-6 grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-4">
         {bundles.map((b, i) => {
           const Icon = b.icon;
           return (

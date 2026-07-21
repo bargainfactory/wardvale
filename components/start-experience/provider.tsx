@@ -37,7 +37,7 @@ export function StartExperienceProvider({ children }: { children: ReactNode }) {
         <Suspense fallback={null}>
           <DeepLink onOpen={openFn} />
         </Suspense>
-        <Dialog open={open} onClose={closeFn} label={t("start.dialogLabel")} closeLabel={t("start.close")}>
+        <Dialog open={open} onClose={closeFn} label={t("start.dialogLabel")} closeLabel={t("start.close")} className="max-w-5xl">
           {open && <StartFlow key={industry || "pick"} initialIndustry={industry} />}
         </Dialog>
       </MotionConfig>
