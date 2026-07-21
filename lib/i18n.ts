@@ -12,6 +12,9 @@ export const localeLabels: Record<Locale, string> = {
 type Dict = Record<string, string>;
 
 const en: Dict = {
+  "start.inputKicker": "Your answers",
+  "start.outcomeKicker": "What you're building",
+  "start.outcomeModeled": "Modeled monthly outcome",
   "start.roadmapTitle": "What we'll cover",
   "start.rm1": "What eats your time",
   "start.rm2": "Where the work starts",
@@ -1814,6 +1817,9 @@ const en: Dict = {
 };
 
 const es: Dict = {
+  "start.inputKicker": "Tus respuestas",
+  "start.outcomeKicker": "Lo que estás construyendo",
+  "start.outcomeModeled": "Resultado mensual estimado",
   "start.roadmapTitle": "Lo que veremos",
   "start.rm1": "Qué te quita tiempo",
   "start.rm2": "Dónde empieza el trabajo",
@@ -3614,6 +3620,9 @@ const es: Dict = {
 };
 
 const fr: Dict = {
+  "start.inputKicker": "Vos réponses",
+  "start.outcomeKicker": "Ce que vous construisez",
+  "start.outcomeModeled": "Résultat mensuel modélisé",
   "start.roadmapTitle": "Ce que nous allons aborder",
   "start.rm1": "Ce qui vous prend du temps",
   "start.rm2": "Où le travail commence",
@@ -5414,6 +5423,9 @@ const fr: Dict = {
 };
 
 const pt: Dict = {
+  "start.inputKicker": "Suas respostas",
+  "start.outcomeKicker": "O que você está construindo",
+  "start.outcomeModeled": "Resultado mensal estimado",
   "start.roadmapTitle": "O que vamos abordar",
   "start.rm1": "O que consome seu tempo",
   "start.rm2": "Onde o trabalho começa",
@@ -7195,6 +7207,9 @@ const pt: Dict = {
 };
 
 const de: Dict = {
+  "start.inputKicker": "Deine Antworten",
+  "start.outcomeKicker": "Was du aufbaust",
+  "start.outcomeModeled": "Modelliertes Monatsergebnis",
   "start.roadmapTitle": "Was wir durchgehen",
   "start.rm1": "Was deine Zeit frisst",
   "start.rm2": "Wo die Arbeit beginnt",

@@ -46,10 +46,45 @@ export function StartFlow({ initialIndustry = "" }: { initialIndustry?: string }
           </span>
         </div>
 
-        {/* Dashboard: the interview on the left, a live preview of what's coming
-            and what's being tailored on the right. */}
-        <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_340px]">
-          <div>
+        {/* ── Roadmap stepper: full-width horizontal strip across the top ── */}
+        <div className="mb-6 rounded-2xl border border-border bg-card/40 px-4 py-4 md:px-6">
+          <p className="mb-3 text-[13px] font-semibold uppercase tracking-wide text-muted-foreground">{t("start.roadmapTitle")}</p>
+          <ol className="grid grid-cols-3 gap-y-4 sm:flex sm:items-start sm:gap-0">
+            {ROADMAP.map((key, i) => {
+              const done = i < current;
+              const active = i === current;
+              return (
+                <li key={key} className="flex flex-col items-center text-center sm:flex-1">
+                  <div className="flex w-full items-center">
+                    {/* connector left */}
+                    <span className={`hidden h-px flex-1 sm:block ${i === 0 ? "opacity-0" : done || active ? "bg-cyan-electric/50" : "bg-border"}`} />
+                    <span
+                      className={`grid h-7 w-7 shrink-0 place-items-center rounded-full border text-xs font-medium transition sm:mx-1 ${
+                        done
+                          ? "border-cyan-electric/40 bg-cyan-electric/15 text-cyan-electric"
+                          : active
+                            ? "border-cyan-electric bg-cyan-electric text-background"
+                            : "border-border text-muted-foreground"
+                      }`}
+                    >
+                      {done ? <Check className="h-3.5 w-3.5" /> : i + 1}
+                    </span>
+                    {/* connector right */}
+                    <span className={`hidden h-px flex-1 sm:block ${i === ROADMAP.length - 1 ? "opacity-0" : done ? "bg-cyan-electric/50" : "bg-border"}`} />
+                  </div>
+                  <span className={`mt-2 px-1 text-xs leading-tight sm:text-[13px] ${active ? "font-medium text-foreground" : done ? "text-muted-foreground" : "text-muted-foreground/60"}`}>
+                    {t(key)}
+                  </span>
+                </li>
+              );
+            })}
+          </ol>
+        </div>
+
+        {/* ── Input → outcome: your answers on the left build the OS on the right ── */}
+        <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_360px] lg:gap-8">
+          <div className="flex min-h-[440px] flex-col">
+            <p className="mb-1 text-[13px] font-semibold uppercase tracking-wide text-cyan-electric">{t("start.inputKicker")}</p>
             <p className="mb-3 flex items-center gap-1.5 text-xs text-muted-foreground">
               <Mic className="h-3.5 w-3.5" /> {t("start.typeOrSpeak")}
             </p>
@@ -57,34 +92,15 @@ export function StartFlow({ initialIndustry = "" }: { initialIndustry?: string }
             <WorkflowBuilder industry={chosen.vertical} embedded onStep={setStep} />
           </div>
 
-          <aside className="space-y-5 lg:sticky lg:top-2 lg:self-start">
-            {/* Roadmap — anticipate the coming questions */}
-            <div className="rounded-2xl border border-border bg-card/40 p-4">
-              <p className="mb-3 text-[13px] font-semibold uppercase tracking-wide text-muted-foreground">{t("start.roadmapTitle")}</p>
-              <ol className="space-y-2.5">
-                {ROADMAP.map((key, i) => {
-                  const done = i < current;
-                  const active = i === current;
-                  return (
-                    <li key={key} className={`flex items-center gap-2.5 text-[15px] transition ${active ? "text-foreground" : done ? "text-muted-foreground" : "text-muted-foreground/60"}`}>
-                      <span className={`grid h-5 w-5 shrink-0 place-items-center rounded-full border text-[10px] ${done ? "border-cyan-electric/40 bg-cyan-electric/15 text-cyan-electric" : active ? "border-cyan-electric bg-cyan-electric text-background" : "border-border"}`}>
-                        {done ? <Check className="h-3 w-3" /> : i + 1}
-                      </span>
-                      {t(key)}
-                    </li>
-                  );
-                })}
-              </ol>
-            </div>
-
-            {/* Pre-installed agents — what the answers are tailoring */}
-            {pack && (
-              <div className="rounded-2xl border border-cyan-electric/20 bg-cyan-electric/[0.04] p-4">
+          {pack && (
+            <aside className="lg:sticky lg:top-2 lg:self-start">
+              <p className="mb-1 text-[13px] font-semibold uppercase tracking-wide text-muted-foreground">{t("start.outcomeKicker")}</p>
+              <div className="rounded-2xl border border-cyan-electric/20 bg-cyan-electric/[0.04] p-5">
                 <p className="flex items-center gap-1.5 text-[13px] font-semibold uppercase tracking-wide text-cyan-electric">
                   <Sparkles className="h-3.5 w-3.5" /> {t("start.preinstalledTitle")}
                 </p>
                 <p className="mt-1 text-xs text-muted-foreground">{t("start.preinstalledHint")}</p>
-                <ul className="mt-3 space-y-1.5">
+                <ul className="mt-4 space-y-2">
                   {pack.agents.map((key) => (
                     <li key={key} className="flex items-center gap-2 text-[15px]">
                       <Check className="h-3.5 w-3.5 shrink-0 text-cyan-electric" />
@@ -92,9 +108,14 @@ export function StartFlow({ initialIndustry = "" }: { initialIndustry?: string }
                     </li>
                   ))}
                 </ul>
+                {/* The payoff line — modeled, and labeled as such. */}
+                <div className="mt-5 border-t border-cyan-electric/15 pt-4">
+                  <p className="text-xs text-muted-foreground">{t("start.outcomeModeled")}</p>
+                  <p className="mt-0.5 font-display text-2xl font-semibold gradient-text">{t(chosen.savings)}</p>
+                </div>
               </div>
-            )}
-          </aside>
+            </aside>
+          )}
         </div>
       </div>
     );
